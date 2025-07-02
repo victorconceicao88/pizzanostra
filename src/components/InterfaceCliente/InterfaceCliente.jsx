@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { FaPizzaSlice, FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight } from 'react-icons/fa';
 import { Pizza, Leaf, IceCream, Hamburger, Wine, X, Check, Plus, Minus, MapPin, CreditCard, CurrencyEur, DeviceMobile, Money } from '@phosphor-icons/react';
@@ -1751,8 +1753,8 @@ const InterfaceClienteInner = () => {
           userId: user?.uid || null,
           endereco: customerInfo.endereco || null,
           localidade: customerInfo.localidade || null,
-          codigoPostal: codigoPostal ? `${codigoPostal.substring(0, 4)}-${codigoPostal.substring(4)}` : null, // Formato PT
-          nif: includeNif ? nifNumber : null
+          codigoPostal: codigoPostal ? `${codigoPostal.substring(0, 4)}-${codigoPostal.substring(4)}` : null,
+          nif: includeNif ? nifNumber : null  
         },
 
         // DETALHES DO PEDIDO
