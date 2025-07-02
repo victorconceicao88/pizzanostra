@@ -1,6 +1,4 @@
-/* eslint-disable */
-
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { 
   collection, 
@@ -757,4 +755,4 @@ const refreshOrders = async () => {
   );
 };
 
-export default InterfaceAdmin;
+export default InterfaceAdmin; 
