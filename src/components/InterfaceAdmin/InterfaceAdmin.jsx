@@ -1,4 +1,5 @@
- import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { 
   collection, 
@@ -145,7 +146,6 @@ useEffect(() => {
       return {
         id: doc.id,
         ...data,
-        // Garante que todos os campos de endereço sejam preenchidos
         enderecoCompleto: data.enderecoCompleto || 
                          (data.cliente?.endereco && data.cliente?.localidade 
                           ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
@@ -159,6 +159,8 @@ useEffect(() => {
           telefone: data.cliente?.telefone || 'Não informado',
           endereco: data.cliente?.endereco || null,
           localidade: data.cliente?.localidade || null,
+          codigoPostal: data.cliente?.codigoPostal || null,
+          nif: data.cliente?.nif || null, // Adicione esta linha
           userId: data.cliente?.userId || null
         },
         criadoEm: data.criadoEm?.toDate() || new Date()
@@ -167,6 +169,9 @@ useEffect(() => {
 
     setOrders(ordersData);
     setLoading(false);
+    
+    // DEBUG: Verifique se os campos estão vindo
+    console.log("Primeiro pedido:", ordersData[0]?.cliente);
   });
 
   return () => unsubscribe();
@@ -182,24 +187,40 @@ const refreshOrders = async () => {
     );
     
     const snapshot = await getDocs(q);
-    const ordersData = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      cliente: {
-        nome: doc.data().cliente?.nome || 'Não informado',
-        telefone: doc.data().cliente?.telefone || 'Não informado',
-        userId: doc.data().cliente?.userId || null
-      }
-    }));
+    const ordersData = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        enderecoCompleto: data.enderecoCompleto || 
+                         (data.cliente?.endereco && data.cliente?.localidade 
+                          ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
+                          : null),
+        zonaEntrega: data.zonaEntrega || null,
+        bairro: data.bairro || data.cliente?.localidade || null,
+        tipoEntrega: data.tipoEntrega || 
+                    (data.cliente?.endereco ? 'entrega' : 'retirada'),
+        cliente: {
+          nome: data.cliente?.nome || 'Não informado',
+          telefone: data.cliente?.telefone || 'Não informado',
+          endereco: data.cliente?.endereco || null,
+          localidade: data.cliente?.localidade || null,
+          codigoPostal: data.cliente?.codigoPostal || null,
+          nif: data.cliente?.nif || null,
+          userId: data.cliente?.userId || null
+        },
+        criadoEm: data.criadoEm?.toDate() || new Date()
+      };
+    });
     
     setOrders(ordersData);
   } catch (error) {
     console.error("Erro ao atualizar pedidos:", error);
+    toast.error("Erro ao atualizar pedidos");
   } finally {
     setLoading(false);
   }
 };
-  
 
   const markAsReady = async (orderId) => {
     try {
@@ -466,6 +487,13 @@ const refreshOrders = async () => {
         <span className="font-medium">Zona:</span> {order.zonaEntrega}
       </p>
     )}
+{order.cliente?.codigoPostal && (
+  <div className="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+    <p className="text-sm text-gray-700">
+      <span className="font-medium">Código Postal:</span> {order.cliente.codigoPostal}
+    </p>
+  </div>
+)}
   </div>
 ) : (
   <div className="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
@@ -485,7 +513,8 @@ const refreshOrders = async () => {
                             </p>
                           </div>
                         )}
-                        {order.cliente?.nif && (
+                      
+                     {order.cliente?.nif && (
   <div className="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
     <p className="text-sm text-gray-700">
       <span className="font-medium">NIF:</span> {order.cliente.nif}
@@ -755,4 +784,4 @@ const refreshOrders = async () => {
   );
 };
 
-export default InterfaceAdmin; 
+export default InterfaceAdmin;

@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { FaPizzaSlice, FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight } from 'react-icons/fa';
 import { Pizza, Leaf, IceCream, Hamburger, Wine, X, Check, Plus, Minus, MapPin, CreditCard, CurrencyEur, DeviceMobile, Money } from '@phosphor-icons/react';
 import { motion, AnimatePresence, useAnimation, useInView } from 'framer-motion';
-import { useNavigate, } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion, serverTimestamp, Timestamp, arrayRemove , increment ,onSnapshot,  query, orderBy, limit,addDoc,writeBatch } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion, serverTimestamp, Timestamp, arrayRemove, increment, onSnapshot, query, orderBy, limit, addDoc, writeBatch } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 import { menuData, deliveryAreas } from './menuData';
@@ -15,18 +15,18 @@ import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
 import WelcomeModal from './WelcomeModal';
 
-// Imagens de categoria
+// Imagens de categoria otimizadas para mobile
 const categoryImages = {
-  tradicionais: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  vegetarianas: 'https://images.unsplash.com/photo-1571066811602-716837d681de?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  entradas: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  petiscos: 'https://images.unsplash.com/photo-1559847844-5315695dadae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  doces: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  bordas: 'https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  massas: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  sobremesas: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  bebidas: 'https://images.unsplash.com/photo-1536935338788-846bb9981813?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  vinhos: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
+  tradicionais: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+  vegetarianas: 'https://images.unsplash.com/photo-1571066811602-716837d681de?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+  entradas: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+  petiscos: 'https://images.unsplash.com/photo-1559847844-5315695dadae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+  doces: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+  bordas: 'https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+  massas: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+  sobremesas: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+  bebidas: 'https://images.unsplash.com/photo-1536935338788-846bb9981813?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
+  vinhos: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80'
 };
 
 // Adicionais para pizzas
@@ -141,7 +141,7 @@ const LanguageSelector = () => {
     <div className="flex items-center ml-2">
       <button 
         onClick={() => setLanguage('pt')}
-        className={`px-2 py-1 rounded-md text-xs sm:text-sm font-medium ${
+        className={`px-3 py-1 rounded-md text-sm font-medium ${
           language === 'pt' ? 'bg-[#016730] text-white' : 'text-gray-700 hover:bg-gray-100'
         }`}
       >
@@ -149,7 +149,7 @@ const LanguageSelector = () => {
       </button>
       <button 
         onClick={() => setLanguage('en')}
-        className={`px-2 py-1 rounded-md text-xs sm:text-sm font-medium ${
+        className={`px-3 py-1 rounded-md text-sm font-medium ${
           language === 'en' ? 'bg-[#016730] text-white' : 'text-gray-700 hover:bg-gray-100'
         }`}
       >
@@ -157,7 +157,7 @@ const LanguageSelector = () => {
       </button>
       <button 
         onClick={() => setLanguage('es')}
-        className={`px-2 py-1 rounded-md text-xs sm:text-sm font-medium ${
+        className={`px-3 py-1 rounded-md text-sm font-medium ${
           language === 'es' ? 'bg-[#016730] text-white' : 'text-gray-700 hover:bg-gray-100'
         }`}
       >
@@ -169,15 +169,15 @@ const LanguageSelector = () => {
 
 const CategoryHeader = ({ category, language }) => {
   return (
-    <div className="relative rounded-2xl overflow-hidden mb-8 h-64">
+    <div className="relative rounded-2xl overflow-hidden mb-6 h-48 sm:h-64">
       <img 
         src={categoryImages[category.id]} 
         alt={typeof category.name === 'object' ? category.name[language] : category.name}
         className="w-full h-full object-cover"
         loading="lazy"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 flex items-end p-6">
-        <h2 className="text-3xl font-bold text-white">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 flex items-end p-4 sm:p-6">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">
           {typeof category.name === 'object' ? category.name[language] : category.name}
         </h2>
       </div>
@@ -243,12 +243,16 @@ const CustomizationModal = ({
         <div className="h-2 w-full bg-white"></div>
         <div className="h-2 w-full bg-red-600"></div>
         
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-800">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800">
               {typeof product.name === 'object' ? product.name[language] : product.name}
             </h3>
-            <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
+            <button 
+              onClick={onClose} 
+              className="p-2 rounded-full hover:bg-gray-100"
+              aria-label="Fechar"
+            >
               <X size={20} />
             </button>
           </div>
@@ -260,278 +264,287 @@ const CustomizationModal = ({
           )}
           
           {/* Tab Navigation */}
-          <div className="flex border-b border-gray-200 mb-4">
+          <div className="flex border-b border-gray-200 mb-4 overflow-x-auto">
             <button
               onClick={() => setActiveTab('size')}
-              className={`py-2 px-4 font-medium text-sm ${activeTab === 'size' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`py-2 px-3 sm:px-4 font-medium text-sm flex-shrink-0 ${
+                activeTab === 'size' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               {t(language, 'Size')}
             </button>
             {product.sizes && menuData.bordas.length > 0 && (
               <button
                 onClick={() => setActiveTab('border')}
-                className={`py-2 px-4 font-medium text-sm ${activeTab === 'border' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              {t(language, 'Stuffed')}
-            </button>
-          )}
-          <button
-            onClick={() => setActiveTab('extras')}
-            className={`py-2 px-4 font-medium text-sm ${activeTab === 'extras' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            {t(language, 'extras')} ({selection.extras.length})
-          </button>
-        </div>
-        
-        {/* Tab Content */}
-        <div className="mb-6">
-          {activeTab === 'size' && product.sizes && (
-            <div>
-              <div className="grid grid-cols-3 gap-2">
-                {['individual', 'media', 'familia'].map(size => (
-                  <button
-                    key={size}
-                    onClick={() => handleSizeChange(size)}
-                    className={`py-3 rounded-lg transition-all flex flex-col items-center ${
-                      selection.size === size
-                        ? 'bg-white border-2 border-[#016730] text-gray-800 shadow-md'
-                        : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="text-xs font-medium">{t(language, size)}</div>
-                    <div className="font-bold text-sm">
-                      {product.sizes[size]?.toFixed(2) || '0.00'}€
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {activeTab === 'border' && product.sizes && menuData.bordas.length > 0 && (
-            <div className="space-y-2">
-              <button
-                onClick={() => handleBorderChange(null)}
-                className={`w-full px-3 py-2 rounded-lg flex items-center justify-between transition-all ${
-                  selection.border === null
-                    ? 'bg-white border-2 border-[#016730] text-gray-800'
-                    : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+                className={`py-2 px-3 sm:px-4 font-medium text-sm flex-shrink-0 ${
+                  activeTab === 'border' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <span className="text-sm">{t(language, 'noBorder')}</span>
-                <span className="text-xs text-gray-500">+0.00€</span>
+                {t(language, 'Stuffed')}
               </button>
-              {menuData.bordas.map(border => (
+            )}
+            <button
+              onClick={() => setActiveTab('extras')}
+              className={`py-2 px-3 sm:px-4 font-medium text-sm flex-shrink-0 ${
+                activeTab === 'extras' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t(language, 'extras')} ({selection.extras.length})
+            </button>
+          </div>
+          
+          {/* Tab Content */}
+          <div className="mb-6">
+            {activeTab === 'size' && product.sizes && (
+              <div>
+                <div className="grid grid-cols-3 gap-2">
+                  {['individual', 'media', 'familia'].map(size => (
+                    <button
+                      key={size}
+                      onClick={() => handleSizeChange(size)}
+                      className={`py-3 rounded-lg transition-all flex flex-col items-center ${
+                        selection.size === size
+                          ? 'bg-white border-2 border-[#016730] text-gray-800 shadow-md'
+                          : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="text-xs font-medium">{t(language, size)}</div>
+                      <div className="font-bold text-sm">
+                        {product.sizes[size]?.toFixed(2) || '0.00'}€
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'border' && product.sizes && menuData.bordas.length > 0 && (
+              <div className="space-y-2">
                 <button
-                  key={border.id}
-                  onClick={() => handleBorderChange(border.id)}
-                  className={`w-full px-3 py-2 rounded-lg flex items-center justify-between transition-all ${
-                    selection.border === border.id
+                  onClick={() => handleBorderChange(null)}
+                  className={`w-full px-3 py-3 rounded-lg flex items-center justify-between transition-all ${
+                    selection.border === null
                       ? 'bg-white border-2 border-[#016730] text-gray-800'
                       : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
                   }`}
                 >
-                  <div className="flex flex-col items-start">
-                    <span className="text-sm">
-                      {typeof border.name === 'object' ? border.name[language] : border.name}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    +{border.sizes[selection.size || 'media'].toFixed(2)}€
-                  </span>
+                  <span className="text-sm">{t(language, 'noBorder')}</span>
+                  <span className="text-xs text-gray-500">+0.00€</span>
                 </button>
-              ))}
-            </div>
-          )}
-          
-          {activeTab === 'extras' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1">
-              {pizzaExtras.map(extra => {
-                const isSelected = selection.extras.some(e => e.id === extra.id);
-                return (
+                {menuData.bordas.map(border => (
                   <button
-                    key={extra.id}
-                    onClick={() => toggleExtra(extra)}
-                    className={`p-2 rounded-lg flex flex-col items-start transition-all border ${
-                      isSelected
-                        ? 'bg-green-50 border-[#016730]'
-                        : 'bg-white border-gray-200 hover:border-gray-300'
+                    key={border.id}
+                    onClick={() => handleBorderChange(border.id)}
+                    className={`w-full px-3 py-3 rounded-lg flex items-center justify-between transition-all ${
+                      selection.border === border.id
+                        ? 'bg-white border-2 border-[#016730] text-gray-800'
+                        : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex items-center w-full">
-                      {isSelected && (
-                        <FaCheck className="text-[#016730] mr-1 flex-shrink-0" size={12} />
-                      )}
-                      <span className="text-xs font-medium text-left truncate">
-                        {typeof extra.name === 'object' ? extra.name[language] : extra.name}
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm">
+                        {typeof border.name === 'object' ? border.name[language] : border.name}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-500 mt-1">
-                      +{extra.price.toFixed(2)}€
+                    <span className="text-xs text-gray-500">
+                      +{border.sizes[selection.size || 'media'].toFixed(2)}€
                     </span>
                   </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        
-        {selection.extras.length > 0 && activeTab !== 'extras' && (
-          <div className="mb-4 text-xs text-[#016730] font-medium">
-            {t(language, 'extrasTotal')}: +{selection.extras.reduce((sum, extra) => sum + extra.price, 0).toFixed(2)}€
-          </div>
-        )}
-        
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-1">{t(language, 'quantity')}</h4>
-            <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => handleQuantityChange(selection.quantity - 1)}
-                disabled={selection.quantity <= 1}
-                className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
-              >
-                <Minus size={14} />
-              </button>
-              <span className="w-8 h-8 flex items-center justify-center text-sm font-medium border-l border-r border-gray-200">
-                {selection.quantity}
-              </span>
-              <button
-                onClick={() => handleQuantityChange(selection.quantity + 1)}
-                className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
-          </div>
-          
-          <div className="text-right">
-            <div className="text-sm text-gray-500">{t(language, 'total')}</div>
-            <div className="text-2xl font-bold text-[#016730]">
-              {totalPrice.toFixed(2)}€
-            </div>
-          </div>
-        </div>
-        
-        <button
-          onClick={handleAddToCart}
-          className="w-full py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center"
-        >
-          <FaShoppingCart className="mr-2" size={16} />
-          {t(language, 'addToCart')}
-        </button>
-      </div>
-    </div>
-  </div>
-);
-};
-
-const ProductCard = ({ product, language, onAddToCart }) => {
-const [isModalOpen, setIsModalOpen] = useState(false);
-
-const handleAddClick = (e) => {
-  e.stopPropagation();
-  
-  if (product.sizes) {
-    setIsModalOpen(true);
-  } else {
-    onAddToCart(product, {
-      size: null,
-      border: null,
-      quantity: 1,
-      extras: []
-    });
-  }
-};
-
-return (
-  <>
-    <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow border-2 border-[#016730]">
-      <div className="p-4">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-800 mb-1">
-              {typeof product.name === 'object' ? product.name[language] : product.name}
-            </h3>
-            {product.description && (
-              <p className="text-gray-600 text-sm line-clamp-2 mb-2">
-                {typeof product.description === 'object' ? product.description[language] : product.description}
-              </p>
+                ))}
+              </div>
+            )}
+            
+            {activeTab === 'extras' && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1">
+                {pizzaExtras.map(extra => {
+                  const isSelected = selection.extras.some(e => e.id === extra.id);
+                  return (
+                    <button
+                      key={extra.id}
+                      onClick={() => toggleExtra(extra)}
+                      className={`p-2 rounded-lg flex flex-col items-start transition-all border ${
+                        isSelected
+                          ? 'bg-green-50 border-[#016730]'
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center w-full">
+                        {isSelected && (
+                          <FaCheck className="text-[#016730] mr-1 flex-shrink-0" size={12} />
+                        )}
+                        <span className="text-xs font-medium text-left truncate">
+                          {typeof extra.name === 'object' ? extra.name[language] : extra.name}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500 mt-1">
+                        +{extra.price.toFixed(2)}€
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
           
-          <div className="text-right ml-2">
-            <span className="text-lg font-bold text-red-600">
-              {product.sizes ? product.sizes.media.toFixed(2) : product.price.toFixed(2)}€
-            </span>
-          </div>
-        </div>
-        
-        <div className="flex justify-between items-center mt-3">
-          {product.rating && (
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                i < Math.floor(product.rating) ? 
-                  <FaStar key={i} className="text-amber-400 text-sm" /> : 
-                  <FaRegStar key={i} className="text-amber-400 text-sm" />
-              ))}
-              <span className="ml-1 text-xs text-gray-500">({product.ratingCount || 0})</span>
+          {selection.extras.length > 0 && activeTab !== 'extras' && (
+            <div className="mb-4 text-xs text-[#016730] font-medium">
+              {t(language, 'extrasTotal')}: +{selection.extras.reduce((sum, extra) => sum + extra.price, 0).toFixed(2)}€
             </div>
           )}
           
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">{t(language, 'quantity')}</h4>
+              <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => handleQuantityChange(selection.quantity - 1)}
+                  disabled={selection.quantity <= 1}
+                  className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                  aria-label="Reduzir quantidade"
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="w-10 h-10 flex items-center justify-center text-sm font-medium border-l border-r border-gray-200">
+                  {selection.quantity}
+                </span>
+                <button
+                  onClick={() => handleQuantityChange(selection.quantity + 1)}
+                  className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  aria-label="Aumentar quantidade"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="text-right">
+              <div className="text-sm text-gray-500">{t(language, 'total')}</div>
+              <div className="text-xl sm:text-2xl font-bold text-[#016730]">
+                {totalPrice.toFixed(2)}€
+              </div>
+            </div>
+          </div>
+          
           <button
-            onClick={handleAddClick}
-            className="px-3 py-1 bg-white border border-[#016730] text-gray-800 rounded-lg font-medium flex items-center justify-center gap-1 shadow-sm hover:shadow-md transition-all text-sm"
+            onClick={handleAddToCart}
+            className="w-full py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center"
           >
-            <Plus size={14} weight="bold" className="text-[#016730]" />
-            {t(language, 'add')}
+            <FaShoppingCart className="mr-2" size={16} />
+            {t(language, 'addToCart')}
           </button>
         </div>
       </div>
     </div>
+  );
+};
+
+const ProductCard = ({ product, language, onAddToCart }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAddClick = (e) => {
+    e.stopPropagation();
     
-    {isModalOpen && (
-      <CustomizationModal
-        product={product}
-        onClose={() => setIsModalOpen(false)}
-        onAddToCart={onAddToCart}
-        language={language}
-      />
-    )}
-  </>
-);
+    if (product.sizes) {
+      setIsModalOpen(true);
+    } else {
+      onAddToCart(product, {
+        size: null,
+        border: null,
+        quantity: 1,
+        extras: []
+      });
+    }
+  };
+
+  return (
+    <>
+      <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow border-2 border-[#016730] h-full flex flex-col">
+        <div className="p-3 sm:p-4 flex-grow">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-1">
+                {typeof product.name === 'object' ? product.name[language] : product.name}
+              </h3>
+              {product.description && (
+                <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 mb-2">
+                  {typeof product.description === 'object' ? product.description[language] : product.description}
+                </p>
+              )}
+            </div>
+            
+            <div className="text-right ml-2">
+              <span className="text-base sm:text-lg font-bold text-red-600">
+                {product.sizes ? product.sizes.media.toFixed(2) : product.price.toFixed(2)}€
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex justify-between items-center mt-3">
+            {product.rating && (
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  i < Math.floor(product.rating) ? 
+                    <FaStar key={i} className="text-amber-400 text-xs sm:text-sm" /> : 
+                    <FaRegStar key={i} className="text-amber-400 text-xs sm:text-sm" />
+                ))}
+                <span className="ml-1 text-xs text-gray-500">({product.ratingCount || 0})</span>
+              </div>
+            )}
+            
+            <button
+              onClick={handleAddClick}
+              className="px-3 py-2 bg-white border border-[#016730] text-gray-800 rounded-lg font-medium flex items-center justify-center gap-1 shadow-sm hover:shadow-md transition-all text-sm"
+              aria-label="Adicionar ao carrinho"
+            >
+              <Plus size={14} weight="bold" className="text-[#016730]" />
+              {t(language, 'add')}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {isModalOpen && (
+        <CustomizationModal
+          product={product}
+          onClose={() => setIsModalOpen(false)}
+          onAddToCart={onAddToCart}
+          language={language}
+        />
+      )}
+    </>
+  );
 };
 
 const StampRewardPreview = ({ cartTotal, language }) => {
-const stampsEarned = Math.floor(cartTotal / 15);
+  const stampsEarned = Math.floor(cartTotal / 15);
 
-return (
-  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4">
-    <div className="flex items-center justify-between mb-2">
-      <h4 className="font-medium text-amber-800 flex items-center">
-        <FaCoins className="mr-2 text-amber-600" />
-        {t(language, 'stampsEarned')}
-      </h4>
-      <span className="bg-amber-200 text-amber-800 px-2 py-1 rounded-full text-xs">
-        +{stampsEarned} {t(language, 'stamps')}
-      </span>
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-medium text-amber-800 flex items-center">
+          <FaCoins className="mr-2 text-amber-600" />
+          {t(language, 'stampsEarned')}
+        </h4>
+        <span className="bg-amber-200 text-amber-800 px-2 py-1 rounded-full text-xs">
+          +{stampsEarned} {t(language, 'stamps')}
+        </span>
+      </div>
+      
+      <div className="flex items-center">
+        {[...Array(Math.min(5, stampsEarned))].map((_, i) => (
+          <div
+            key={i}
+            className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white shadow-md mx-1"
+          >
+            <FaCoins size={14} />
+          </div>
+        ))}
+        {stampsEarned > 5 && (
+          <span className="ml-2 text-amber-600 font-medium">+{stampsEarned - 5}</span>
+        )}
+      </div>
     </div>
-    
-    <div className="flex items-center">
-      {[...Array(Math.min(5, stampsEarned))].map((_, i) => (
-        <div
-          key={i}
-          className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white shadow-md mx-1"
-        >
-          <FaCoins size={14} />
-        </div>
-      ))}
-      {stampsEarned > 5 && (
-        <span className="ml-2 text-amber-600 font-medium">+{stampsEarned - 5}</span>
-      )}
-    </div>
-  </div>
-);
+  );
 };
 
 const CartItem = ({ 
@@ -545,7 +558,7 @@ const CartItem = ({
 }) => {
   const isEligibleForStamps = ['tradicionais', 'vegetarianas', 'entradas'].includes(item.category) && 
                             !item.isBorder;
- const calculateStampsNeeded = () => {
+  const calculateStampsNeeded = () => {
     if (item.category === 'entradas') return 5 * item.quantity;
     if (item.selectedSize === 'individual') return 10 * item.quantity;
     if (item.selectedSize === 'media') return 11 * item.quantity;
@@ -556,7 +569,6 @@ const CartItem = ({
   const stampsNeeded = calculateStampsNeeded();
   const useStamps = itemsWithStamps[item.id] || false;
   
-
   const handleToggleUseStamps = () => {
     const needed = calculateStampsNeeded();
     if (!useStamps && needed > selosDisponiveis) {
@@ -638,23 +650,26 @@ const CartItem = ({
             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
               <button 
                 onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                aria-label="Reduzir quantidade"
               >
                 <Minus size={12} />
               </button>
-              <span className="w-8 h-7 sm:w-10 sm:h-8 flex items-center justify-center border-l border-r border-gray-200 text-xs sm:text-sm">
+              <span className="w-8 h-8 flex items-center justify-center border-l border-r border-gray-200 text-sm">
                 {item.quantity}
               </span>
               <button 
                 onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                aria-label="Aumentar quantidade"
               >
                 <Plus size={12} />
               </button>
             </div>
             <button 
               onClick={() => onRemove(item.id)}
-              className="ml-2 sm:ml-4 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              className="ml-2 sm:ml-4 w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              aria-label="Remover item"
             >
               <X size={16} />
             </button>
@@ -664,18 +679,19 @@ const CartItem = ({
     </div>
   );
 };
+
 const ExpandableCategorySection = ({ title, products, language, onAddToCart }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
   return (
-    <div className="mb-8">
+    <div className="mb-6 sm:mb-8">
       <div 
         className="flex justify-between items-center p-4 bg-white rounded-xl shadow-sm cursor-pointer border border-gray-200 hover:border-[#016730] transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+        <h3 className="text-base sm:text-lg font-bold text-gray-800">{title}</h3>
         <div className="flex items-center">
-          <span className="text-sm text-gray-500 mr-2">
+          <span className="text-xs sm:text-sm text-gray-500 mr-2">
             {products.length} {t(language, 'items')}
           </span>
           {isExpanded ? (
@@ -698,7 +714,7 @@ const ExpandableCategorySection = ({ title, products, language, onAddToCart }) =
             }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-4">
               {products.map(product => (
                 <ProductCard 
                   key={product.id} 
@@ -714,6 +730,7 @@ const ExpandableCategorySection = ({ title, products, language, onAddToCart }) =
     </div>
   );
 };
+
 const CheckoutFlow = ({ 
   cart, 
   setCart, 
@@ -749,6 +766,7 @@ const CheckoutFlow = ({
   const [codigoPostal, setCodigoPostal] = useState('');
   const [showZoneAlert, setShowZoneAlert] = useState(false);
   const itemsWithStampsRef = useRef(itemsWithStamps);
+  
 
   useEffect(() => {
     itemsWithStampsRef.current = itemsWithStamps;
@@ -874,26 +892,50 @@ const CheckoutFlow = ({
   };
 
   const handleCodigoPostalChange = (e) => {
-    // Permitir o formato português (XXXX-XXX) mas armazenar apenas números
-    const value = e.target.value
-      .replace(/\D/g, '') // Remove tudo que não for dígito
-      .replace(/^(\d{4})(\d)/, '$1-$2') // Adiciona hífen depois do 4º dígito
-      .slice(0, 8); // Limita a 7 dígitos + hífen
+    const value = e.target.value.replace(/\D/g, '').slice(0, 7);
+    setCodigoPostal(value);
     
-    // Armazenar apenas os números (sem hífen) para validação
-    setCodigoPostal(value.replace(/\D/g, ''));
+    if (value.length > 4) {
+      const formatted = `${value.slice(0, 4)}-${value.slice(4)}`;
+      setCustomerInfo({
+        ...customerInfo,
+        codigoPostal: formatted
+      });
+    } else {
+      setCustomerInfo({
+        ...customerInfo,
+        codigoPostal: value
+      });
+    }
   };
 
   const handleNifChange = (e) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 9);
     setNifNumber(value);
+    setCustomerInfo({
+      ...customerInfo,
+      nif: value
+    });
+  };
+
+  const canProceedToPayment = () => {
+    const hasBasicInfo = customerInfo.nome && customerInfo.telefone?.length === 9;
+    
+    if (deliveryOption === 'entrega') {
+      return hasBasicInfo && 
+             customerInfo.endereco && 
+             customerInfo.localidade && 
+             customerInfo.codigoPostal;
+    }
+    
+    return hasBasicInfo;
   };
 
   const renderStep = () => {
     switch (step) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between">
               <span className="text-xs sm:text-sm text-gray-500">
                 {cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')}
@@ -1008,28 +1050,10 @@ const CheckoutFlow = ({
         );
       
       case 2: {
-        // Validação robusta dos campos
-        const validarDados = () => {
-          const dadosObrigatorios = customerInfo.nome?.trim() && 
-                                  customerInfo.telefone?.trim() && 
-                                  customerInfo.telefone.length === 9;
-          
-          if (deliveryOption === 'entrega') {
-            return (
-              dadosObrigatorios &&
-              customerInfo.endereco?.trim() &&
-              customerInfo.localidade &&
-              selectedZone &&
-              codigoPostal.length === 7 // Código postal português tem 7 dígitos
-            );
-          }
-          return dadosObrigatorios;
-        };
-
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Título e Progresso */}
-            <div className="flex items-center text-sm text-gray-500 mb-4">
+            <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-4">
               <span className="hidden md:inline">Passo 2 de 3</span>
               <span className="mx-2 hidden md:inline">•</span>
               <div className="flex items-center">
@@ -1041,56 +1065,56 @@ const CheckoutFlow = ({
             </div>
 
             {/* Opções de Retirada/Entrega */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <button
                 onClick={() => setDeliveryOption('retirada')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-3 sm:p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
                   deliveryOption === 'retirada'
                     ? 'border-green-600 bg-green-50 text-green-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <FaStore className="text-xl mb-2" />
-                <span className="font-bold">Retirada</span>
+                <FaStore className="text-lg sm:text-xl mb-1 sm:mb-2" />
+                <span className="font-bold text-sm sm:text-base">Retirada</span>
                 <span className="text-xs text-gray-500 mt-1">Sem taxa</span>
               </button>
 
               <button
                 onClick={() => setDeliveryOption('entrega')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-3 sm:p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
                   deliveryOption === 'entrega'
                     ? 'border-green-600 bg-green-50 text-green-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <FaMotorcycle className="text-xl mb-2" />
-                <span className="font-bold">Entrega</span>
+                <FaMotorcycle className="text-lg sm:text-xl mb-1 sm:mb-2" />
+                <span className="font-bold text-sm sm:text-base">Entrega</span>
                 <span className="text-xs text-gray-500 mt-1">Taxa: {selectedZone ? deliveryAreas[selectedZone]?.taxa.toFixed(2) + '€' : '--'}</span>
               </button>
             </div>
 
             {/* Campos do Formulário */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {/* Nome e Telefone (sempre visíveis) */}
               <div>
-                <label className="block text-gray-700 mb-2 font-medium">Nome Completo*</label>
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium">Nome Completo*</label>
                 <input
                   type="text"
                   value={customerInfo.nome}
                   onChange={(e) => setCustomerInfo({...customerInfo, nome: e.target.value})}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   placeholder="Seu nome completo"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2 font-medium">Telefone*</label>
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium">Telefone*</label>
                 <input
                   type="tel"
                   value={customerInfo.telefone}
                   onChange={handleTelefoneChange}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   placeholder="912345678"
                   required
                 />
@@ -1103,34 +1127,29 @@ const CheckoutFlow = ({
               {deliveryOption === 'entrega' && (
                 <>
                   <div>
-                    <label className="block text-gray-700 mb-2 font-medium">Endereço Completo*</label>
+                    <label className="block text-gray-700 mb-1 sm:mb-2 font-medium">Endereço Completo*</label>
                     <input
                       type="text"
                       value={customerInfo.endereco}
                       onChange={(e) => setCustomerInfo({...customerInfo, endereco: e.target.value})}
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                       placeholder="Rua, número, complemento, apartamento..."
                       required
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 mb-2 font-medium">Código Postal*</label>
-                    <input
-                      type="text"
-                      value={codigoPostal.replace(/(\d{4})(\d{3})/, '$1-$2')}
-                      onChange={handleCodigoPostalChange}
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                      placeholder="0000-000 (formato português)"
-                      required
-                    />
-                    {codigoPostal && codigoPostal.length !== 7 && (
-                      <p className="text-red-500 text-xs mt-1">O código postal deve ter 7 dígitos</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 mb-2 font-medium">Bairro*</label>
+                  
+                    <div className="mb-3 sm:mb-4">
+                      <label className="block text-gray-700 mb-1 sm:mb-2 font-medium">Código Postal*</label>
+                      <input
+                        type="text"
+                        value={codigoPostal}
+                        onChange={handleCodigoPostalChange}
+                        className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                        placeholder="Ex: 1234-567"
+                        required
+                      />
+                    </div>
+                    
+                    <label className="block text-gray-700 mb-1 sm:mb-2 font-medium">Bairro*</label>
                     <select
                       value={customerInfo.localidade}
                       onChange={(e) => {
@@ -1141,7 +1160,7 @@ const CheckoutFlow = ({
                         setSelectedZone(zona);
                         setCustomerInfo({...customerInfo, localidade: bairro});
                       }}
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                       required
                     >
                       <option value="">Selecione seu bairro</option>
@@ -1158,10 +1177,10 @@ const CheckoutFlow = ({
                   </div>
 
                   {showZoneAlert && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 sm:p-4">
                       <div className="flex items-start">
                         <FaInfoCircle className="text-blue-500 mt-1 mr-2 flex-shrink-0" />
-                        <p className="text-blue-700 text-sm">
+                        <p className="text-blue-700 text-xs sm:text-sm">
                           Por favor, insira corretamente o seu endereço e selecione a freguesia ou localidade correspondente.
                         </p>
                       </div>
@@ -1169,39 +1188,25 @@ const CheckoutFlow = ({
                   )}
                 </>
               )}
-
-              {/* Campo de NIF */}
-              <div>
-                <div className="flex items-center mb-2">
-                  <input
-                    type="checkbox"
-                    id="include-nif"
-                    checked={includeNif}
-                    onChange={(e) => setIncludeNif(e.target.checked)}
-                    className="mr-2 h-4 w-4 text-[#016730] focus:ring-[#016730] border-gray-300 rounded"
-                  />
-                  <label htmlFor="include-nif" className="text-gray-700 font-medium">
-                    Gostaria de incluir o NIF na fatura?
-                  </label>
-                </div>
-                {includeNif && (
-                  <input
-                    type="text"
-                    value={nifNumber}
-                    onChange={handleNifChange}
-                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 mt-2"
-                    placeholder="NIF (apenas números)"
-                  />
-                )}
+              
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium">NIF (Opcional)</label>
+                <input
+                  type="text"
+                  value={customerInfo.nif}
+                  onChange={handleNifChange}
+                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="Digite o NIF"
+                />
               </div>
 
               {/* Campo de observações (opcional) */}
               <div>
-                <label className="block text-gray-700 mb-2 font-medium">Observações</label>
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium">Observações</label>
                 <textarea
                   value={customerInfo.observacoes}
                   onChange={(e) => setCustomerInfo({...customerInfo, observacoes: e.target.value})}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   placeholder="Pontos de referência, instruções especiais..."
                   rows={3}
                 />
@@ -1209,18 +1214,18 @@ const CheckoutFlow = ({
             </div>
 
             {/* Botões de navegação */}
-            <div className="flex justify-between gap-4 pt-6 border-t border-gray-200">
+            <div className="flex justify-between gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors text-sm sm:text-base"
               >
                 Voltar
               </button>
               <button
-                onClick={() => validarDados() && setStep(3)}
-                disabled={!validarDados()}
-                className={`flex-1 py-3 rounded-xl text-white font-bold transition-colors ${
-                  validarDados()
+                onClick={() => setStep(3)}
+                disabled={!canProceedToPayment()}
+                className={`flex-1 py-3 rounded-xl text-white font-bold transition-colors text-sm sm:text-base ${
+                  canProceedToPayment()
                     ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-gray-400 cursor-not-allowed'
                 }`}
@@ -1233,7 +1238,7 @@ const CheckoutFlow = ({
       }
       case 3:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between">
               <div className="hidden sm:flex items-center text-sm text-gray-500">
                 <span className="hidden sm:inline">Passo 2 de 3</span>
@@ -1262,7 +1267,7 @@ const CheckoutFlow = ({
             </div>
             
             {user && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <FaCoins className="text-amber-600 mr-2" />
@@ -1271,7 +1276,7 @@ const CheckoutFlow = ({
                     </span>
                   </div>
                   {selosUsados > 0 && (
-                    <span className="text-sm bg-amber-200 text-amber-800 px-2 py-1 rounded-full">
+                    <span className="text-xs sm:text-sm bg-amber-200 text-amber-800 px-2 py-1 rounded-full">
                       {t(language, 'stampsUsed')}: {selosUsados}
                     </span>
                   )}
@@ -1279,49 +1284,50 @@ const CheckoutFlow = ({
               </div>
             )}
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
               <button
                 onClick={() => setPaymentMethod('mbway')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-3 sm:p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'mbway' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                  <DeviceMobile size={20} weight={paymentMethod === 'mbway' ? 'fill' : 'regular'} />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
+                  <DeviceMobile size={18} weight={paymentMethod === 'mbway' ? 'fill' : 'regular'} />
                 </div>
-                <span className="font-bold text-sm">{t(language, 'mbway')}</span>
+                <span className="font-bold text-xs sm:text-sm">{t(language, 'mbway')}</span>
                 <span className="text-xs text-gray-500 mt-1">{t(language, 'mbwayDescription')}</span>
               </button>
               
               <button
                 onClick={() => setPaymentMethod('dinheiro')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-3 sm:p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'dinheiro' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-2">
-                  <Money size={20} weight={paymentMethod === 'dinheiro' ? 'fill' : 'regular'} />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
+                  <Money size={18} weight={paymentMethod === 'dinheiro' ? 'fill' : 'regular'} />
                 </div>
-                <span className="font-bold text-sm">{t(language, 'cash')}</span>
+                <span className="font-bold text-xs sm:text-sm">{t(language, 'cash')}</span>
                 <span className="text-xs text-gray-500 mt-1">{t(language, 'cashDescription')}</span>
               </button>
               
               <button
                 onClick={() => setPaymentMethod('cartao')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-3 sm:p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'cartao' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2">
-                  <CreditCard size={20} weight={paymentMethod === 'cartao' ? 'fill' : 'regular'} />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
+                  <CreditCard size={18} weight={paymentMethod === 'cartao' ? 'fill' : 'regular'} />
                 </div>
-                <span className="font-bold text-sm">{t(language, 'card')}</span>
+                <span className="font-bold text-xs sm:text-sm">{t(language, 'card')}</span>
                 <span className="text-xs text-gray-500 mt-1">{t(language, 'cardDescription')}</span>
               </button>
             </div>
+            
             {paymentMethod === 'mbway' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <label className="block text-gray-700 mb-2 font-medium text-sm sm:text-base">{t(language, 'mbwayNumber')}</label>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 sm:p-4">
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-sm sm:text-base">{t(language, 'mbwayNumber')}</label>
                 <div className="flex items-center border border-blue-300 bg-white rounded-lg overflow-hidden">
                   <span className="px-3 py-2 bg-blue-100 text-blue-800 text-sm">+351</span>
                   <input
@@ -1340,11 +1346,11 @@ const CheckoutFlow = ({
             )}
             
             {paymentMethod === 'dinheiro' && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <label className="block text-gray-700 mb-2 font-medium text-sm sm:text-base">{t(language, 'changeFor')}</label>
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 sm:p-4">
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-sm sm:text-base">{t(language, 'changeFor')}</label>
                 <div className="flex items-center border border-green-300 bg-white rounded-lg overflow-hidden">
                   <span className="px-3 py-2 bg-green-100 text-green-800">
-                    <CurrencyEur size={18} />
+                    <CurrencyEur size={16} />
                   </span>
                   <input
                     type="number"
@@ -1361,8 +1367,8 @@ const CheckoutFlow = ({
               </div>
             )}
 
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-              <h3 className="font-bold text-gray-800 mb-3 text-sm sm:text-base">{t(language, 'orderSummary')}</h3>
+            <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-200">
+              <h3 className="font-bold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">{t(language, 'orderSummary')}</h3>
               
               <div className="space-y-2">
                 <div className="flex justify-between">
@@ -1405,9 +1411,9 @@ const CheckoutFlow = ({
                 </span>
               </div>
               
-              <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200 flex items-center">
-                <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
-                  <FaMotorcycle className="text-[#016730]" size={16} />
+              <div className="mt-3 sm:mt-4 bg-white p-3 rounded-lg border border-gray-200 flex items-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-50 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+                  <FaMotorcycle className="text-[#016730]" size={14} />
                 </div>
                 <div>
                   <p className="font-medium text-gray-800 text-sm sm:text-base">{t(language, deliveryOption === 'retirada' ? 'pickup' : 'delivery')}</p>
@@ -1420,32 +1426,32 @@ const CheckoutFlow = ({
               </div>
 
               {includeNif && nifNumber && (
-                <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200">
+                <div className="mt-3 sm:mt-4 bg-white p-3 rounded-lg border border-gray-200">
                   <p className="font-medium text-gray-800 text-sm sm:text-base">NIF na fatura</p>
                   <p className="text-xs sm:text-sm text-gray-500">{nifNumber}</p>
                 </div>
               )}
             </div>
             
-            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200">
               <button
                 onClick={() => setStep(2)}
-                className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium flex-1 sm:flex-none text-sm sm:text-base"
+                className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium flex-1 sm:flex-none text-sm sm:text-base"
               >
                 {t(language, 'back')}
               </button>
               <button
                 onClick={finalizarPedido}
                 disabled={!canCheckout || isSubmitting}
-                className={`w-full py-3 rounded-lg text-white font-bold ${
+                className={`w-full py-2 sm:py-3 rounded-lg text-white font-bold ${
                   (canCheckout && !isSubmitting)
                     ? 'bg-gradient-to-r from-[#016730] to-blue-600 hover:from-[#02803c] hover:to-blue-700'
                     : 'bg-gray-400 cursor-not-allowed'
-                } transition-colors flex items-center justify-center`}
+                } transition-colors flex items-center justify-center text-sm sm:text-base`}
               >
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -1453,7 +1459,7 @@ const CheckoutFlow = ({
                   </>
                 ) : (
                   <>
-                    <FaCheckCircle className="mr-2" />
+                    <FaCheckCircle className="mr-1 sm:mr-2" size={14} />
                     {t(language, 'confirmOrder')}
                   </>
                 )}
@@ -1468,17 +1474,21 @@ const CheckoutFlow = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-800">
+        <div className="p-4 sm:p-6">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800">
               {step === 1 ? t(language, 'yourCart') : 
                step === 2 ? t(language, 'deliveryInfo') : 
                step === 3 ? t(language, 'paymentMethod') : t(language, 'orderConfirmed')}
             </h3>
-            <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
-              <X size={20} />
+            <button 
+              onClick={onClose} 
+              className="p-1 sm:p-2 rounded-full hover:bg-gray-100"
+              aria-label="Fechar"
+            >
+              <X size={18} />
             </button>
           </div>
           
@@ -1491,7 +1501,6 @@ const CheckoutFlow = ({
 
 const InterfaceClienteInner = () => {
   const [activeCategory, setActiveCategory] = useState('todos');
-  const [cart, setCart] = useState([]);
   const [showCheckout, setShowCheckout] = useState(false);
   const [deliveryOption, setDeliveryOption] = useState('retirada');
   const [loading, setLoading] = useState(true);
@@ -1501,7 +1510,9 @@ const InterfaceClienteInner = () => {
     telefone: '',
     endereco: '',
     localidade: '',
-    observacoes: ''
+    codigoPostal: '',
+    nif: '',
+    observacoes: '',
   });
   const [paymentMethod, setPaymentMethod] = useState('mbway');
   const [trocoPara, setTrocoPara] = useState('');
@@ -1546,12 +1557,29 @@ const InterfaceClienteInner = () => {
     { id: 'vinhos', name: t(language, 'vinhos'), icon: <FaWineGlassAlt />, color: 'bg-rose-500' },
   ];
 
-  const toggleSection = (sectionId) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionId]: !prev[sectionId]
-    }));
-  };
+  // Persistir carrinho no localStorage
+  const [cart, setCart] = useState(() => {
+    const savedCart = typeof window !== 'undefined' ? localStorage.getItem('pizzaNostraCart') : null;
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('pizzaNostraCart', JSON.stringify(cart));
+    } catch (error) {
+      console.error("Erro ao salvar carrinho:", error);
+    }
+  }, [cart]);
+
+  // Notificação de item adicionado (3 segundos)
+  useEffect(() => {
+    if (showAddedNotification) {
+      const timer = setTimeout(() => {
+        setShowAddedNotification(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showAddedNotification]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -1589,16 +1617,16 @@ const InterfaceClienteInner = () => {
 
   useEffect(() => {
     const basicCheck = customerInfo.nome && 
-                      customerInfo.telefone && 
-                      customerInfo.telefone.length === 9;
+                     customerInfo.telefone?.length === 9;
+    
     const deliveryCheck = deliveryOption === 'entrega' 
       ? customerInfo.endereco && 
         customerInfo.localidade && 
-        codigoPostal.length === 7 // Código postal português tem 7 dígitos
+        customerInfo.codigoPostal
       : true;
     
     setCanCheckout(basicCheck && deliveryCheck && cart.length > 0);
-  }, [customerInfo, deliveryOption, cart, codigoPostal]);
+  }, [customerInfo, deliveryOption, cart]);
 
   const addToCart = (product, selection) => {
     const { size, border, quantity, extras } = selection;
@@ -1696,22 +1724,14 @@ const InterfaceClienteInner = () => {
         throw new Error(t(language, 'emptyCart'));
       }
 
-      // 2. CÁLCULO DOS SELOS USADOS (CORREÇÃO DEFINITIVA)
+      // 2. CÁLCULO DOS SELOS USADOS
       const selosUsados = cart.reduce((total, item) => {
         if (!itemsWithStamps[item.id]) return total;
         
-        // Pizza individual = 10 selos
         if (item.selectedSize === 'individual') return total + (10 * item.quantity);
-        
-        // Pizza média = 11 selos
         if (item.selectedSize === 'media') return total + (11 * item.quantity);
-        
-        // Pizza família = 12 selos
         if (item.selectedSize === 'familia') return total + (12 * item.quantity);
-        
-        // Entradas = 5 selos
         if (item.category === 'entradas') return total + (5 * item.quantity);
-        
         return total;
       }, 0);
 
@@ -1730,7 +1750,7 @@ const InterfaceClienteInner = () => {
       // 5. SELOS GANHOS (1 SELO A CADA 15€ GASTOS)
       const selosGanhos = user ? Math.floor(totalPago / 15) : 0;
 
-      // 6. ATUALIZAÇÃO DOS SELOS NO FIREBASE (OPERAÇÃO ATÔMICA)
+      // 6. ATUALIZAÇÃO DOS SELOS NO FIREBASE
       if (user?.uid) {
         const userRef = doc(db, 'users', user.uid);
         await updateDoc(userRef, {
@@ -1748,17 +1768,17 @@ const InterfaceClienteInner = () => {
         cliente: {
           nome: customerInfo.nome,
           telefone: customerInfo.telefone,
-          userId: user?.uid || null,
           endereco: customerInfo.endereco || null,
           localidade: customerInfo.localidade || null,
-          codigoPostal: codigoPostal ? `${codigoPostal.substring(0, 4)}-${codigoPostal.substring(4)}` : null, // Formato PT
-          nif: includeNif ? nifNumber : null
+          codigoPostal: customerInfo.codigoPostal || null,
+          nif: customerInfo.nif || null,
+          userId: user?.uid || null,
         },
 
         // DETALHES DO PEDIDO
         tipoEntrega: deliveryOption,
         enderecoCompleto: deliveryOption === 'entrega' 
-          ? `${customerInfo.endereco}, ${customerInfo.localidade}`
+          ? `${customerInfo.endereco}, ${customerInfo.localidade}, ${customerInfo.codigoPostal}`
           : null,
         zonaEntrega: deliveryOption === 'entrega' ? selectedZone : null,
 
@@ -1808,7 +1828,7 @@ const InterfaceClienteInner = () => {
         ...(paymentMethod === 'mbway' && { mbwayNumber }),
         observacoes: customerInfo.observacoes || null
       };
-
+      
       // 8. SALVAR PEDIDO NO FIRESTORE
       await addDoc(collection(db, 'pedidos'), pedidoData);
 
@@ -1822,7 +1842,7 @@ const InterfaceClienteInner = () => {
       if (user) {
         setSelosDisponiveis(prev => prev + selosGanhos - selosUsados);
       }
-
+      localStorage.removeItem('pizzaNostraCart');
     } catch (error) {
       console.error("Erro ao finalizar pedido:", error);
       toast.error(`${t(language, 'orderError')}: ${error.message}`);
@@ -1834,11 +1854,11 @@ const InterfaceClienteInner = () => {
   const renderProducts = () => {
     if (activeCategory === 'todos') {
       return (
-        <div className="space-y-12">
+        <div className="space-y-8 sm:space-y-12">
           {categories.filter(c => c.id !== 'todos').map(category => (
             <div key={category.id}>
               <CategoryHeader category={category} language={language} />
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <ExpandableCategorySection
                   title={typeof category.name === 'object' ? category.name[language] : category.name}
                   products={menuData[category.id] || []}
@@ -1855,7 +1875,7 @@ const InterfaceClienteInner = () => {
     return (
       <div>
         <CategoryHeader category={categories.find(c => c.id === activeCategory)} language={language} />
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <ExpandableCategorySection
             title={typeof categories.find(c => c.id === activeCategory).name === 'object' 
               ? categories.find(c => c.id === activeCategory).name[language] 
@@ -1888,10 +1908,10 @@ const InterfaceClienteInner = () => {
         )}
       </AnimatePresence>
 
-      <header className="bg-white shadow-sm sticky top-0 z-50 px-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center py-3 sm:py-4">
-          <div className="flex items-center space-x-3">
-            <div className="h-12 w-12 rounded-full border-4 border-black overflow-hidden">
+      <header className="bg-white shadow-sm sticky top-0 z-50 px-2 sm:px-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center py-2 sm:py-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 sm:border-4 border-black overflow-hidden">
               <img 
                 src={logo} 
                 alt="Pizza Nostra" 
@@ -1900,28 +1920,28 @@ const InterfaceClienteInner = () => {
               />
             </div>       
             <h1 
-              className="text-xl sm:text-2xl font-bold text-black tracking-tight italic"
+              className="text-lg sm:text-xl md:text-2xl font-bold text-black tracking-tight italic"
               style={{ fontFamily: "'Times New Roman', Times, serif" }}
             >
               <span>Pizza</span>
-              <span className="ml-2 sm:ml-3">Nostra</span>
+              <span className="ml-1 sm:ml-2 md:ml-3">Nostra</span>
             </h1>
           </div>
 
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
             <LanguageSelector />
             
             {user ? (
               <button 
                 onClick={() => navigate('/fidelidade')}
-                className="relative flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors"
+                className="relative flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-2 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors"
               >
                 <FaUser className="text-gray-600 text-sm sm:text-base" />
               </button>
             ) : (
               <button
                 onClick={() => navigate('/fidelidade')}
-                className="flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
               >
                 <FaUser className="text-gray-600 text-sm sm:text-base" />
               </button>
@@ -1930,6 +1950,7 @@ const InterfaceClienteInner = () => {
             <button 
               onClick={() => setShowCheckout(true)}
               className="relative p-1 sm:p-2 rounded-xl hover:bg-gray-50 transition-colors"
+              aria-label="Carrinho"
             >
               <div className="relative">
                 <FaShoppingCart className="text-gray-700 text-sm sm:text-base" />
@@ -1939,15 +1960,14 @@ const InterfaceClienteInner = () => {
                   </span>
                 )}
               </div>
-              <span className="sr-only">Carrinho</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6 sm:py-8">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 md:py-8">
         <div 
-          className="relative rounded-2xl p-6 sm:p-8 md:p-12 mb-8 sm:mb-12 text-white overflow-hidden shadow-2xl"
+          className="relative rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 lg:p-12 mb-6 sm:mb-8 md:mb-12 text-white overflow-hidden shadow-xl sm:shadow-2xl"
           ref={ref}
         >
           <img 
@@ -1958,33 +1978,33 @@ const InterfaceClienteInner = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30"></div>
           <div className="relative z-10 max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 leading-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 leading-tight">
               {t(language, 'title')}
             </h1>
             
-            <p className="text-sm sm:text-base lg:text-xl opacity-90 mb-6 sm:mb-8 max-w-lg">
+            <p className="text-xs sm:text-sm md:text-base lg:text-lg opacity-90 mb-4 sm:mb-6 md:mb-8 max-w-lg">
               A autêntica pizza italiana... com um abraço caloroso do Brasil!
             </p>
           </div>
           
-          <div className="absolute right-4 sm:right-8 bottom-4 sm:bottom-8 opacity-20 md:opacity-100">
-            <Pizza size={120} weight="fill" className="text-white" />
+          <div className="absolute right-2 sm:right-4 md:right-8 bottom-2 sm:bottom-4 md:bottom-8 opacity-20 md:opacity-100">
+            <Pizza size={80} weight="fill" className="text-white" />
           </div>
         </div>
 
-        <div className="mb-8 sm:mb-12">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">
+        <div className="mb-6 sm:mb-8 md:mb-12">
+          <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 mb-3 sm:mb-4 md:mb-6">
             {t(language, 'ourMenu')} 
           </h2>
           
-          <div className="flex overflow-x-auto pb-4 sm:pb-6 gap-2 sm:gap-3 scrollbar-hide px-1 -mx-1">
+          <div className="flex overflow-x-auto pb-2 sm:pb-4 gap-1 sm:gap-2 md:gap-3 scrollbar-hide px-1 -mx-1">
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
-                className={`flex items-center px-4 py-3 rounded-xl whitespace-nowrap transition-all text-sm sm:text-base bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md`}
+                className={`flex items-center px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl whitespace-nowrap transition-all text-xs sm:text-sm md:text-base bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md`}
               >
-                <span className="mr-2">{category.icon}</span>
+                <span className="mr-1 sm:mr-2">{category.icon}</span>
                 <span className="font-medium">{category.name}</span>
               </button>
             ))}
@@ -2035,6 +2055,7 @@ const InterfaceClienteInner = () => {
               telefone: '',
               endereco: '',
               localidade: '',
+              codigoPostal: '',
               observacoes: ''
             });
             setCodigoPostal('');

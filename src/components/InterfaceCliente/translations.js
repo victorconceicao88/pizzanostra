@@ -78,6 +78,7 @@ export const translations = {
     deliveryZones: "Ver zonas de entrega",
     notes: "Observações",
     notesPlaceholder: "Alguma instrução especial para a entrega?",
+
     
     // Payment methods
     mbway: "MB Way",
@@ -89,6 +90,7 @@ export const translations = {
     mbwayNumber: "Número de Telemóvel MB Way *",
     changeFor: "Precisa de troco para quanto? *",
     changeExample: "Ex: 20.00",
+    size:"Tamanho",
     
     // Order summary
     orderSummary: "Resumo do Pedido",
@@ -112,7 +114,8 @@ export const translations = {
     border: 'Borda',
     StuffedCrust: 'Selecione a Borda',
     margheritaDesc: "Molho de tomate, mussarela, manjericão fresco",
-    pepperoniDesc: "Molho de tomate, mussarela e pepperoni"
+    pepperoniDesc: "Molho de tomate, mussarela e pepperoni",
+    onlyChargeDelivery:"Só pagas a entrega.",
   },
   
   en: {
@@ -126,6 +129,9 @@ export const translations = {
     subtitle: "Made with ingredients imported from Italy and traditional wood-fired oven. We deliver throughout the region!",
     viewCart: "View Cart",
     fullMenu: "Full Menu",
+    useStampsForItem:"Redeem stamps for item",
+    stampsEarned:"You're collecting stamps.",
+    orderSentSuccess:"Thanks! We’ve received your order and we’re getting it ready",
     
     // Categories
     entradas: "Starters",

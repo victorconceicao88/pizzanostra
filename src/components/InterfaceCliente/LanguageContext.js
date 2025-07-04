@@ -121,6 +121,7 @@ export const LanguageProvider = ({ children }) => {
         Size : "Escolher Tamanho",
         openingHours: "Horario de Funcionamento",
         quantity: "Quantidade",
+        guestStampNotice :"Apenas clientes com sessão iniciada acumulam carimbos. Inicia sessão para não ficares de fora !",
 
         
         // Categorias do menu
@@ -165,10 +166,14 @@ export const LanguageProvider = ({ children }) => {
         loginError: 'Erro ao fazer login',
         logoutSuccess: 'Logout realizado com sucesso',
         logoutError: 'Erro ao fazer logout',
-        errorLoadingData: 'Erro ao carregar dados'
+        errorLoadingData: 'Erro ao carregar dados',
+    
       },
       en: {
         // Header and general info
+      
+        useStampsForItem:"Redeem stamps for item",
+        guestStampNotice: "Only logged-in customers collect stamps. Sign in so you don’t miss out!",
         restaurantName: 'Italian Pizzeria',
         since: 'Since 1995',
         title: 'Authentic Italian Pizza',

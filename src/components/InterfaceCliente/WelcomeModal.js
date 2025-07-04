@@ -1,146 +1,119 @@
-import React from 'react';
-import { X, Crown, Gift, Bread, Pizza } from 'phosphor-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { X, Storefront, Pizza, Bicycle, Gift } from 'phosphor-react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import Lottie from 'lottie-react';
-import pizzaAnimation from './pizza-animation.json'; // Certifique-se de ter este arquivo
 
-const ElitePizzaModal = ({ onClose }) => {
+const PremiumLoyaltyModal = ({ onClose }) => {
   const navigate = useNavigate();
-  
-  const handleAction = () => {
+  const [activeTab, setActiveTab] = useState('options');
+
+  const handleJoin = () => {
     onClose();
     navigate('/fidelidade');
   };
 
-  // Bordas da bandeira italiana (verde, branco, vermelho)
-  const ItalianFlagBorder = () => (
-    <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
-      <div className="absolute top-0 left-0 h-full w-2 bg-[#009246]"></div> {/* Verde */}
-      <div className="absolute top-0 left-2 h-full w-2 bg-white"></div>       {/* Branco */}
-      <div className="absolute top-0 left-4 h-full w-2 bg-[#CE2B37]"></div>   {/* Vermelho */}
-    </div>
-  );
+  const consumptionOptions = [
+    {
+      id: 1,
+      title: "Comer no Restaurante",
+      description: "Sente o ambiente italiano autêntico",
+      icon: <Storefront size={36} className="text-amber-500" />,
+      color: "bg-amber-50"
+    },
+    {
+      id: 2,
+      title: "Take Away",
+      description: "Leva contigo o sabor da casa",
+      icon: <Pizza size={36} className="text-red-500" />,
+      color: "bg-red-50"
+    },
+    {
+      id: 3,
+      title: "Em Tua Casa",
+      description: "Entrega rápida e quentinha",
+      icon: <Bicycle size={36} className="text-green-500" />,
+      color: "bg-green-50"
+    }
+  ];
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm">
-      <motion.div 
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-md">
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="relative bg-white rounded-xl w-full max-w-md overflow-hidden shadow-2xl"
+        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+        className="relative w-full max-w-xl bg-white rounded-3xl overflow-hidden shadow-2xl"
       >
-        {/* Borda da bandeira italiana */}
-        <ItalianFlagBorder />
-        
-        {/* Close button premium */}
-        <button
+        {/* Botão Fechar */}
+        <motion.button
+          whileHover={{ rotate: 90 }}
           onClick={onClose}
-          className="absolute top-5 right-5 p-1.5 rounded-full bg-white/90 hover:bg-gray-100 transition-colors z-10 text-gray-500 shadow-sm border border-gray-200"
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-200"
           aria-label="Fechar modal"
         >
-          <X size={18} weight="bold" />
-        </button>
-        
-        <div className="p-8 pt-12">
-          {/* Pizza Animation Container */}
-          <div className="flex justify-center mb-2">
-            <div className="w-40 h-40 relative">
-              <Lottie 
-                animationData={pizzaAnimation} 
-                loop={true}
-                style={{ width: '100%', height: '100%' }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-amber-400/20 blur-md"></div>
-              </div>
-            </div>
+          <X size={18} weight="bold" className="text-gray-600" />
+        </motion.button>
+
+        {/* Cabeçalho */}
+        <div className="pt-10 pb-6 px-6 sm:px-8 text-center">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
+            Como Queres a Tua Pizza?
+          </h1>
+          <p className="text-sm text-gray-600 max-w-md mx-auto">
+            Escolhe como queres saborear a tua pizza favorita. Cada opção acumula pontos no nosso programa de fidelidade!
+          </p>
+        </div>
+
+        {/* Opções */}
+        <div className="px-6 sm:px-8 pb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            {consumptionOptions.map((option) => (
+              <motion.div
+                key={option.id}
+                whileHover={{ y: -2, scale: 1.02 }}
+                className={`p-4 ${option.color} rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer`}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-3">{option.icon}</div>
+                  <h3 className="text-base font-semibold text-gray-800 mb-1">{option.title}</h3>
+                  <p className="text-xs text-gray-500">{option.description}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
 
-          {/* Logo com sombra sutil */}
-          <h1 
-            className="text-3xl font-bold text-center text-gray-900 tracking-tight italic mb-6 drop-shadow-sm"
-            style={{ 
-              fontFamily: "'Times New Roman', Times, serif",
-              textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
-            }}
-          >
-            Pizza Nostra
-          </h1>
-          
-          {/* Program Benefits - Cards modernos */}
-          <div className="space-y-3 mb-8">
-            <motion.div 
-              whileHover={{ scale: 1.02 }}
-              className="flex items-start bg-gradient-to-r from-gray-50 to-white rounded-lg p-3 border border-gray-100 shadow-sm"
-            >
-              <div className="bg-[#016730]/10 p-2 rounded-lg mr-3 flex-shrink-0 shadow-inner">
-                <div className="w-6 h-6 bg-[#016730] rounded-full flex items-center justify-center text-white text-xs font-bold">
-                  1
-                </div>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-800">1 selo a cada €15 gastos</h3>
-                <p className="text-xs text-gray-500 mt-1">Acumule e desfrute</p>
-              </div>
-            </motion.div>
-            
-            <motion.div 
-              whileHover={{ scale: 1.02 }}
-              className="flex items-start bg-gradient-to-r from-gray-50 to-white rounded-lg p-3 border border-gray-100 shadow-sm"
-            >
-              <div className="bg-amber-100 p-2 rounded-lg mr-3 flex-shrink-0 shadow-inner">
-                <Crown size={20} weight="fill" className="text-amber-600" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-800">10 selos = Pizza Grátis</h3>
-                <p className="text-xs text-gray-500 mt-1">Sabor tradicional ou premium</p>
-              </div>
-            </motion.div>
-            
-            <motion.div 
-              whileHover={{ scale: 1.02 }}
-              className="flex items-start bg-gradient-to-r from-gray-50 to-white rounded-lg p-3 border border-gray-100 shadow-sm"
-            >
-              <div className="bg-green-100 p-2 rounded-lg mr-3 flex-shrink-0 shadow-inner">
-                <Pizza size={20} weight="fill" className="text-green-600" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-800">5 selos = Pão de Alho</h3>
-                <p className="text-xs text-gray-500 mt-1">Recheado com queijo especial</p>
-              </div>
-            </motion.div>
-          </div>
-          
-          {/* CTA Button Premium */}
+          {/* Botões de Ação */}
           <div className="space-y-3">
             <motion.button
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleAction}
-              className="w-full py-3.5 bg-gradient-to-r from-[#016730] to-gray-900 rounded-lg text-white font-medium hover:from-[#02803c] hover:to-gray-800 transition-all flex items-center justify-center shadow-lg relative overflow-hidden"
+              onClick={handleJoin}
+              className="w-full py-3 bg-white border-[3px] border-[#02803c] rounded-xl text-black font-bold flex items-center justify-center shadow-md hover:shadow-lg transition-all"
             >
-              <span className="relative z-10 flex items-center">
-                <span className="group-hover:translate-x-1 transition-transform">
-                  Entrar no Programa
-                </span>
-                <Gift size={18} weight="fill" className="ml-2 opacity-90" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#016730]/80 to-gray-900/80 opacity-0 hover:opacity-100 transition-opacity"></div>
+              <Gift size={20} weight="fill" className="mr-2 text-[#02803c]" />
+              Entrar no Programa
             </motion.button>
-            
-            <button
+
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onClose}
-              className="w-full text-center text-xs text-gray-400 hover:text-gray-600 transition-colors underline underline-offset-2 font-medium"
+              className="w-full py-3 bg-white border-[3px] border-[#02803c] rounded-xl text-black font-bold hover:bg-gray-50 transition-all"
             >
               Continuar sem cadastro
-            </button>
+            </motion.button>
           </div>
+
+          <p className="text-xs text-center text-gray-400 mt-5">
+            Ao entrar, você concorda com nossos{' '}
+            <a href="/termos" className="text-red-600 hover:underline">Termos</a> e{' '}
+            <a href="/politica" className="text-red-600 hover:underline">Política</a>
+          </p>
         </div>
       </motion.div>
     </div>
   );
 };
 
-export default ElitePizzaModal;
+export default PremiumLoyaltyModal;

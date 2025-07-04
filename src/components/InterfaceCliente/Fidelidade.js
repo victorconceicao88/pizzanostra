@@ -6,7 +6,9 @@ import { auth, db } from '../../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useLanguage } from './LanguageContext';
 import Lottie from 'lottie-react';
+import { FaRegCircleCheck,FaCrown  } from 'react-icons/fa6';
 import loyaltyProgramAnimation from './loyaltyProgramAnimation';
+import logo from './logo.jpg';
 import { 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -43,11 +45,16 @@ import {
   FaUserPlus,
   FaPizzaSlice,
   FaGift,
-  FaRegStar
+  FaRegStar,
+  FaMedal,
+  FaClock,
+  FaBolt,
+  FaGem,
+  FaStamp
 } from 'react-icons/fa';
-import { GiPizzaCutter, GiFullPizza,GiShoppingCart,GiBigDiamondRing,GiGarlic , GiPizzaSlice, GiHalfPizza,GiPizza } from 'react-icons/gi';
+import { IoRestaurantSharp } from 'react-icons/io5';
+import { GiPizzaCutter, GiFullPizza,GiShoppingCart,GiBigDiamondRing,GiGarlic , GiPizzaSlice, GiHalfPizza,GiPizza,GiOlive} from 'react-icons/gi';
 import { MdLocalPizza } from "react-icons/md"; // ícone moderno
-
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -230,30 +237,30 @@ const Fidelidade = () => {
     }
   };
 
-  const Stamp = ({ active, index }) => {
-    return (
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ 
-          scale: active ? 1 : 0.9,
-          opacity: active ? 1 : 0.7
-        }}
-        transition={{ 
-          duration: 0.3, 
-          delay: index * 0.05,
-          type: "spring",
-          stiffness: 500
-        }}
-        className="relative"
-      >
-        <div className={`w-8 h-8 rounded-full border-2 ${active ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-100'} flex items-center justify-center`}>
-          <FaStar 
-            className={`text-lg ${active ? 'text-green-500' : 'text-gray-400'}`} 
-          />
-        </div>
-      </motion.div>
-    );
-  };
+const Stamp = ({ active, index }) => {
+  return (
+    <motion.div
+      initial={{ scale: 0 }}
+      animate={{ 
+        scale: active ? 1 : 0.9,
+        opacity: active ? 1 : 0.7
+      }}
+      transition={{ 
+        duration: 0.3, 
+        delay: index * 0.05,
+        type: "spring",
+        stiffness: 500
+      }}
+      className="relative"
+    >
+      <div className={`w-8 h-8 rounded-full border-2 ${active ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'} flex items-center justify-center`}>
+        <FaStar 
+          className={`text-lg ${active ? 'text-green-500' : 'text-red-500'}`} 
+        />
+      </div>
+    </motion.div>
+  );
+};
 
 const LoyaltyCard = ({ stamps, user }) => {
   const totalStamps = 12;
@@ -878,118 +885,114 @@ const LoyaltyCard = ({ stamps, user }) => {
 
   <main className="max-w-7xl mx-auto px-4 py-8">
 {!user ? (
-  <div className="min-h-[70vh] flex items-center justify-center px-4 bg-white">
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-2xl border border-black rounded-lg p-8" // Adicionada borda preta fina e padding
+  <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ 
+        duration: 0.6,
+        ease: "easeOut"
+      }}
+      className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
     >
-      <div className="text-center">
-        {/* Animação Lottie para programa de fidelidade */}
-        <motion.div
-          initial={{ scale: 0.8, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          transition={{ type: "spring", damping: 10, stiffness: 100 }}
-          className="mb-10 flex justify-center"
-        >
-          <div className="relative w-64 h-64">
-            <Lottie 
-              animationData={loyaltyProgramAnimation}
-              loop={true}
-              autoplay={true}
-              className="absolute inset-0"
-            />
-            <div className="absolute -inset-4 bg-[#009344]/10 rounded-full blur-lg"></div>
-          </div>
-        </motion.div>
+      {/* Container de conteúdo */}
+      <div className="p-8 sm:p-10">
+        {/* Logo Premium */}
+        <div className="flex flex-col items-center mb-12">
+         <motion.div className="flex flex-col items-center mb-12">
+  <div className="w-24 h-24 rounded-[1.75rem] border-[3px] border-black relative overflow-hidden">
+    <img 
+      src={logo} 
+      alt="Logo do Restaurante"
+      className="absolute inset-0 w-full h-full object-cover"
+      style={{ borderRadius: 'calc(1.75rem - 3px)' }} // Subtrai a espessura da borda
+    />
+  </div>
 
-        {/* Título totalmente preto */}
-        <motion.h2
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-          className="text-4xl md:text-5xl font-bold mb-6 italic text-black"
-          style={{ 
-            fontFamily: "'Times New Roman', Times, serif",
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)'
-          }}
-        >
-          Programa de Fidelidade Pizza Nostra
-        </motion.h2>
+  <motion.h1 
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.3, ease: "easeOut" }}
+    className="text-4xl font-bold text-gray-900 font-serif tracking-tight mt-6"
+  >
+    PIZZA NOSTRA
+  </motion.h1>
 
-        {/* Subtítulo */}
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto"
-        >
-          Acumule selos em cada compra e desfrute de benefícios especiais como pizzas grátis e descontos exclusivos
-        </motion.p>
+  <motion.p
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 0.75 }}
+    transition={{ delay: 0.45, ease: "easeOut" }}
+    className="text-xs text-gray-500 mt-2 tracking-[0.2em] uppercase font-medium"
+  >
+    Desde 1996
+  </motion.p>
+</motion.div>
 
-        {/* Botões */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="flex flex-col sm:flex-row justify-center gap-4 md:gap-6"
-        >
+        </div>
+
+        {/* Botões de Ação */}
+        <div className="space-y-5">
           <motion.button
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ 
+              y: -2, 
+              boxShadow: "0 10px 25px -5px rgba(0, 147, 68, 0.25)",
+            }}
+            whileTap={{ 
+              scale: 0.985,
+              boxShadow: "0 5px 15px -5px rgba(0, 147, 68, 0.2)"
+            }}
             onClick={() => {
               setShowLoginForm(true);
               setAuthView('login');
             }}
-            className="px-8 py-4 bg-gradient-to-br from-[#009344] to-[#007a38] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-3 min-w-[200px]"
-            style={{ fontFamily: "'Times New Roman', Times, serif" }}
+            className="w-full py-4 px-6 bg-gradient-to-br from-[#009344] to-[#006b32] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-3 border-2 border-black/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#009344]/50"
           >
-            <FaSignInAlt className="text-xl" />
-            <span className="text-lg">Entrar na Conta</span>
+            <FaSignInAlt className="text-xl flex-shrink-0" />
+            <span className="tracking-wide text-lg">ACESSAR CONTA</span>
           </motion.button>
 
+          <div className="relative flex items-center justify-center my-7">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative bg-white px-4 text-sm text-gray-400 rounded-full border border-gray-200 font-medium tracking-wider">
+              OU
+            </div>
+          </div>
+
           <motion.button
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ 
+              y: -2,
+              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.08)",
+            }}
+            whileTap={{ 
+              scale: 0.985,
+              boxShadow: "0 5px 15px -5px rgba(0, 0, 0, 0.05)"
+            }}
             onClick={() => {
               setShowLoginForm(true);
               setAuthView('register');
             }}
-            className="px-8 py-4 bg-gradient-to-br from-black to-gray-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-3 min-w-[200px]"
-            style={{ fontFamily: "'Times New Roman', Times, serif" }}
+            className="w-full py-4 px-6 bg-white text-gray-900 font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-3 border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300/50"
           >
-            <FaUserPlus className="text-xl" />
-            <span className="text-lg">Criar Conta</span>
+            <FaUserPlus className="text-xl flex-shrink-0" />
+            <span className="tracking-wide text-lg">CRIAR CONTA</span>
           </motion.button>
-        </motion.div>
+        </div>
 
-        {/* Benefícios com ícones coloridos */}
+        {/* Rodapé Premium */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="mt-16 grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto"
+          transition={{ 
+            delay: 0.7,
+            ease: "easeOut"
+          }}
+          className="mt-14 text-center border-t border-gray-100 pt-6"
         >
-          {[
-            { icon: <FaPizzaSlice className="text-red-500 text-2xl" />, text: "Pizzas Grátis" },
-            { icon: <FaCoins className="text-amber-500 text-2xl" />, text: "Descontos Exclusivos" },
-            { icon: <FaStar className="text-yellow-400 text-2xl" />, text: "Benefícios VIP" }
-          ].map((item, index) => (
-            <motion.div
-              key={index}
-              whileHover={{ y: -5 }}
-              className="bg-white p-4 rounded-xl shadow-md border border-gray-200 flex flex-col items-center"
-            >
-              <div className="mb-2">{item.icon}</div>
-              <span 
-                className="font-medium text-black"
-                style={{ fontFamily: "'Times New Roman', Times, serif" }}
-              >
-                {item.text}
-              </span>
-            </motion.div>
-          ))}
+          <p className="text-xs text-gray-400 tracking-wider font-medium">
+            © {new Date().getFullYear()} PIZZA NOSTRA GROUP. ALL RIGHTS RESERVED.
+          </p>
         </motion.div>
       </div>
     </motion.div>

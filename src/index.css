@@ -353,6 +353,3 @@ code {
   to { transform: rotate(360deg); }
 }
 
-.animate-\[spin_15s_linear_infinite\] {
-  animation: spin 15s linear infinite;
-}
