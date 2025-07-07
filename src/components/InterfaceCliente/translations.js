@@ -116,6 +116,9 @@ export const translations = {
     margheritaDesc: "Molho de tomate, mussarela, manjericão fresco",
     pepperoniDesc: "Molho de tomate, mussarela e pepperoni",
     onlyChargeDelivery:"Só pagas a entrega.",
+    registerToEarn:"Cadastre-se para ganhar",
+    registerToEarnDescription:"Cadastre-se gratuitamente e comece a ganhar recompensas." ,
+    registerNow:"Cadastre-se agora",
   },
   
   en: {
@@ -175,8 +178,13 @@ export const translations = {
     pickupAddress: "Pizza Street, 123 - Portimão",
     delivery: "Home Delivery",
     deliveryArea: "We deliver in your area",
+    paidWithStamps : "Paid with Stamps",
+
     
     // Form fields
+    registerToEarn:"Sign up to earn",
+    registerToEarnDescription:"Sign up for free and start earning rewards." ,
+    registerNow:"Sign up now",
     fullName: "Full Name *",
     phone: "Phone *",
     address: "Full Address *",

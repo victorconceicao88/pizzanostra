@@ -8,6 +8,7 @@ import { useLanguage } from './LanguageContext';
 import Lottie from 'lottie-react';
 import { FaRegCircleCheck,FaCrown  } from 'react-icons/fa6';
 import loyaltyProgramAnimation from './loyaltyProgramAnimation';
+import pisaprojeto4 from '../../assets/pisaprojeto4.jpg';
 import logo from './logo.jpg';
 import { 
   signInWithEmailAndPassword,
@@ -251,11 +252,17 @@ const Stamp = ({ active, index }) => {
         type: "spring",
         stiffness: 500
       }}
-      className="relative"
+      className="relative z-20"
     >
-      <div className={`w-8 h-8 rounded-full border-2 ${active ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'} flex items-center justify-center`}>
+      <div 
+        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shadow-md`}
+        style={{
+          backgroundColor: active ? '#009344' : '#cf2734',
+          borderColor: active ? '#009344' : '#cf2734'
+        }}
+      >
         <FaStar 
-          className={`text-lg ${active ? 'text-green-500' : 'text-red-500'}`} 
+          className="text-lg text-white" 
         />
       </div>
     </motion.div>
@@ -264,7 +271,6 @@ const Stamp = ({ active, index }) => {
 
 const LoyaltyCard = ({ stamps, user }) => {
   const totalStamps = 12;
-  const progress = ((Number(stamps) || 0) / totalStamps) * 100;
   
   return (
     <motion.div
@@ -279,65 +285,59 @@ const LoyaltyCard = ({ stamps, user }) => {
                border: '4px solid black',
                borderRadius: '12px'
              }}>
-          {/* Torre de Pisa como marca d'água */}
-          <div className="absolute right-4 top-4 opacity-10">
+          
+          {/* Torre de Pisa no canto direito - Versão corrigida */}
+     
+          <div className="absolute right-0 top-0 h-full w-1/2 overflow-hidden opacity-20">
             <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/6/66/The_Leaning_Tower_of_Pisa_SB.jpeg" 
+              src={pisaprojeto4} 
               alt="Torre de Pisa" 
-              className="w-24 h-24 object-cover rounded-full"
+              className="h-full w-full object-cover"
             />
           </div>
           
-          {/* Cabeçalho do cartão */}
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <div className="flex items-center">
-                <span className="font-bold text-xl">Pizza Nostra</span>
+          {/* Conteúdo do cartão */}
+          <div className="relative z-10 h-full flex flex-col">
+            {/* Cabeçalho */}
+            <div className="flex justify-between items-start mb-2">
+              <div className="w-full">
+                <h2 className="font-bold text-xl">Pizza Nostra</h2>
+               <div className="w-[calc(100%+2rem)]  h-px bg-black my-1"></div>
+                <p className="text-xs text-gray-500">Programa de Fidelidade</p>
+              </div>        
+              <div className="flex flex-col items-end">
+                <div className="text-sm font-medium">
+                  <span className="text-green-600 font-bold">{Number(stamps) || 0}</span>
+                  <span className="text-gray-500">/</span>
+                  <span className="text-gray-600">{totalStamps}</span>
+                </div>
               </div>
-              <div className="w-full h-px bg-black my-2"></div>
-              <p className="text-xs text-gray-500 mt-1">
-                Programa de Fidelidade
-              </p>
             </div>
-            
-            <div className="flex flex-col items-end">
-              <div className="bg-gray-100 rounded-full px-3 py-1 text-sm font-medium flex items-center">
-                <span className="text-green-600 font-bold">{Number(stamps) || 0}</span> 
-                <span className="mx-1 text-gray-500">/</span>
-                <span className="text-gray-600">{totalStamps}</span>
+
+            {/* Área dos selos */}
+            <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+              <div className="flex justify-center space-x-4">
+                {[...Array(6)].map((_, index) => (
+                  <Stamp key={`star-${index}`} active={index < (Number(stamps) || 0)} index={index} />
+                ))}
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Selos
+              <div className="flex justify-center space-x-4">
+                {[...Array(6)].map((_, index) => (
+                  <Stamp key={`star-${index+6}`} active={index+6 < (Number(stamps) || 0)} index={index+6} />
+                ))}
+              </div>
+            </div>
+
+            {/* Rodapé */}
+            <div className="flex justify-end">
+              <div className="text-right">
+                <p className="text-sm font-medium">
+                  {user?.displayName || user?.email?.split('@')[0]}
+                </p>
               </div>
             </div>
           </div>
-          
-          {/* Área dos carimbos - 2 linhas de 6 carimbos cada */}
-          <div className="flex flex-col items-center justify-center space-y-4 mb-6">
-            <div className="flex justify-center space-x-4">
-              {[...Array(6)].map((_, index) => (
-                <Stamp key={`star-${index}`} active={index < (Number(stamps) || 0)} index={index} />
-              ))}
-            </div>
-            <div className="flex justify-center space-x-4">
-              {[...Array(6)].map((_, index) => (
-                <Stamp key={`star-${index+6}`} active={index+6 < (Number(stamps) || 0)} index={index+6} />
-              ))}
-            </div>
-          </div>
-          
-          {/* Rodapé do cartão */}
-          <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">
-                Titular
-              </p>
-              <p className="text-sm font-medium">
-                {user?.displayName || user?.email?.split('@')[0]}
-              </p>
-            </div>
-          </div>
-          
+
           {/* Faixa holográfica */}
           <div className="absolute top-1/3 left-0 right-0 h-6 bg-gradient-to-r from-transparent via-gray-100 to-transparent opacity-30"></div>
         </div>
@@ -345,7 +345,6 @@ const LoyaltyCard = ({ stamps, user }) => {
     </motion.div>
   );
 };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">

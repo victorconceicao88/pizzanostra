@@ -167,11 +167,15 @@ export const LanguageProvider = ({ children }) => {
         logoutSuccess: 'Logout realizado com sucesso',
         logoutError: 'Erro ao fazer logout',
         errorLoadingData: 'Erro ao carregar dados',
-    
+        registerToEarn:"Cadastre-se para ganhar",
+        registerToEarnDescription:"Cadastre-se gratuitamente e comece a ganhar recompensas." ,
+        registerNow:"Cadastre-se agora",
       },
       en: {
         // Header and general info
-      
+        registerToEarn:"Sign up to earn",
+        registerToEarnDescription:"Sign up for free and start earning rewards." ,
+        registerNow:"Sign up now",
         useStampsForItem:"Redeem stamps for item",
         guestStampNotice: "Only logged-in customers collect stamps. Sign in so you don’t miss out!",
         restaurantName: 'Italian Pizzeria',
@@ -180,6 +184,9 @@ export const LanguageProvider = ({ children }) => {
         subtitle: 'Made with ingredients imported directly from Italy',
         yourCart: 'Your Cart',
         cart: 'Cart',
+        onlyChargeDelivery: "Only the delivery fee will be charged if delivery is selected",
+        stampsUsed : "Stamps Used",
+        paidWithStamps : "Paid with Stamps",
         emptyCart: 'Your cart is empty',
         emptyCartMessage: 'Add delicious items to start your order',
         exploreMenu: 'Explore Menu',
