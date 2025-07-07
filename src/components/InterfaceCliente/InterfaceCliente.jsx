@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { FaPizzaSlice, FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight } from 'react-icons/fa';
+import React, { useState, useEffect, useRef, useMemo,Fragment } from 'react';
+import { FaPizzaSlice, FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight,FaShieldAlt,FaPlus,FaUserPlus } from 'react-icons/fa';
 import { Pizza, Leaf, IceCream, Hamburger, Wine, X, Check, Plus, Minus, MapPin, CreditCard, CurrencyEur, DeviceMobile, Money } from '@phosphor-icons/react';
 import { motion, AnimatePresence, useAnimation, useInView } from 'framer-motion';
 import { useNavigate, } from 'react-router-dom';
@@ -14,6 +14,8 @@ import { t } from './translations';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
 import WelcomeModal from './WelcomeModal';
+import { Combobox, Transition } from '@headlessui/react'
+
 
 
 // Imagens de categoria
@@ -77,61 +79,93 @@ const OrderConfirmationModal = ({
   navigate
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden">
-        <div className="p-6 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaCheckCircle className="text-green-600 text-2xl" />
+<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-xl">
+    <div className="p-6 text-center">
+      {/* Animated checkmark */}
+      <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 animate-[bounce_1s_ease-in-out]">
+        <div className="relative">
+          <FaCheckCircle className="text-green-500 text-4xl" />
+          <div className="absolute inset-0 rounded-full border-4 border-green-200 animate-[ping_1.5s_ease-in-out_infinite] opacity-0"></div>
+        </div>
+      </div>
+      
+      {/* Main heading */}
+      <h3 className="text-2xl font-bold text-gray-900 mb-3">
+        {t(language, 'orderSentSuccess')}!
+      </h3>
+      
+      {/* Order confirmation */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+        <p className="text-gray-700 font-medium mb-1">
+          {t(language, 'orderNumber')}
+        </p>
+        <p className="text-2xl font-bold text-gray-900 font-mono tracking-wide">
+          #{orderNumber}
+        </p>
+      </div>
+      
+      {/* Assurance message */}
+          <div>
+            <h4 className="font-semibold text-green-800 mb-1">
+              {t(language, 'orderPreparingTitle')}
+            </h4>
+            <p className="text-sm text-green-700">
+              {t(language, 'orderPreparingDescription')}
+            </p>
+            <a
+              href="tel:+351282046810"
+              className="mt-2 inline-flex items-center text-green-800 font-semibold hover:text-green-900"
+            >
+              <FaPhone className="mr-2" /> +351 282 046 810
+            </a>
           </div>
-          
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
-            {t(language, 'orderSentSuccess')}!
-          </h3>
-          
-          <p className="text-gray-600 mb-4">
-            {t(language, 'orderNumber')}: <span className="font-mono font-bold">#{orderNumber}</span>
-          </p>
 
-          {!user && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-left">
-              <h4 className="font-bold text-blue-800 mb-2 flex items-center">
-                <FaCoins className="mr-2 text-blue-600" />
+      {!user && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-left">
+          <div className="flex items-start">
+            <FaCoins className="text-blue-600 mt-1 mr-2 flex-shrink-0" />
+            <div>
+              <h4 className="font-semibold text-blue-800 mb-1">
                 {t(language, 'registerToEarn')}
               </h4>
               <p className="text-sm text-blue-700">
                 {t(language, 'registerToEarnDescription')}
               </p>
             </div>
-          )}
-          
-          <div className="flex flex-col sm:flex-row gap-3 mt-6">
-            <button
-              onClick={onClose}
-              className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors flex-1"
-            >
-              {t(language, 'close')}
-            </button>
-            <button
-              onClick={onNewOrder}
-              className="px-6 py-3 bg-gradient-to-r from-red-600 to-green-600 rounded-xl text-white font-bold hover:from-red-700 hover:to-green-700 transition-colors flex-1"
-            >
-              {t(language, 'newOrder')}
-            </button>
-            {!user && (
-              <button
-                onClick={() => {
-                  onClose();
-                  navigate('/fidelidade');
-                }}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl text-white font-bold hover:from-blue-700 hover:to-blue-800 transition-colors flex-1"
-              >
-                {t(language, 'registerNow')}
-              </button>
-            )}
           </div>
         </div>
+      )}
+      
+      {/* Action buttons */}
+      <div className="flex flex-col sm:flex-row gap-3 mt-6">
+        <button
+          onClick={onClose}
+          className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors flex-1 flex items-center justify-center gap-2"
+        >
+          <FaTimes /> {t(language, 'close')}
+        </button>
+        <button
+          onClick={onNewOrder}
+          className="px-6 py-3 bg-gradient-to-r from-red-600 to-green-600 rounded-xl text-white font-bold hover:from-red-700 hover:to-green-700 transition-colors flex-1 flex items-center justify-center gap-2"
+        >
+          <FaPlus /> {t(language, 'newOrder')}
+        </button>
+        {!user && (
+          <button
+            onClick={() => {
+              onClose();
+              navigate('/fidelidade');
+            }}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl text-white font-bold hover:from-blue-700 hover:to-blue-800 transition-colors flex-1 flex items-center justify-center gap-2"
+          >
+            <FaUserPlus /> {t(language, 'registerNow')}
+          </button>
+        )}
       </div>
     </div>
+  </div>
+</div>
   );
 };
 
@@ -751,6 +785,7 @@ const CheckoutFlow = ({
   const [codigoPostal, setCodigoPostal] = useState('');
   const [showZoneAlert, setShowZoneAlert] = useState(false);
   const itemsWithStampsRef = useRef(itemsWithStamps);
+  const [query, setQuery] = useState('')
   
 
   useEffect(() => {
@@ -1034,444 +1069,507 @@ const canProceedToPayment = () => {
           </div>
         );
       
-      case 2: {
-        // Validação robusta dos campos
-        const validarDados = () => {
-          const dadosObrigatorios = customerInfo.nome?.trim() && 
-                                  customerInfo.telefone?.trim() && 
-                                  customerInfo.telefone.length === 9;
-          
-          if (deliveryOption === 'entrega') {
-            return (
-              dadosObrigatorios &&
-              customerInfo.endereco?.trim() &&
-              customerInfo.localidade &&
-              selectedZone &&
-              codigoPostal.length === 7 // Código postal português tem 7 dígitos
-            );
-          }
-          return dadosObrigatorios;
-        };
+case 2: {
+  // Validação robusta dos campos
+  const validarDados = () => {
+    const dadosObrigatorios = customerInfo.nome?.trim() && 
+                            customerInfo.telefone?.trim() && 
+                            customerInfo.telefone.length === 9;
+    
+    if (deliveryOption === 'entrega') {
+      return (
+        dadosObrigatorios &&
+        customerInfo.endereco?.trim() &&
+        customerInfo.localidade &&
+        selectedZone &&
+        codigoPostal.length === 7
+      );
+    }
+    return dadosObrigatorios;
+  };
 
-        return (
-          <div className="space-y-6">
-            {/* Título e Progresso */}
-            <div className="flex items-center text-sm text-gray-500 mb-4">
-              <span className="hidden md:inline">Passo 2 de 3</span>
-              <span className="mx-2 hidden md:inline">•</span>
-              <div className="flex items-center">
-                <div className="w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center mr-2">
-                  2
+  return (
+    <div className="space-y-6">
+      {/* Nova barra de progresso */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          {[1, 2, 3, 4].map((stepNum) => (
+            <div key={stepNum} className="flex flex-col items-center relative">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  stepNum < 2
+                    ? 'bg-green-600 text-white'
+                    : stepNum === 2
+                    ? 'bg-white border-2 border-green-600 text-green-600 font-bold'
+                    : 'bg-gray-200 text-gray-500'
+                }`}
+              >
+                {stepNum}
+              </div>
+              {stepNum < 4 && (
+                <div className="absolute top-4 left-14 w-16 h-0.5 bg-gray-200">
+                  <div
+                    className={`h-full ${
+                      stepNum < 2 ? 'bg-green-600' : 'bg-gray-200'
+                    }`}
+                  ></div>
                 </div>
-                <span className="font-medium text-gray-700">Informações de Entrega</span>
-              </div>
+              )}
             </div>
+          ))}
+        </div>
+        <div className="flex justify-between text-xs text-gray-500 px-2">
+          <span>Carrinho</span>
+          <span className="text-green-600 font-medium">Informações</span>
+          <span>Pagamento</span>
+          <span>Confirmação</span>
+        </div>
+      </div>
 
-            {/* Opções de Retirada/Entrega */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <button
-                onClick={() => setDeliveryOption('retirada')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
-                  deliveryOption === 'retirada'
-                    ? 'border-green-600 bg-green-50 text-green-700'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <FaStore className="text-xl mb-2" />
-                <span className="font-bold">Retirada</span>
-                <span className="text-xs text-gray-500 mt-1">Sem taxa</span>
-              </button>
+      {/* Opções de Retirada/Entrega */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <button
+          onClick={() => setDeliveryOption('retirada')}
+          className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+            deliveryOption === 'retirada'
+              ? 'border-green-600 bg-green-50 text-green-700'
+              : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <FaStore className="text-xl mb-2" />
+          <span className="font-bold">Retirada</span>
+          <span className="text-xs text-gray-500 mt-1">Sem taxa</span>
+        </button>
 
-              <button
-                onClick={() => setDeliveryOption('entrega')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
-                  deliveryOption === 'entrega'
-                    ? 'border-green-600 bg-green-50 text-green-700'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <FaMotorcycle className="text-xl mb-2" />
-                <span className="font-bold">Entrega</span>
-                <span className="text-xs text-gray-500 mt-1">Taxa: {selectedZone ? deliveryAreas[selectedZone]?.taxa.toFixed(2) + '€' : '--'}</span>
-              </button>
-            </div>
+        <button
+          onClick={() => setDeliveryOption('entrega')}
+          className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+            deliveryOption === 'entrega'
+              ? 'border-green-600 bg-green-50 text-green-700'
+              : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <FaMotorcycle className="text-xl mb-2" />
+          <span className="font-bold">Entrega</span>
+          <span className="text-xs text-gray-500 mt-1">Taxa: {selectedZone ? deliveryAreas[selectedZone]?.taxa.toFixed(2) + '€' : '--'}</span>
+        </button>
+      </div>
 
-            {/* Campos do Formulário */}
-            <div className="space-y-4">
-              {/* Nome e Telefone (sempre visíveis) */}
-              <div>
-                <label className="block text-gray-700 mb-2 font-medium">Nome Completo*</label>
-                <input
-                  type="text"
-                  value={customerInfo.nome}
-                  onChange={(e) => setCustomerInfo({...customerInfo, nome: e.target.value})}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="Seu nome completo"
-                  required
-                />
-              </div>
+      {/* Campos do Formulário */}
+      <div className="space-y-4">
+        <div>
+          <label className="block text-gray-700 mb-2 font-medium">Nome Completo*</label>
+          <input
+            type="text"
+            value={customerInfo.nome}
+            onChange={(e) => setCustomerInfo({...customerInfo, nome: e.target.value})}
+            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            placeholder="Seu nome completo"
+            required
+          />
+        </div>
 
-              <div>
-                <label className="block text-gray-700 mb-2 font-medium">Telefone*</label>
-                <input
-                  type="tel"
-                  value={customerInfo.telefone}
-                  onChange={handleTelefoneChange}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="912345678"
-                  required
-                />
-                {customerInfo.telefone && customerInfo.telefone.length !== 9 && (
-                  <p className="text-red-500 text-xs mt-1">O telefone deve ter 9 dígitos</p>
-                )}
-              </div>
+        <div>
+          <label className="block text-gray-700 mb-2 font-medium">Telefone*</label>
+          <input
+            type="tel"
+            value={customerInfo.telefone}
+            onChange={handleTelefoneChange}
+            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            placeholder="912345678"
+            required
+          />
+          {customerInfo.telefone && customerInfo.telefone.length !== 9 && (
+            <p className="text-red-500 text-xs mt-1">O telefone deve ter 9 dígitos</p>
+          )}
+        </div>
 
-              {/* Campos específicos para entrega */}
-              {deliveryOption === 'entrega' && (
-                <>
-                  <div>
-                    <label className="block text-gray-700 mb-2 font-medium">Endereço Completo*</label>
-                    <input
-                      type="text"
-                      value={customerInfo.endereco}
-                      onChange={(e) => setCustomerInfo({...customerInfo, endereco: e.target.value})}
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                      placeholder="Rua, número, complemento, apartamento..."
-                      required
-                    />
-                  
-                    <div className="mb-4">
-                        <label className="block text-gray-700 mb-2 font-medium">Código Postal*</label>
-                        <input
-                          type="text"
-                          value={codigoPostal}
-                          onChange={handleCodigoPostalChange}
-                          className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                          placeholder="Ex: 1234-567"
-                          required
-                        />
-                      </div>
-                    
-                    <label className="block text-gray-700 mb-2 font-medium">Bairro*</label>
-                    <select
-                      value={customerInfo.localidade}
-                      onChange={(e) => {
-                        const bairro = e.target.value;
-                        const zona = Object.keys(deliveryAreas).find(
-                          (z) => deliveryAreas[z].bairros[language].includes(bairro)
-                        );
-                        setSelectedZone(zona);
-                        setCustomerInfo({...customerInfo, localidade: bairro});
-                      }}
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                      required
+{deliveryOption === 'entrega' && (
+  <>
+    <div>
+      <label className="block text-gray-700 mb-2 font-medium">Endereço Completo*</label>
+      <input
+        type="text"
+        value={customerInfo.endereco}
+        onChange={(e) =>
+          setCustomerInfo({ ...customerInfo, endereco: e.target.value })
+        }
+        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        placeholder="Rua, número, complemento, apartamento..."
+        required
+      />
+    </div>
+
+    <div className="mb-4">
+      <label className="block text-gray-700 mb-2 font-medium">Código Postal*</label>
+      <input
+        type="text"
+        value={codigoPostal}
+        onChange={handleCodigoPostalChange}
+        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        placeholder="Ex: 1234-567"
+        required
+      />
+    </div>
+
+    <label className="block text-gray-700 mb-2 font-medium">Zona de Entrega*</label>
+    <div className="relative">
+      <Combobox
+        value={customerInfo.localidade}
+        onChange={(bairro) => {
+          const zona = Object.keys(deliveryAreas).find(
+            (z) => deliveryAreas[z].bairros[language].includes(bairro)
+          );
+          setSelectedZone(zona);
+          setCustomerInfo({ ...customerInfo, localidade: bairro });
+        }}
+      >
+        <div className="relative">
+          <Combobox.Input
+            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            placeholder="Busque sua zona ou bairro"
+            displayValue={(bairro) => bairro}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-4">
+            <FaChevronDown className="text-gray-400" />
+          </Combobox.Button>
+        </div>
+        <Transition
+          as={Fragment}
+          leave="transition ease-in duration-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+          afterLeave={() => setQuery('')}
+        >
+          <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+            {Object.entries(deliveryAreas).map(([zona, dados]) => (
+              <div key={zona}>
+                <div className="px-4 py-2 text-sm text-gray-500 bg-gray-50">
+                  {zona}
+                </div>
+                {dados.bairros[language]
+                  .filter((bairro) =>
+                    query === '' ||
+                    bairro.toLowerCase().includes(query.toLowerCase()) ||
+                    zona.toLowerCase().includes(query.toLowerCase())
+                  )
+                  .map((bairro) => (
+                    <Combobox.Option
+                      key={bairro}
+                      value={bairro}
+                      className={({ active }) =>
+                        `px-4 py-2 cursor-pointer ${active ? 'bg-green-100' : 'bg-white'}`
+                      }
                     >
-                      <option value="">Selecione seu bairro</option>
-                      {Object.entries(deliveryAreas).map(([zona, dados]) => (
-                        <optgroup key={zona} label={`${zona} (${dados.taxa.toFixed(2)}€)`}>
-                          {dados.bairros[language].map((bairro) => (
-                            <option key={bairro} value={bairro}>
-                              {bairro}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </div>
-
-                  {showZoneAlert && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                      <div className="flex items-start">
-                        <FaInfoCircle className="text-blue-500 mt-1 mr-2 flex-shrink-0" />
-                        <p className="text-blue-700 text-sm">
-                          Por favor, insira corretamente o seu endereço e selecione a freguesia ou localidade correspondente.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            <div className="mb-4">
-                <label className="block text-gray-700 mb-2 font-medium">NIF (Opcional)</label>
-                <input
-                  type="text"
-                  value={customerInfo.nif}
-                  onChange={(e) => setCustomerInfo({
-                    ...customerInfo,
-                    nif: e.target.value
-                  })}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="Digite o NIF"
-                />
-              </div>
-
-
-              {/* Campo de observações (opcional) */}
-              <div>
-                <label className="block text-gray-700 mb-2 font-medium">Observações</label>
-                <textarea
-                  value={customerInfo.observacoes}
-                  onChange={(e) => setCustomerInfo({...customerInfo, observacoes: e.target.value})}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="Pontos de referência, instruções especiais..."
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            {/* Botões de navegação */}
-            <div className="flex justify-between gap-4 pt-6 border-t border-gray-200">
-              <button
-                onClick={() => setStep(1)}
-                className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Voltar
-              </button>
-              <button
-              onClick={() => setStep(3)}
-              disabled={!canProceedToPayment()}
-              className={`flex-1 py-3 rounded-xl text-white font-bold transition-colors ${
-                canProceedToPayment()
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-gray-400 cursor-not-allowed'
-              }`}
-            >
-              Continuar para Pagamento
-            </button>
-            </div>
-          </div>
-        );
-      }
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="hidden sm:flex items-center text-sm text-gray-500">
-                <span className="hidden sm:inline">Passo 2 de 3</span>
-                <span className="mx-2 hidden sm:inline">•</span>
-                <div className="flex items-center opacity-50">
-                  <div className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mr-2">
-                    1
-                  </div>
-                  <span>{t(language, 'deliveryInfo')}</span>
-                </div>
-                <span className="mx-2 text-gray-300">›</span>
-                <div className="flex items-center">
-                  <div className="w-5 h-5 rounded-full bg-[#016730] text-white flex items-center justify-center mr-2">
-                    2
-                  </div>
-                  <span className="font-medium text-gray-700">{t(language, 'paymentMethod')}</span>
-                </div>
-                <span className="mx-2 text-gray-300">›</span>
-                <div className="flex items-center opacity-50">
-                  <div className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mr-2">
-                    3
-                  </div>
-                  <span>{t(language, 'orderConfirmed')}</span>
-                </div>
-              </div>
-            </div>
-            
-            {user && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <FaCoins className="text-amber-600 mr-2" />
-                    <span className="font-medium text-amber-800">
-                      {selosDisponiveis} {t(language, 'stampsAvailable')}
-                    </span>
-                  </div>
-                  {selosUsados > 0 && (
-                    <span className="text-sm bg-amber-200 text-amber-800 px-2 py-1 rounded-full">
-                      {t(language, 'stampsUsed')}: {selosUsados}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-              <button
-                onClick={() => setPaymentMethod('mbway')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
-                  paymentMethod === 'mbway' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                  <DeviceMobile size={20} weight={paymentMethod === 'mbway' ? 'fill' : 'regular'} />
-                </div>
-                <span className="font-bold text-sm">{t(language, 'mbway')}</span>
-                <span className="text-xs text-gray-500 mt-1">{t(language, 'mbwayDescription')}</span>
-              </button>
-              
-              <button
-                onClick={() => setPaymentMethod('dinheiro')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
-                  paymentMethod === 'dinheiro' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-2">
-                  <Money size={20} weight={paymentMethod === 'dinheiro' ? 'fill' : 'regular'} />
-                </div>
-                <span className="font-bold text-sm">{t(language, 'cash')}</span>
-                <span className="text-xs text-gray-500 mt-1">{t(language, 'cashDescription')}</span>
-              </button>
-              
-              <button
-                onClick={() => setPaymentMethod('cartao')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
-                  paymentMethod === 'cartao' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2">
-                  <CreditCard size={20} weight={paymentMethod === 'cartao' ? 'fill' : 'regular'} />
-                </div>
-                <span className="font-bold text-sm">{t(language, 'card')}</span>
-                <span className="text-xs text-gray-500 mt-1">{t(language, 'cardDescription')}</span>
-              </button>
-            </div>
-            {paymentMethod === 'mbway' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <label className="block text-gray-700 mb-2 font-medium text-sm sm:text-base">{t(language, 'mbwayNumber')}</label>
-                <div className="flex items-center border border-blue-300 bg-white rounded-lg overflow-hidden">
-                  <span className="px-3 py-2 bg-blue-100 text-blue-800 text-sm">+351</span>
-                  <input
-                    type="tel"
-                    value={mbwayNumber}
-                    onChange={(e) => setMbwayNumber(e.target.value)}
-                    className="flex-1 p-2 sm:p-3 focus:outline-none text-sm sm:text-base"
-                    placeholder="912 345 678"
-                    required
-                  />
-                </div>
-                <p className="text-xs sm:text-sm text-blue-700 mt-2 flex items-center">
-                  <FaQrcode className="mr-1" /> {t(language, 'mbwayDescription')}
-                </p>
-              </div>
-            )}
-            
-            {paymentMethod === 'dinheiro' && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <label className="block text-gray-700 mb-2 font-medium text-sm sm:text-base">{t(language, 'changeFor')}</label>
-                <div className="flex items-center border border-green-300 bg-white rounded-lg overflow-hidden">
-                  <span className="px-3 py-2 bg-green-100 text-green-800">
-                    <CurrencyEur size={18} />
-                  </span>
-                  <input
-                    type="number"
-                    value={trocoPara}
-                    onChange={(e) => setTrocoPara(e.target.value)}
-                    className="flex-1 p-2 sm:p-3 focus:outline-none text-sm sm:text-base"
-                    placeholder={t(language, 'changeExample')}
-                    required
-                  />
-                </div>
-                <p className="text-xs sm:text-sm text-green-700 mt-2">
-                  {t(language, 'cashDescription')}
-                </p>
-              </div>
-            )}
-
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-              <h3 className="font-bold text-gray-800 mb-3 text-sm sm:text-base">{t(language, 'orderSummary')}</h3>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 text-sm sm:text-base">{t(language, 'subtotal')} ({cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')})</span>
-                  <span className="font-medium">{cartTotal.toFixed(2)}€</span>
-                </div>
-                
-                {deliveryOption === 'entrega' && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 text-sm sm:text-base">{t(language, 'deliveryFee')}</span>
-                    <span className="font-medium">
-                      {deliveryFee.toFixed(2)}€
-                      {customerInfo.localidade && (
-                        <span className="text-xs text-gray-500 ml-1">({customerInfo.localidade})</span>
+                      {({ selected }) => (
+                        <div className="flex items-center">
+                          {selected && <FaCheck className="text-green-500 mr-2" />}
+                          <span className={`${selected ? 'font-medium' : 'font-normal'}`}>
+                            {bairro}
+                          </span>
+                        </div>
                       )}
-                    </span>
-                  </div>
-                )}
-                
-                {selosUsados > 0 && (
-                  <div className="flex justify-between text-[#016730]">
-                    <span className="text-sm sm:text-base">{t(language, 'stampsUsed')}</span>
-                    <span className="font-medium">
-                      -{(cartTotal + deliveryFee - finalTotal).toFixed(2)}€ ({selosUsados} {t(language, 'stamps')})
-                    </span>
-                  </div>
-                )}
+                    </Combobox.Option>
+                  ))}
               </div>
-              
-              <div className="flex justify-between py-2 sm:py-3 border-t border-gray-200 mt-1 sm:mt-2">
-                <div>
-                  <span className="font-bold text-sm sm:text-base">{t(language, 'estimatedTotal')}:</span>
-                  <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
-                    <FaRegClock className="mr-1" />
-                    <span>{t(language, 'estimatedTime')}: {estimatedTime}</span>
-                  </div>
-                </div>
-                <span className="font-bold text-xl sm:text-2xl text-[#016730]">
-                  {finalTotal.toFixed(2)}€
-                </span>
-              </div>
-              
-              <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200 flex items-center">
-                <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
-                  <FaMotorcycle className="text-[#016730]" size={16} />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-800 text-sm sm:text-base">{t(language, deliveryOption === 'retirada' ? 'pickup' : 'delivery')}</p>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    {deliveryOption === 'retirada' ? 
-                      t(language, 'pickupAddress') : 
-                      customerInfo.endereco ? `${customerInfo.endereco}, ${customerInfo.localidade}` : t(language, 'addressPlaceholder')}
-                  </p>
-                </div>
-              </div>
+            ))}
+          </Combobox.Options>
+        </Transition>
+      </Combobox>
+    </div>
+  </>
+)}
 
-              {includeNif && nifNumber && (
-                <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200">
-                  <p className="font-medium text-gray-800 text-sm sm:text-base">NIF na fatura</p>
-                  <p className="text-xs sm:text-sm text-gray-500">{nifNumber}</p>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2 font-medium">NIF (Opcional)</label>
+          <input
+            type="text"
+            value={customerInfo.nif}
+            onChange={(e) => setCustomerInfo({
+              ...customerInfo,
+              nif: e.target.value
+            })}
+            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            placeholder="Digite o NIF"
+          />
+        </div>
+
+        <div>
+          <label className="block text-gray-700 mb-2 font-medium">Observações</label>
+          <textarea
+            value={customerInfo.observacoes}
+            onChange={(e) => setCustomerInfo({...customerInfo, observacoes: e.target.value})}
+            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            placeholder="Pontos de referência, instruções especiais..."
+            rows={3}
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-between gap-4 pt-6 border-t border-gray-200">
+        <button
+          onClick={() => setStep(1)}
+          className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          Voltar
+        </button>
+        <button
+          onClick={() => setStep(3)}
+          disabled={!validarDados()}
+          className={`flex-1 py-3 rounded-xl text-white font-bold transition-colors ${
+            validarDados()
+              ? 'bg-green-600 hover:bg-green-700'
+              : 'bg-gray-400 cursor-not-allowed'
+          }`}
+        >
+          Continuar para Pagamento
+        </button>
+      </div>
+    </div>
+  );
+}
+case 3:
+  return (
+    <div className="space-y-6">
+      {/* Nova barra de progresso */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          {[1, 2, 3, 4].map((stepNum) => (
+            <div key={stepNum} className="flex flex-col items-center relative">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  stepNum < 3
+                    ? 'bg-green-600 text-white'
+                    : stepNum === 3
+                    ? 'bg-white border-2 border-green-600 text-green-600 font-bold'
+                    : 'bg-gray-200 text-gray-500'
+                }`}
+              >
+                {stepNum}
+              </div>
+              {stepNum < 4 && (
+                <div className="absolute top-4 left-14 w-16 h-0.5 bg-gray-200">
+                  <div
+                    className={`h-full ${
+                      stepNum < 3 ? 'bg-green-600' : 'bg-gray-200'
+                    }`}
+                  ></div>
                 </div>
               )}
             </div>
-            
-            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 pt-4 border-t border-gray-200">
-              <button
-                onClick={() => setStep(2)}
-                className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium flex-1 sm:flex-none text-sm sm:text-base"
-              >
-                {t(language, 'back')}
-              </button>
-              <button
-                onClick={finalizarPedido}
-                disabled={!canCheckout || isSubmitting}
-                className={`w-full py-3 rounded-lg text-white font-bold ${
-                  (canCheckout && !isSubmitting)
-                    ? 'bg-gradient-to-r from-[#016730] to-blue-600 hover:from-[#02803c] hover:to-blue-700'
-                    : 'bg-gray-400 cursor-not-allowed'
-                } transition-colors flex items-center justify-center`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {t(language, 'processing')}
-                  </>
-                ) : (
-                  <>
-                    <FaCheckCircle className="mr-2" />
-                    {t(language, 'confirmOrder')}
-                  </>
+          ))}
+        </div>
+        <div className="flex justify-between text-xs text-gray-500 px-2">
+          <span>Carrinho</span>
+          <span>Informações</span>
+          <span className="text-green-600 font-medium">Pagamento</span>
+          <span>Confirmação</span>
+        </div>
+      </div>
+
+      {user && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <FaCoins className="text-amber-600 mr-2" />
+              <span className="font-medium text-amber-800">
+                {selosDisponiveis} {t(language, 'stampsAvailable')}
+              </span>
+            </div>
+            {selosUsados > 0 && (
+              <span className="text-sm bg-amber-200 text-amber-800 px-2 py-1 rounded-full">
+                {t(language, 'stampsUsed')}: {selosUsados}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <button
+          onClick={() => setPaymentMethod('mbway')}
+          className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+            paymentMethod === 'mbway' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+            <DeviceMobile size={20} weight={paymentMethod === 'mbway' ? 'fill' : 'regular'} />
+          </div>
+          <span className="font-bold text-sm">{t(language, 'mbway')}</span>
+          <span className="text-xs text-gray-500 mt-1">{t(language, 'mbwayDescription')}</span>
+        </button>
+        
+        <button
+          onClick={() => setPaymentMethod('dinheiro')}
+          className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+            paymentMethod === 'dinheiro' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-2">
+            <Money size={20} weight={paymentMethod === 'dinheiro' ? 'fill' : 'regular'} />
+          </div>
+          <span className="font-bold text-sm">{t(language, 'cash')}</span>
+          <span className="text-xs text-gray-500 mt-1">{t(language, 'cashDescription')}</span>
+        </button>
+        
+        <button
+          onClick={() => setPaymentMethod('cartao')}
+          className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+            paymentMethod === 'cartao' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2">
+            <CreditCard size={20} weight={paymentMethod === 'cartao' ? 'fill' : 'regular'} />
+          </div>
+          <span className="font-bold text-sm">{t(language, 'card')}</span>
+          <span className="text-xs text-gray-500 mt-1">{t(language, 'cardDescription')}</span>
+        </button>
+      </div>
+
+      {paymentMethod === 'mbway' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <label className="block text-gray-700 mb-2 font-medium text-sm sm:text-base">{t(language, 'mbwayNumber')}</label>
+          <div className="flex items-center border border-blue-300 bg-white rounded-lg overflow-hidden">
+            <span className="px-3 py-2 bg-blue-100 text-blue-800 text-sm">+351</span>
+            <input
+              type="tel"
+              value={mbwayNumber}
+              onChange={(e) => setMbwayNumber(e.target.value)}
+              className="flex-1 p-2 sm:p-3 focus:outline-none text-sm sm:text-base"
+              placeholder="912 345 678"
+              required
+            />
+          </div>
+          <p className="text-xs sm:text-sm text-blue-700 mt-2 flex items-center">
+            <FaQrcode className="mr-1" /> {t(language, 'mbwayDescription')}
+          </p>
+        </div>
+      )}
+      
+      {paymentMethod === 'dinheiro' && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+          <label className="block text-gray-700 mb-2 font-medium text-sm sm:text-base">{t(language, 'changeFor')}</label>
+          <div className="flex items-center border border-green-300 bg-white rounded-lg overflow-hidden">
+            <span className="px-3 py-2 bg-green-100 text-green-800">
+              <CurrencyEur size={18} />
+            </span>
+            <input
+              type="number"
+              value={trocoPara}
+              onChange={(e) => setTrocoPara(e.target.value)}
+              className="flex-1 p-2 sm:p-3 focus:outline-none text-sm sm:text-base"
+              placeholder={t(language, 'changeExample')}
+              required
+            />
+          </div>
+          <p className="text-xs sm:text-sm text-green-700 mt-2">
+            {t(language, 'cashDescription')}
+          </p>
+        </div>
+      )}
+
+      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+        <h3 className="font-bold text-gray-800 mb-3 text-sm sm:text-base">{t(language, 'orderSummary')}</h3>
+        
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-gray-600 text-sm sm:text-base">{t(language, 'subtotal')} ({cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')})</span>
+            <span className="font-medium">{cartTotal.toFixed(2)}€</span>
+          </div>
+          
+          {deliveryOption === 'entrega' && (
+            <div className="flex justify-between">
+              <span className="text-gray-600 text-sm sm:text-base">{t(language, 'deliveryFee')}</span>
+              <span className="font-medium">
+                {deliveryFee.toFixed(2)}€
+                {customerInfo.localidade && (
+                  <span className="text-xs text-gray-500 ml-1">({customerInfo.localidade})</span>
                 )}
-              </button>
+              </span>
+            </div>
+          )}
+          
+          {selosUsados > 0 && (
+            <div className="flex justify-between text-[#016730]">
+              <span className="text-sm sm:text-base">{t(language, 'stampsUsed')}</span>
+              <span className="font-medium">
+                -{(cartTotal + deliveryFee - finalTotal).toFixed(2)}€ ({selosUsados} {t(language, 'stamps')})
+              </span>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex justify-between py-2 sm:py-3 border-t border-gray-200 mt-1 sm:mt-2">
+          <div>
+            <span className="font-bold text-sm sm:text-base">{t(language, 'estimatedTotal')}:</span>
+            <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
+              <FaRegClock className="mr-1" />
+              <span>{t(language, 'estimatedTime')}: {estimatedTime}</span>
             </div>
           </div>
-        );
+          <span className="font-bold text-xl sm:text-2xl text-[#016730]">
+            {finalTotal.toFixed(2)}€
+          </span>
+        </div>
+        
+        <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200 flex items-center">
+          <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
+            <FaMotorcycle className="text-[#016730]" size={16} />
+          </div>
+          <div>
+            <p className="font-medium text-gray-800 text-sm sm:text-base">{t(language, deliveryOption === 'retirada' ? 'pickup' : 'delivery')}</p>
+            <p className="text-xs sm:text-sm text-gray-500">
+              {deliveryOption === 'retirada' ? 
+                t(language, 'pickupAddress') : 
+                customerInfo.endereco ? `${customerInfo.endereco}, ${customerInfo.localidade}` : t(language, 'addressPlaceholder')}
+            </p>
+          </div>
+        </div>
+
+        {includeNif && nifNumber && (
+          <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200">
+            <p className="font-medium text-gray-800 text-sm sm:text-base">NIF na fatura</p>
+            <p className="text-xs sm:text-sm text-gray-500">{nifNumber}</p>
+          </div>
+        )}
+      </div>
+      
+      <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 pt-4 border-t border-gray-200">
+        <button
+          onClick={() => setStep(2)}
+          className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium flex-1 sm:flex-none text-sm sm:text-base"
+        >
+          {t(language, 'back')}
+        </button>
+        <button
+          onClick={finalizarPedido}
+          disabled={!canCheckout || isSubmitting}
+          className={`w-full py-3 rounded-lg text-white font-bold ${
+            (canCheckout && !isSubmitting)
+              ? 'bg-gradient-to-r from-[#016730] to-blue-600 hover:from-[#02803c] hover:to-blue-700'
+              : 'bg-gray-400 cursor-not-allowed'
+          } transition-colors flex items-center justify-center`}
+        >
+          {isSubmitting ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {t(language, 'processing')}
+            </>
+          ) : (
+            <>
+              <FaCheckCircle className="mr-2" />
+              {t(language, 'confirmOrder')}
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
       
       default:
         return null;

@@ -170,6 +170,7 @@ export const LanguageProvider = ({ children }) => {
         registerToEarn:"Cadastre-se para ganhar",
         registerToEarnDescription:"Cadastre-se gratuitamente e comece a ganhar recompensas." ,
         registerNow:"Cadastre-se agora",
+     
       },
       en: {
         // Header and general info

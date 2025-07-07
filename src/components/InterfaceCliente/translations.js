@@ -119,6 +119,8 @@ export const translations = {
     registerToEarn:"Cadastre-se para ganhar",
     registerToEarnDescription:"Cadastre-se gratuitamente e comece a ganhar recompensas." ,
     registerNow:"Cadastre-se agora",
+    orderPreparingTitle: "O seu pedido está a ser preparado com todo o cuidado!",
+    orderPreparingDescription: "Se precisar de alguma informação, fale connosco através do:",
   },
   
   en: {
@@ -135,6 +137,8 @@ export const translations = {
     useStampsForItem:"Redeem stamps for item",
     stampsEarned:"You're collecting stamps.",
     orderSentSuccess:"Thanks! We’ve received your order and we’re getting it ready",
+    orderPreparingTitle: "We're preparing your order with care!",
+    orderPreparingDescription: "If you need anything, feel free to give us a call:",
     
     // Categories
     entradas: "Starters",
