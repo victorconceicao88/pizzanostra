@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { 
@@ -38,23 +39,23 @@ import {
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Componentes de UI melhorados
+// Componentes de UI
 const ModernCard = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-md ${className}`}>
+  <div className={`bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl ${className}`}>
     {children}
   </div>
 );
 
 const Badge = ({ children, color = 'gray' }) => {
   const colors = {
-    gray: 'bg-gray-50 text-gray-700 border border-gray-200',
-    green: 'bg-green-50 text-green-700 border border-green-200',
-    red: 'bg-red-50 text-red-700 border border-red-200',
-    yellow: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
-    blue: 'bg-blue-50 text-blue-700 border border-blue-200',
-    purple: 'bg-purple-50 text-purple-700 border border-purple-200',
-    amber: 'bg-amber-50 text-amber-700 border border-amber-200',
-    stamp: 'bg-gradient-to-br from-amber-100 to-amber-200 text-amber-800 border border-amber-300'
+    gray: 'bg-gray-100 text-gray-800',
+    green: 'bg-green-100 text-green-800',
+    red: 'bg-red-100 text-red-800',
+    yellow: 'bg-yellow-100 text-yellow-800',
+    blue: 'bg-blue-100 text-blue-800',
+    purple: 'bg-purple-100 text-purple-800',
+    amber: 'bg-amber-100 text-amber-800',
+    stamp: 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md'
   };
   
   return (
@@ -65,10 +66,13 @@ const Badge = ({ children, color = 'gray' }) => {
 };
 
 const StampBadge = () => (
-  <Badge color="stamp" className="relative z-10">
-    <FaStamp className="mr-1" />
-    Pago com Selos
-  </Badge>
+  <div className="relative inline-flex items-center justify-center">
+    <div className="absolute inset-0 bg-amber-400 rounded-full opacity-75 animate-pulse"></div>
+    <Badge color="stamp" className="relative z-10">
+      <FaStamp className="mr-1" />
+      Pago com Selos
+    </Badge>
+  </div>
 );
 
 // Utilitários
@@ -76,20 +80,21 @@ const formatCurrency = (value) => new Intl.NumberFormat('pt-PT', { style: 'curre
 const formatStamps = (count) => `${count} selo${count !== 1 ? 's' : ''}`;
 
 const paymentIcons = {
-  dinheiro: <FaMoneyBillWave className="text-green-600" />,
-  cartao: <FaCreditCard className="text-blue-600" />, 
-  mbway: <FaMobileAlt className="text-purple-600" />,
+  dinheiro: <FaMoneyBillWave className="text-green-500" />,
+  cartao: <FaCreditCard className="text-blue-500" />, 
+  mbway: <FaMobileAlt className="text-purple-500" />,
   selos: <div className="relative">
-    <FaStamp className="text-amber-500" />
+    <FaStamp className="text-amber-500 absolute animate-ping" />
+    <FaStamp className="text-amber-500 relative" />
   </div>
 };
 
 const CustomerCard = ({ customer, onReset }) => {
   return (
-    <ModernCard className="p-5 bg-gradient-to-br from-blue-50 to-blue-50 border border-blue-100">
+    <ModernCard className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center">
             <FaUserCircle className="text-blue-500 mr-2" />
             {customer.nome}
           </h3>
@@ -99,14 +104,14 @@ const CustomerCard = ({ customer, onReset }) => {
               {customer.telefone}
             </p>
             <p className="text-sm text-gray-600 flex items-center">
-              <FaStamp className="mr-2 text-amber-500" />
+              <FaStamp className="mr-2 text-amber-400" />
               {formatStamps(customer.selos)} acumulados
             </p>
           </div>
         </div>
         <button
           onClick={onReset}
-          className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors border border-blue-200"
+          className="text-xs text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded-full transition-colors"
         >
           Nova busca
         </button>
@@ -126,6 +131,21 @@ const InterfaceAdmin = () => {
   const [isUpdatingStamps, setIsUpdatingStamps] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [stampChange, setStampChange] = useState(0);
+
+  useEffect(() => {
+  // Adicione este listener para sincronização entre abas
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      refreshOrders();
+    }
+  };
+  
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+}, []);
 
 // Substitua o useEffect atual por este:
 useEffect(() => {
@@ -231,19 +251,26 @@ const refreshOrders = async () => {
     }
   };
 
-  const deleteOrder = async (orderId) => {
-    if (!window.confirm('Tem certeza que deseja remover este pedido permanentemente?')) {
-      return;
-    }
+const deleteOrder = async (orderId) => {
+  if (!window.confirm('Tem certeza que deseja remover este pedido permanentemente?')) {
+    return;
+  }
 
-    try {
-      await deleteDoc(doc(db, 'pedidos', orderId));
-      toast.success('Pedido removido com sucesso!');
-    } catch (error) {
-      console.error("Erro ao remover pedido:", error);
-      toast.error(`Erro ao remover pedido: ${error.message}`);
-    }
-  };
+  try {
+    await deleteDoc(doc(db, 'pedidos', orderId));
+    
+    // Atualiza o estado local imediatamente
+    setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+    
+    toast.success('Pedido removido com sucesso!');
+  } catch (error) {
+    console.error("Erro ao remover pedido:", error);
+    toast.error(`Erro ao remover pedido: ${error.message}`);
+    
+    // Força um refresh em caso de erro para garantir sincronização
+    refreshOrders();
+  }
+};
 
   const searchCustomer = async () => {
     if (!customerSearchTerm.trim()) {

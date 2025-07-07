@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { 
-  enableIndexedDbPersistence,
+  enableMultiTabIndexedDbPersistence, // Alterado para multi-tab
   initializeFirestore,
   CACHE_SIZE_UNLIMITED
 } from "firebase/firestore";
@@ -14,7 +14,6 @@ const firebaseConfig = {
   messagingSenderId: "392686255742",
   appId: "1:392686255742:web:a7d86a9aa56f735ca7a22f",
   databaseURL: "https://pizza-nostra-e54da-default-rtdb.europe-west1.firebasedatabase.app"
-
 };
 
 // Inicialização otimizada
@@ -23,13 +22,18 @@ const app = initializeApp(firebaseConfig);
 // Configuração robusta do Firestore
 const db = initializeFirestore(app, {
   cacheSizeBytes: CACHE_SIZE_UNLIMITED,
-  experimentalForceLongPolling: true, // Mantém apenas esta opção
-  useFetchStreams: false,
+  experimentalForceLongPolling: true,
 });
 
-// Habilita persistência offline
-enableIndexedDbPersistence(db).catch((err) => {
-  console.error("Persistência offline falhou:", err);
+// Habilita persistência offline com suporte a multi-tab
+enableMultiTabIndexedDbPersistence(db).catch((err) => {
+  if (err.code === 'failed-precondition') {
+    // Múltiplas abas abertas, persistência só pode ser habilitada em uma aba
+    console.warn("Persistência offline não pode ser habilitada em múltiplas abas.");
+  } else if (err.code === 'unimplemented') {
+    // O navegador não suporta todas as funcionalidades necessárias
+    console.warn("Persistência offline não é suportada neste navegador.");
+  }
 });
 
 const auth = getAuth(app);
