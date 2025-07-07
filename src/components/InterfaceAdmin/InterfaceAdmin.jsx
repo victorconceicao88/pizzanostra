@@ -81,7 +81,7 @@ const formatStamps = (count) => `${count} selo${count !== 1 ? 's' : ''}`;
 
 const paymentIcons = {
   dinheiro: <FaMoneyBillWave className="text-green-500" />,
-  cartao: <FaCreditCard className="text-blue-500" />, 
+  cartão: <FaCreditCard className="text-blue-500" />, 
   mbway: <FaMobileAlt className="text-purple-500" />,
   selos: <div className="relative">
     <FaStamp className="text-amber-500 absolute animate-ping" />
