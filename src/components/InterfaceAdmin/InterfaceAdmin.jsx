@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { 
@@ -16,6 +15,10 @@ import {
   limit
 } from 'firebase/firestore';
 import { 
+  FaMapMarkerAlt,
+  FaInfoCircle,
+  FaMotorcycle,
+  FaExclamationTriangle,
   FaCheck, 
   FaSearch, 
   FaUser, 
@@ -34,7 +37,8 @@ import {
   FaCreditCard,
   FaMobileAlt,
   FaCoins,
-  FaAward
+  FaAward,
+  FaTimes
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -120,6 +124,36 @@ const CustomerCard = ({ customer, onReset }) => {
   );
 };
 
+const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <ModernCard className="w-full max-w-md">
+        <div className="p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
+          <p className="text-gray-600 mb-6">{message}</p>
+          
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={onConfirm}
+              className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors"
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
+      </ModernCard>
+    </div>
+  );
+};
+
 const InterfaceAdmin = () => {
   const [activeTab, setActiveTab] = useState('pedidos');
   const [orders, setOrders] = useState([]);
@@ -131,111 +165,96 @@ const InterfaceAdmin = () => {
   const [isUpdatingStamps, setIsUpdatingStamps] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [stampChange, setStampChange] = useState(0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   useEffect(() => {
-  // Adicione este listener para sincronização entre abas
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === 'visible') {
-      refreshOrders();
-    }
-  };
-  
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  
-  return () => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-  };
-}, []);
-
-// Substitua o useEffect atual por este:
-useEffect(() => {
-  const q = query(
-    collection(db, "pedidos"), 
-    orderBy("criadoEm", "desc"),
-    limit(50)
-  );
-
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    const ordersData = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        enderecoCompleto: data.enderecoCompleto || 
-                         (data.cliente?.endereco && data.cliente?.localidade 
-                          ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
-                          : null),
-        zonaEntrega: data.zonaEntrega || null,
-        bairro: data.bairro || data.cliente?.localidade || null,
-        tipoEntrega: data.tipoEntrega || 
-                    (data.cliente?.endereco ? 'entrega' : 'retirada'),
-        cliente: {
-          nome: data.cliente?.nome || 'Não informado',
-          telefone: data.cliente?.telefone || 'Não informado',
-          endereco: data.cliente?.endereco || null,
-          localidade: data.cliente?.localidade || null,
-          codigoPostal: data.cliente?.codigoPostal || null,
-          nif: data.cliente?.nif || null, // Adicione esta linha
-          userId: data.cliente?.userId || null
-        },
-        criadoEm: data.criadoEm?.toDate() || new Date()
-      };
-    });
-
-    setOrders(ordersData);
-    setLoading(false);
-    
-    // DEBUG: Verifique se os campos estão vindo
-    console.log("Primeiro pedido:", ordersData[0]?.cliente);
-  });
-
-  return () => unsubscribe();
-}, []);
-
-const refreshOrders = async () => {
-  setLoading(true);
-  try {
     const q = query(
-      collection(db, 'pedidos'),
-      orderBy('criadoEm', 'desc'),
+      collection(db, "pedidos"), 
+      orderBy("criadoEm", "desc"),
       limit(50)
     );
-    
-    const snapshot = await getDocs(q);
-    const ordersData = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        enderecoCompleto: data.enderecoCompleto || 
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const ordersData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          valorPago: data.valorPago || 0,
+          troco: data.troco || 0,
+          enderecoCompleto: data.enderecoCompleto || 
                          (data.cliente?.endereco && data.cliente?.localidade 
                           ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
                           : null),
-        zonaEntrega: data.zonaEntrega || null,
-        bairro: data.bairro || data.cliente?.localidade || null,
-        tipoEntrega: data.tipoEntrega || 
+          zonaEntrega: data.zonaEntrega || null,
+          bairro: data.bairro || data.cliente?.localidade || null,
+          tipoEntrega: data.tipoEntrega || 
                     (data.cliente?.endereco ? 'entrega' : 'retirada'),
-        cliente: {
-          nome: data.cliente?.nome || 'Não informado',
-          telefone: data.cliente?.telefone || 'Não informado',
-          endereco: data.cliente?.endereco || null,
-          localidade: data.cliente?.localidade || null,
-          codigoPostal: data.cliente?.codigoPostal || null,
-          nif: data.cliente?.nif || null,
-          userId: data.cliente?.userId || null
-        },
-        criadoEm: data.criadoEm?.toDate() || new Date()
-      };
+          cliente: {
+            nome: data.cliente?.nome || 'Não informado',
+            telefone: data.cliente?.telefone || 'Não informado',
+            endereco: data.cliente?.endereco || null,
+            localidade: data.cliente?.localidade || null,
+            codigoPostal: data.cliente?.codigoPostal || null,
+            nif: data.cliente?.nif || null,
+            userId: data.cliente?.userId || null
+          },
+          criadoEm: data.criadoEm?.toDate() || new Date()
+        };
+      });
+
+      setOrders(ordersData);
+      setLoading(false);
     });
-    
-    setOrders(ordersData);
-  } catch (error) {
-    console.error("Erro ao atualizar pedidos:", error);
-    toast.error("Erro ao atualizar pedidos");
-  } finally {
-    setLoading(false);
-  }
-};
+
+    return () => unsubscribe();
+  }, []);
+
+  const refreshOrders = async () => {
+    setLoading(true);
+    try {
+      const q = query(
+        collection(db, 'pedidos'),
+        orderBy('criadoEm', 'desc'),
+        limit(50)
+      );
+      
+      const snapshot = await getDocs(q);
+      const ordersData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          enderecoCompleto: data.enderecoCompleto || 
+                         (data.cliente?.endereco && data.cliente?.localidade 
+                          ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
+                          : null),
+          zonaEntrega: data.zonaEntrega || null,
+          bairro: data.bairro || data.cliente?.localidade || null,
+          tipoEntrega: data.tipoEntrega || 
+                    (data.cliente?.endereco ? 'entrega' : 'retirada'),
+          cliente: {
+            nome: data.cliente?.nome || 'Não informado',
+            telefone: data.cliente?.telefone || 'Não informado',
+            endereco: data.cliente?.endereco || null,
+            localidade: data.cliente?.localidade || null,
+            codigoPostal: data.cliente?.codigoPostal || null,
+            nif: data.cliente?.nif || null,
+            userId: data.cliente?.userId || null
+          },
+          criadoEm: data.criadoEm?.toDate() || new Date()
+        };
+      });
+      
+      setOrders(ordersData);
+    } catch (error) {
+      console.error("Erro ao atualizar pedidos:", error);
+      toast.error("Erro ao atualizar pedidos");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const markAsReady = async (orderId) => {
     try {
@@ -251,26 +270,46 @@ const refreshOrders = async () => {
     }
   };
 
-const deleteOrder = async (orderId) => {
-  if (!window.confirm('Tem certeza que deseja remover este pedido permanentemente?')) {
-    return;
-  }
+  const cancelOrder = async (orderId) => {
+    try {
+      await updateDoc(doc(db, 'pedidos', orderId), {
+        status: 'cancelado',
+        atualizadoEm: serverTimestamp(),
+        canceladoPor: auth.currentUser.uid
+      });
+      toast.success('Pedido cancelado com sucesso!');
+    } catch (error) {
+      console.error("Erro ao cancelar pedido:", error);
+      toast.error(`Erro ao cancelar pedido: ${error.message}`);
+    }
+  };
 
-  try {
-    await deleteDoc(doc(db, 'pedidos', orderId));
+  const handleDeleteClick = (orderId) => {
+    setOrderToDelete(orderId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!orderToDelete) return;
     
-    // Atualiza o estado local imediatamente
-    setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
-    
-    toast.success('Pedido removido com sucesso!');
-  } catch (error) {
-    console.error("Erro ao remover pedido:", error);
-    toast.error(`Erro ao remover pedido: ${error.message}`);
-    
-    // Força um refresh em caso de erro para garantir sincronização
-    refreshOrders();
-  }
-};
+    try {
+      await deleteDoc(doc(db, 'pedidos', orderToDelete));
+      
+      // Atualiza o estado local imediatamente
+      setOrders(prevOrders => prevOrders.filter(order => order.id !== orderToDelete));
+      
+      toast.success('Pedido removido com sucesso!');
+    } catch (error) {
+      console.error("Erro ao remover pedido:", error);
+      toast.error(`Erro ao remover pedido: ${error.message}`);
+      
+      // Força um refresh em caso de erro para garantir sincronização
+      refreshOrders();
+    } finally {
+      setShowDeleteConfirm(false);
+      setOrderToDelete(null);
+    }
+  };
 
   const searchCustomer = async () => {
     if (!customerSearchTerm.trim()) {
@@ -366,6 +405,15 @@ const deleteOrder = async (orderId) => {
     setShowSuccess(false);
   };
 
+  const formatCurrency = (value) => {
+    if (isNaN(value)) return '€0.00';
+    return new Intl.NumberFormat('pt-PT', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2
+    }).format(value);
+  };
+
   const getTimeDifference = (date) => {
     if (!date) return '--';
     const now = new Date();
@@ -377,15 +425,33 @@ const deleteOrder = async (orderId) => {
     return `${Math.floor(diffInMinutes / 60)}h ${diffInMinutes % 60}min atrás`;
   };
 
-  const filteredOrders = orders.filter(order => 
-    searchTerm === '' || 
-    order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (order.cliente.nome && order.cliente.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (order.cliente.telefone && order.cliente.telefone.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredOrders = orders.filter(order => {
+    if (searchTerm) {
+      const matchesSearch = 
+        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.cliente.nome && order.cliente.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (order.cliente.telefone && order.cliente.telefone.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      if (!matchesSearch) return false;
+    }
+    
+    if (activeTab === 'pedidos') return order.status !== 'pronto' && order.status !== 'cancelado';
+    if (activeTab === 'prontos') return order.status === 'pronto';
+    if (activeTab === 'cancelados') return order.status === 'cancelado';
+    
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Confirmar Remoção"
+        message="Tem certeza que deseja remover este pedido permanentemente? Esta ação não pode ser desfeita."
+      />
+
       <header className="bg-gradient-to-r from-green-600 to-green-800 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -416,9 +482,21 @@ const deleteOrder = async (orderId) => {
           >
             <FaListUl className="mr-2" />
             Pedidos
-            {orders.length > 0 && (
+            {orders.filter(o => o.status !== 'pronto' && o.status !== 'cancelado').length > 0 && (
               <span className="ml-2 bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                {orders.length}
+                {orders.filter(o => o.status !== 'pronto' && o.status !== 'cancelado').length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('prontos')}
+            className={`${activeTab === 'prontos' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} py-4 px-6 border-b-2 font-medium text-sm flex items-center`}
+          >
+            <FaCheck className="mr-2" />
+            Prontos
+            {orders.filter(o => o.status === 'pronto').length > 0 && (
+              <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                {orders.filter(o => o.status === 'pronto').length}
               </span>
             )}
           </button>
@@ -431,7 +509,7 @@ const deleteOrder = async (orderId) => {
           </button>
         </div>
 
-        {activeTab === 'pedidos' ? (
+        {activeTab !== 'selos' ? (
           <ModernCard>
             <div className="p-6 border-b border-gray-200 bg-gray-50">
               <div className="max-w-md mx-auto">
@@ -458,7 +536,7 @@ const deleteOrder = async (orderId) => {
               <div className="py-12 text-center">
                 <FaBoxOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900">
-                  {searchTerm ? 'Nenhum pedido encontrado' : 'Nenhum pedido recente'}
+                  {searchTerm ? 'Nenhum pedido encontrado' : `Nenhum pedido ${activeTab === 'prontos' ? 'pronto' : 'pendente'}`}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
                   {searchTerm ? 'Tente ajustar sua busca' : 'Novos pedidos aparecerão aqui automaticamente'}
@@ -467,168 +545,293 @@ const deleteOrder = async (orderId) => {
             ) : (
               <div className="divide-y divide-gray-200">
                 {filteredOrders.map((order) => (
-                  <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors">
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center flex-wrap gap-2">
-                          <Badge color="gray">#{order.id.substring(0, 6)}</Badge>
-                          <span className="text-sm text-gray-500">
-                            {getTimeDifference(order.criadoEm)}
-                          </span>
-                          
-                         {order.pagoComSelos || order.cliente?.pagoComSelos ? (
-                            <Badge color="amber">
-                              <FaStamp className="mr-1" />
-                              Pago com Selos
-                            </Badge>
-                          ) : null}
-                          
-                          {order.status === 'pronto' && <Badge color="green">Pronto</Badge>}
-                          {order.status === 'pendente' && <Badge color="yellow">Pendente</Badge>}
-                        </div>
-
+                  <div key={order.id} className="relative p-6 mb-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 overflow-hidden">
+                    <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+                    
+                    <div className="flex flex-col space-y-6">
+                      {/* Cabeçalho */}
+                      <div className="flex flex-wrap justify-between items-start gap-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {order.cliente?.nome || 'Nome não informado'}
+                          <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                            <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-md mr-3 font-mono">
+                              #{order.numeroPedido || order.id.substring(0, 5)}
+                            </span>
+                            {order.cliente?.nome || 'Cliente não informado'}
                           </h3>
-                          <p className="text-sm text-gray-600">
-                            {order.cliente?.telefone || 'Telefone não informado'}
-                          </p>
-                        </div>
-{order.tipoEntrega === 'entrega' || order.enderecoCompleto ? (
-  <div className="mt-2 bg-blue-50 p-2 rounded-lg border border-blue-100">
-    <p className="text-sm text-gray-700">
-      <span className="font-semibold text-blue-600">
-        {order.tipoEntrega === 'entrega' ? 'Entrega:' : 'Endereço fornecido:'}
-      </span>
-      {' '}
-      {order.enderecoCompleto || `${order.cliente?.endereco || 'Endereço não informado'}, ${order.cliente?.localidade || 'Bairro não informado'}`}
-    </p>
-    {order.zonaEntrega && (
-      <p className="text-sm text-gray-700 mt-1">
-        <span className="font-medium">Zona:</span> {order.zonaEntrega}
-      </p>
-    )}
-{order.cliente?.codigoPostal && (
-  <div className="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
-    <p className="text-sm text-gray-700">
-      <span className="font-medium">Código Postal:</span> {order.cliente.codigoPostal}
-    </p>
-  </div>
-)}
-  </div>
-) : (
-  <div className="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
-    <p className="text-sm text-gray-700">
-      <span className="font-semibold">Retirada no Local</span>
-    </p>
-  </div>
-  
-)}
-
-
-
-                        {order.observacoes && (
-                          <div className="mt-2 bg-amber-50 p-2 rounded-lg border border-amber-100">
-                            <p className="text-sm text-gray-700">
-                              <span className="font-medium text-amber-600">Observações:</span> {order.observacoes}
-                            </p>
-                          </div>
-                        )}
-                      
-                     {order.cliente?.nif && (
-  <div className="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
-    <p className="text-sm text-gray-700">
-      <span className="font-medium">NIF:</span> {order.cliente.nif}
-    </p>
-  </div>
-)}
-
-                        <div className="space-y-2">
-                          {(order.itens || []).map((item, index) => (
-                            <div 
-                              key={index} 
-                              className={`flex justify-between text-sm p-2 rounded-lg ${
-                                item.pagoComSelos ? 'bg-amber-50 border border-amber-200' : ''
-                              }`}
-                            >
-                              <div>
-                                <span className="font-medium">
-                                  {item.quantidade}x {item.nome}
-                                  {item.pagoComSelos && (
-                                    <span className="ml-2 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs flex items-center inline-flex">
-                                      <FaStamp className="mr-1" size={10} />
-                                      Pago com selos
-                                    </span>
-                                  )}
-                                </span>
-                                {item.observacao && (
-                                  <p className="text-xs text-gray-500">Obs: {item.observacao}</p>
-                                )}
-                              </div>
-                              <span className="font-medium">
-                                {item.pagoComSelos ? (
-                                  <span className="text-green-600">Grátis (selos)</span>
-                                ) : (
-                                  formatCurrency(item.preco * item.quantidade)
-                                )}
+                          <div className="flex items-center space-x-3 mt-2">
+                            <span className="text-sm text-gray-500 flex items-center">
+                              <FaClock className="mr-1" />
+                              {getTimeDifference(order.criadoEm)}
+                            </span>
+                            {order.pagoComSelos && (
+                              <span className="bg-gradient-to-r from-amber-400 to-amber-600 text-white px-2 py-1 rounded-full text-xs flex items-center">
+                                <FaStamp className="mr-1" />
+                                Pago com Selos
                               </span>
-                            </div>
-                          ))}
+                            )}
+                          </div>
                         </div>
                         
-                      <div className="flex flex-col gap-1 text-sm text-gray-600 mt-2">
-                          <div className="flex items-center ml-5">
-                            {paymentIcons[order.metodoPagamento]}
-                            <span className="ml-1">
-                              {order.metodoPagamento === 'dinheiro'
-                                ? `Dinheiro${order.trocoPara ? ` (Troco ${formatCurrency(order.trocoPara)})` : ''}`
-                                : order.metodoPagamento === 'mbway'
-                                ? `MBWay (${order.mbwayNumber || 'número não informado'})`
-                                : order.metodoPagamento}
-                            </span>
-                          </div>
-
-                          {order.pagoComSelos && (
-                            <div className="ml-5 mt-1 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-3 py-2 text-sm font-semibold flex items-center">
-                              <FaCoins className="mr-2 text-amber-600" />
-                              Pedido pago com selos
-                            </div>
-                          )}
+                        <div className="flex space-x-2">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            order.status === 'pronto' 
+                              ? 'bg-green-100 text-green-800' 
+                              : order.status === 'cancelado'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {order.status === 'pronto' 
+                              ? 'PRONTO' 
+                              : order.status === 'cancelado'
+                                ? 'CANCELADO'
+                                : 'PENDENTE'}
+                          </span>
                         </div>
-
                       </div>
 
-                      <div className="flex flex-col items-end gap-3 min-w-[180px]">
-                        <div className="text-right">
-                          <span className="font-bold text-lg text-gray-900">
-                            {formatCurrency(order.total || 0)}
-                          </span>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {order.opcaoEntrega === 'entrega' && order.taxaEntrega > 0 && (
-                              <span>Inclui taxa de entrega: {formatCurrency(order.taxaEntrega)}</span>
-                            )}
-                          </p>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => deleteOrder(order.id)}
-                            className="inline-flex items-center px-3 py-1.5 border border-red-200 text-xs font-medium rounded-lg shadow-sm text-red-700 bg-red-50 hover:bg-red-100"
-                          >
-                            <FaTrash className="mr-1" />
-                            Remover
-                          </button>
-                          {order.status !== 'pronto' && (
-                            <button
-                              onClick={() => markAsReady(order.id)}
-                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700"
-                            >
-                              <FaRegCheckCircle className="mr-1" />
-                              Pronto
-                            </button>
+                      {/* Corpo do pedido */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Coluna 1: Informações do cliente */}
+                        <div className="space-y-4">
+                          <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                            <div className="flex items-center mb-3">
+                              <div className="bg-blue-100 p-2 rounded-full mr-3">
+                                <FaUserCircle className="text-blue-600 text-xl" />
+                              </div>
+                              <h4 className="text-lg font-semibold text-gray-800">Cliente</h4>
+                            </div>
+                            <div className="space-y-2 pl-11">
+                              <p className="text-sm">
+                                <span className="block text-xs text-gray-500 font-medium">Nome</span>
+                                <span className="font-medium">{order.cliente?.nome || 'Não informado'}</span>
+                              </p>
+                              <p className="text-sm">
+                                <span className="block text-xs text-gray-500 font-medium">Telefone</span>
+                                <span className="font-medium">{order.cliente?.telefone || 'Não informado'}</span>
+                              </p>
+                              {order.cliente?.nif && (
+                                <p className="text-sm">
+                                  <span className="block text-xs text-gray-500 font-medium">NIF</span>
+                                  <span className="font-mono">{order.cliente.nif}</span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {order.observacoes && (
+                            <div className="bg-amber-50 p-5 rounded-lg border border-amber-200">
+                              <div className="flex items-center mb-2">
+                                <div className="bg-amber-100 p-2 rounded-full mr-3">
+                                  <FaInfoCircle className="text-amber-600 text-xl" />
+                                </div>
+                                <h4 className="text-lg font-semibold text-amber-800">Observações</h4>
+                              </div>
+                              <p className="text-sm pl-11">{order.observacoes}</p>
+                            </div>
                           )}
                         </div>
+
+                        {/* Coluna 2: Entrega e pagamento */}
+                        <div className="space-y-4">
+                          <div className={`p-5 rounded-lg border ${
+                            order.tipoEntrega === 'entrega' 
+                              ? 'bg-green-50 border-green-200' 
+                              : 'bg-gray-50 border-gray-200'
+                          }`}>
+                            <div className="flex items-center mb-3">
+                              <div className={`p-2 rounded-full mr-3 ${
+                                order.tipoEntrega === 'entrega' 
+                                  ? 'bg-green-100 text-green-600' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                <FaMotorcycle className="text-xl" />
+                              </div>
+                              <h4 className="text-lg font-semibold">
+                                {order.tipoEntrega === 'entrega' ? 'Entrega' : 'Retirada'}
+                              </h4>
+                            </div>
+                            
+                            {order.tipoEntrega === 'entrega' ? (
+                              <div className="space-y-3 pl-11">
+                                <div>
+                                  <span className="block text-xs text-gray-500 font-medium">Endereço</span>
+                                  <p className="font-medium">{order.enderecoCompleto || 'Não informado'}</p>
+                                </div>
+                                
+                                {order.cliente?.codigoPostal && (
+                                  <div>
+                                    <span className="block text-xs text-gray-500 font-medium">Código Postal</span>
+                                    <p className="font-mono">{order.cliente.codigoPostal}</p>
+                                  </div>
+                                )}
+                                
+                                {order.zonaEntrega && (
+                                  <div>
+                                    <span className="block text-xs text-gray-500 font-medium">Zona de Entrega</span>
+                                    <p>{order.zonaEntrega}</p>
+                                  </div>
+                                )}
+                                
+                                <div className="pt-2 border-t border-gray-200 mt-2">
+                                  <span className="block text-xs text-gray-500 font-medium">Taxa de Entrega</span>
+                                  <p className="text-green-600 font-bold">{formatCurrency(order.taxaEntrega || 0)}</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-sm pl-11 text-gray-600">O cliente irá retirar no estabelecimento</p>
+                            )}
+                          </div>
+
+                          <div className="bg-indigo-50 p-5 rounded-lg border border-indigo-200">
+                            <div className="flex items-center mb-3">
+                              <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                                {paymentIcons[order.metodoPagamento] || <FaMoneyBillWave className="text-indigo-600 text-xl" />}
+                              </div>
+                              <h4 className="text-lg font-semibold text-indigo-800">Pagamento</h4>
+                            </div>
+                            
+                            <div className="space-y-3 pl-11">
+                              <div>
+                                <span className="block text-xs text-gray-500 font-medium">Método</span>
+                                <p className="font-medium">{order.metodoPagamento?.toUpperCase() || 'NÃO INFORMADO'}</p>
+                              </div>
+                              
+                              {order.metodoPagamento === 'dinheiro' && (
+                                <>
+                                  <div>
+                                    <span className="block text-xs text-gray-500 font-medium">Valor Pago</span>
+                                    <p className="font-medium">
+                                      {order.detalhesPagamento?.valorPago 
+                                        ? formatCurrency(order.detalhesPagamento.valorPago) 
+                                        : 'Não informado'}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="block text-xs text-gray-500 font-medium">Troco</span>
+                                    <p className="font-medium">
+                                      {order.detalhesPagamento?.troco 
+                                        ? formatCurrency(order.detalhesPagamento.troco) 
+                                        : '0,00€'}
+                                    </p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Coluna 3: Itens e total */}
+                        <div className="space-y-4">
+                          <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                            <div className="flex items-center mb-3">
+                              <div className="bg-purple-100 p-2 rounded-full mr-3">
+                                <FaListUl className="text-purple-600 text-xl" />
+                              </div>
+                              <h4 className="text-lg font-semibold text-gray-800">Itens do Pedido</h4>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              {(order.itens || []).map((item, index) => (
+                                <div 
+                                  key={index} 
+                                  className={`p-3 rounded-lg ${
+                                    item.pagoComSelos 
+                                      ? 'bg-amber-50 border border-amber-200' 
+                                      : 'bg-gray-50 border border-gray-200'
+                                  }`}
+                                >
+                                  <div className="flex justify-between">
+                                    <div>
+                                      <p className="font-medium flex items-center">
+                                        {item.quantidade}x {item.nome}
+                                        {item.pagoComSelos && (
+                                          <span className="ml-2 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs flex items-center">
+                                            <FaStamp className="mr-1" size={10} />
+                                            Selos
+                                          </span>
+                                        )}
+                                      </p>
+                                      {item.tamanho && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          Tamanho: {item.tamanho.charAt(0).toUpperCase() + item.tamanho.slice(1)}
+                                        </p>
+                                      )}
+                                      {item.extras?.length > 0 && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          Extras: {item.extras.map(e => e.nome).join(', ')}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className={`font-medium min-w-[70px] text-right ${
+                                      item.pagoComSelos ? 'text-green-600' : 'text-gray-800'
+                                    }`}>
+                                      {item.pagoComSelos ? 'Grátis' : formatCurrency(item.preco * item.quantidade)}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">Subtotal:</span>
+                                <span className="font-medium">{formatCurrency(order.subtotal || 0)}</span>
+                              </div>
+                              
+                              {order.tipoEntrega === 'entrega' && (
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-gray-600">Taxa de entrega:</span>
+                                  <span>{formatCurrency(order.taxaEntrega || 0)}</span>
+                                </div>
+                              )}
+                              
+                              {order.selosUsados > 0 && (
+                                <div className="flex justify-between text-amber-700">
+                                  <span className="text-sm">Desconto (selos):</span>
+                                  <span className="text-sm">-{formatCurrency((order.subtotal + (order.taxaEntrega || 0) - (order.total || 0)))}</span>
+                                </div>
+                              )}
+
+                              <div className="pt-3 mt-2 border-t border-gray-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-gray-800">Total:</span>
+                                  <span className="text-2xl font-bold text-green-600">
+                                    {formatCurrency(order.total || 0)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Rodapé com ações */}
+                      <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                        {order.status !== 'cancelado' && (
+                          <>
+                            <button
+                              onClick={() => handleDeleteClick(order.id)}
+                              className="px-4 py-2 border border-red-200 text-red-700 bg-white hover:bg-red-50 rounded-lg flex items-center transition-colors shadow-sm"
+                            >
+                              <FaTrash className="mr-2" />
+                              Remover Pedido
+                            </button>
+                            
+                            {order.status !== 'pronto' && (
+                              <>
+                                <button
+                                  onClick={() => markAsReady(order.id)}
+                                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 rounded-lg flex items-center transition-colors shadow-sm"
+                                >
+                                  <FaRegCheckCircle className="mr-2" />
+                                  Marcar como Pronto
+                                </button>
+                              </>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

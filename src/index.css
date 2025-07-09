@@ -353,3 +353,8 @@ code {
   to { transform: rotate(360deg); }
 }
 
+input:invalid {
+  border-color: #f87171;
+  background-color: #fee2e2;
+}
+
