@@ -168,93 +168,97 @@ const InterfaceAdmin = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "pedidos"), 
-      orderBy("criadoEm", "desc"),
-      limit(50)
-    );
+useEffect(() => {
+  const q = query(
+    collection(db, "pedidos"), 
+    orderBy("criadoEm", "desc"),
+    limit(50)
+  );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const ordersData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          valorPago: data.valorPago || 0,
-          troco: data.troco || 0,
-          enderecoCompleto: data.enderecoCompleto || 
-                         (data.cliente?.endereco && data.cliente?.localidade 
-                          ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
-                          : null),
-          zonaEntrega: data.zonaEntrega || null,
-          bairro: data.bairro || data.cliente?.localidade || null,
-          tipoEntrega: data.tipoEntrega || 
-                    (data.cliente?.endereco ? 'entrega' : 'retirada'),
-          cliente: {
-            nome: data.cliente?.nome || 'Não informado',
-            telefone: data.cliente?.telefone || 'Não informado',
-            endereco: data.cliente?.endereco || null,
-            localidade: data.cliente?.localidade || null,
-            codigoPostal: data.cliente?.codigoPostal || null,
-            nif: data.cliente?.nif || null,
-            userId: data.cliente?.userId || null
-          },
-          criadoEm: data.criadoEm?.toDate() || new Date()
-        };
-      });
-
-      setOrders(ordersData);
-      setLoading(false);
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const ordersData = snapshot.docs.map(doc => {
+      const data = doc.data();
+      const timestamp = data.criadoEm;
+      
+      return {
+        id: doc.id,
+        ...data,
+        valorPago: data.valorPago || 0,
+        troco: data.troco || 0,
+        enderecoCompleto: data.enderecoCompleto || 
+                       (data.cliente?.endereco && data.cliente?.localidade 
+                        ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
+                        : null),
+        zonaEntrega: data.zonaEntrega || null,
+        bairro: data.bairro || data.cliente?.localidade || null,
+        tipoEntrega: data.tipoEntrega || 
+                  (data.cliente?.endereco ? 'entrega' : 'retirada'),
+        cliente: {
+          nome: data.cliente?.nome || 'Não informado',
+          telefone: data.cliente?.telefone || 'Não informado',
+          endereco: data.cliente?.endereco || null,
+          localidade: data.cliente?.localidade || null,
+          codigoPostal: data.cliente?.codigoPostal || null,
+          nif: data.cliente?.nif || null,
+          userId: data.cliente?.userId || null
+        },
+        criadoEm: timestamp ? timestamp.toDate() : new Date() // Correção aplicada aqui
+      };
     });
 
-    return () => unsubscribe();
-  }, []);
+    setOrders(ordersData);
+    setLoading(false);
+  });
 
-  const refreshOrders = async () => {
-    setLoading(true);
-    try {
-      const q = query(
-        collection(db, 'pedidos'),
-        orderBy('criadoEm', 'desc'),
-        limit(50)
-      );
+  return () => unsubscribe();
+}, []);
+
+const refreshOrders = async () => {
+  setLoading(true);
+  try {
+    const q = query(
+      collection(db, 'pedidos'),
+      orderBy('criadoEm', 'desc'),
+      limit(50)
+    );
+    
+    const snapshot = await getDocs(q);
+    const ordersData = snapshot.docs.map(doc => {
+      const data = doc.data();
+      const timestamp = data.criadoEm;
       
-      const snapshot = await getDocs(q);
-      const ordersData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          enderecoCompleto: data.enderecoCompleto || 
-                         (data.cliente?.endereco && data.cliente?.localidade 
-                          ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
-                          : null),
-          zonaEntrega: data.zonaEntrega || null,
-          bairro: data.bairro || data.cliente?.localidade || null,
-          tipoEntrega: data.tipoEntrega || 
-                    (data.cliente?.endereco ? 'entrega' : 'retirada'),
-          cliente: {
-            nome: data.cliente?.nome || 'Não informado',
-            telefone: data.cliente?.telefone || 'Não informado',
-            endereco: data.cliente?.endereco || null,
-            localidade: data.cliente?.localidade || null,
-            codigoPostal: data.cliente?.codigoPostal || null,
-            nif: data.cliente?.nif || null,
-            userId: data.cliente?.userId || null
-          },
-          criadoEm: data.criadoEm?.toDate() || new Date()
-        };
-      });
-      
-      setOrders(ordersData);
-    } catch (error) {
-      console.error("Erro ao atualizar pedidos:", error);
-      toast.error("Erro ao atualizar pedidos");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        id: doc.id,
+        ...data,
+        enderecoCompleto: data.enderecoCompleto || 
+                       (data.cliente?.endereco && data.cliente?.localidade 
+                        ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
+                        : null),
+        zonaEntrega: data.zonaEntrega || null,
+        bairro: data.bairro || data.cliente?.localidade || null,
+        tipoEntrega: data.tipoEntrega || 
+                  (data.cliente?.endereco ? 'entrega' : 'retirada'),
+        cliente: {
+          nome: data.cliente?.nome || 'Não informado',
+          telefone: data.cliente?.telefone || 'Não informado',
+          endereco: data.cliente?.endereco || null,
+          localidade: data.cliente?.localidade || null,
+          codigoPostal: data.cliente?.codigoPostal || null,
+          nif: data.cliente?.nif || null,
+          userId: data.cliente?.userId || null
+        },
+        criadoEm: timestamp ? timestamp.toDate() : new Date() // Correção aplicada aqui
+      };
+    });
+    
+    setOrders(ordersData);
+  } catch (error) {
+    console.error("Erro ao atualizar pedidos:", error);
+    toast.error("Erro ao atualizar pedidos");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const markAsReady = async (orderId) => {
     try {
