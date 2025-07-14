@@ -2006,8 +2006,8 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       selosGanhos,
       metodoPagamento: paymentMethod,
       status: 'pendente',
-      criadoEm: serverTimestamp(),
-      atualizadoEm: serverTimestamp(),
+      criadoEm: new Date(),
+      atualizadoEm: new Date(),
       numeroPedido, // Número amigável de 5 dígitos
       idFirebase: pedidoRef.id, // Mantemos o ID do Firebase como referência interna
       userId: user?.uid || null,

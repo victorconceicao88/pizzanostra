@@ -11,12 +11,12 @@ import {
   getDocs,
   serverTimestamp,
   deleteDoc,
-  writeBatch,
   limit
 } from 'firebase/firestore';
 import { 
   FaMapMarkerAlt,
   FaInfoCircle,
+  FaPrint,
   FaMotorcycle,
   FaExclamationTriangle,
   FaCheck, 
@@ -32,16 +32,14 @@ import {
   FaTrash,
   FaBoxOpen,
   FaRegCheckCircle,
-  FaBroom,
   FaMoneyBillWave,
   FaCreditCard,
   FaMobileAlt,
-  FaCoins,
-  FaAward,
   FaTimes
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
 
 // Componentes de UI
 const ModernCard = ({ children, className = '' }) => (
@@ -68,16 +66,6 @@ const Badge = ({ children, color = 'gray' }) => {
     </span>
   );
 };
-
-const StampBadge = () => (
-  <div className="relative inline-flex items-center justify-center">
-    <div className="absolute inset-0 bg-amber-400 rounded-full opacity-75 animate-pulse"></div>
-    <Badge color="stamp" className="relative z-10">
-      <FaStamp className="mr-1" />
-      Pago com Selos
-    </Badge>
-  </div>
-);
 
 // Utilitários
 const formatCurrency = (value) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
@@ -168,7 +156,19 @@ const InterfaceAdmin = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
 
-useEffect(() => {
+  const thermalPrinter = {
+    printOrder: async (order) => {
+      try {
+        await axios.post('http://localhost:3001/api/print', order);
+        toast.success('Pedido enviado para impressão!');
+      } catch (error) {
+        console.error('Erro ao imprimir:', error);
+        toast.error('Erro ao enviar para impressão');
+      }
+    }
+  };
+ 
+  useEffect(() => {
   const q = query(
     collection(db, "pedidos"), 
     orderBy("criadoEm", "desc"),
@@ -176,23 +176,23 @@ useEffect(() => {
   );
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    const ordersData = snapshot.docs.map(doc => {
+    const updatedOrders = snapshot.docs.map(doc => {
       const data = doc.data();
       const timestamp = data.criadoEm;
-      
+
       return {
         id: doc.id,
         ...data,
         valorPago: data.valorPago || 0,
         troco: data.troco || 0,
         enderecoCompleto: data.enderecoCompleto || 
-                       (data.cliente?.endereco && data.cliente?.localidade 
-                        ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
-                        : null),
+          (data.cliente?.endereco && data.cliente?.localidade 
+            ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
+            : null),
         zonaEntrega: data.zonaEntrega || null,
         bairro: data.bairro || data.cliente?.localidade || null,
         tipoEntrega: data.tipoEntrega || 
-                  (data.cliente?.endereco ? 'entrega' : 'retirada'),
+          (data.cliente?.endereco ? 'entrega' : 'retirada'),
         cliente: {
           nome: data.cliente?.nome || 'Não informado',
           telefone: data.cliente?.telefone || 'Não informado',
@@ -202,63 +202,94 @@ useEffect(() => {
           nif: data.cliente?.nif || null,
           userId: data.cliente?.userId || null
         },
-        criadoEm: timestamp ? timestamp.toDate() : new Date() // Correção aplicada aqui
+        criadoEm: timestamp ? timestamp.toDate() : new Date()
       };
     });
 
-    setOrders(ordersData);
+    setOrders(updatedOrders);
     setLoading(false);
+
+    // Verifica apenas alterações do tipo 'added'
+    snapshot.docChanges().forEach(change => {
+      if (change.type === 'added') {
+        const newData = change.doc.data();
+
+        // Impede impressão duplicada
+        if (newData.status === 'impresso') return;
+
+        const newOrder = {
+          id: change.doc.id,
+          ...newData,
+          criadoEm: newData.criadoEm?.toDate?.() || new Date()
+        };
+
+        console.log('🖨️ Novo pedido detectado, enviando para impressão...');
+
+        thermalPrinter.printOrder(newOrder)
+          .then(() => {
+            updateDoc(doc(db, "pedidos", newOrder.id), {
+              status: 'impresso',
+              impressoEm: serverTimestamp(),
+              impressoPor: auth.currentUser.uid
+            });
+          })
+          .catch(error => {
+            console.error('❌ Falha na impressão automática:', error);
+            setTimeout(() => thermalPrinter.printOrder(newOrder), 5000);
+          });
+      }
+    });
   });
 
   return () => unsubscribe();
-}, []);
+}, []); // Remova 'orders' da dependência
 
-const refreshOrders = async () => {
-  setLoading(true);
-  try {
-    const q = query(
-      collection(db, 'pedidos'),
-      orderBy('criadoEm', 'desc'),
-      limit(50)
-    );
-    
-    const snapshot = await getDocs(q);
-    const ordersData = snapshot.docs.map(doc => {
-      const data = doc.data();
-      const timestamp = data.criadoEm;
+  const refreshOrders = async () => {
+    setLoading(true);
+    try {
+      const q = query(
+        collection(db, 'pedidos'),
+        orderBy('criadoEm', 'desc'),
+        limit(50)
+      );
       
-      return {
-        id: doc.id,
-        ...data,
-        enderecoCompleto: data.enderecoCompleto || 
+      const snapshot = await getDocs(q);
+      const ordersData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const timestamp = data.criadoEm;
+        
+        return {
+          id: doc.id,
+          ...data,
+          enderecoCompleto: data.enderecoCompleto || 
                        (data.cliente?.endereco && data.cliente?.localidade 
                         ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
                         : null),
-        zonaEntrega: data.zonaEntrega || null,
-        bairro: data.bairro || data.cliente?.localidade || null,
-        tipoEntrega: data.tipoEntrega || 
+          zonaEntrega: data.zonaEntrega || null,
+          bairro: data.bairro || data.cliente?.localidade || null,
+          tipoEntrega: data.tipoEntrega || 
                   (data.cliente?.endereco ? 'entrega' : 'retirada'),
-        cliente: {
-          nome: data.cliente?.nome || 'Não informado',
-          telefone: data.cliente?.telefone || 'Não informado',
-          endereco: data.cliente?.endereco || null,
-          localidade: data.cliente?.localidade || null,
-          codigoPostal: data.cliente?.codigoPostal || null,
-          nif: data.cliente?.nif || null,
-          userId: data.cliente?.userId || null
-        },
-        criadoEm: timestamp ? timestamp.toDate() : new Date() // Correção aplicada aqui
-      };
-    });
-    
-    setOrders(ordersData);
-  } catch (error) {
-    console.error("Erro ao atualizar pedidos:", error);
-    toast.error("Erro ao atualizar pedidos");
-  } finally {
-    setLoading(false);
-  }
-};
+          cliente: {
+            nome: data.cliente?.nome || 'Não informado',
+            telefone: data.cliente?.telefone || 'Não informado',
+            endereco: data.cliente?.endereco || null,
+            localidade: data.cliente?.localidade || null,
+            codigoPostal: data.cliente?.codigoPostal || null,
+            nif: data.cliente?.nif || null,
+            userId: data.cliente?.userId || null
+          },
+          criadoEm: timestamp ? timestamp.toDate() : new Date()
+        };
+      });
+      
+      setOrders(ordersData);
+    } catch (error) {
+      console.error("Erro ao atualizar pedidos:", error);
+      toast.error("Erro ao atualizar pedidos");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const markAsReady = async (orderId) => {
     try {
@@ -407,15 +438,6 @@ const refreshOrders = async () => {
     setCustomerSearchTerm('');
     setStampChange(0);
     setShowSuccess(false);
-  };
-
-  const formatCurrency = (value) => {
-    if (isNaN(value)) return '€0.00';
-    return new Intl.NumberFormat('pt-PT', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2
-    }).format(value);
   };
 
   const getTimeDifference = (date) => {
@@ -590,6 +612,13 @@ const refreshOrders = async () => {
                                 ? 'CANCELADO'
                                 : 'PENDENTE'}
                           </span>
+                          <button
+                            onClick={() => thermalPrinter.printOrder(order)}
+                            className="px-3 py-1 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-full flex items-center transition-colors shadow-sm text-xs"
+                          >
+                            <FaPrint className="mr-1" size={12} />
+                            Reimprimir
+                          </button>
                         </div>
                       </div>
 
@@ -825,6 +854,13 @@ const refreshOrders = async () => {
                             
                             {order.status !== 'pronto' && (
                               <>
+                                <button
+                                  onClick={() => cancelOrder(order.id)}
+                                  className="px-4 py-2 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-lg flex items-center transition-colors shadow-sm"
+                                >
+                                  <FaTimes className="mr-2" />
+                                  Cancelar Pedido
+                                </button>
                                 <button
                                   onClick={() => markAsReady(order.id)}
                                   className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 rounded-lg flex items-center transition-colors shadow-sm"
