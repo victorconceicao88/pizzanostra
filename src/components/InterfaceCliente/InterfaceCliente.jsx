@@ -1918,6 +1918,7 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
   if (isSubmitting) return;
   setIsSubmitting(true);
 
+
   try {
     if (cart.length === 0) {
       throw new Error(t(language, 'emptyCart'));
@@ -2022,6 +2023,15 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
 
     // Salvando o pedido
     await setDoc(pedidoRef, pedidoData);
+
+   if (user) {
+  const userRef = doc(db, 'users', user.uid);
+  await updateDoc(userRef, {
+    selos: increment(selosGanhos - selosUsados),
+    selosAtualizadoEm: serverTimestamp()
+  });
+}
+
 
     // Limpando o carrinho e mostrando confirmação
     setCart([]);

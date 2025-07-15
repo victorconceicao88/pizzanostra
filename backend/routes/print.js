@@ -4,13 +4,15 @@ const router = express.Router();
 module.exports = (printer) => {
   router.post('/', async (req, res) => {
     try {
-      if (!req.body.id || !req.body.cliente) {
-        return res.status(400).json({ success: false, error: "Dados incompletos" });
+      const { numeroPedido, itens, cliente } = req.body;
+
+      if (!numeroPedido || !itens || !cliente) {
+        return res.status(400).json({ success: false, error: "Dados do pedido incompletos" });
       }
 
       await printer.printOrder(req.body);
 
-      res.json({ 
+      res.json({
         success: true,
         printedAt: new Date().toISOString()
       });
