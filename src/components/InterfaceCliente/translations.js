@@ -10,7 +10,49 @@ export const translations = {
     title: "Autêntica Pizza Brasileira em Portimão",
     subtitle: "Feita com ingredientes importados da Itália e forno a lenha tradicional. Entregamos em toda a região!",
     viewCart: "Ver Carrinho",
+    stampsAvailable:"Selos disponíveis",
+    useStamps:"Utilizar selos",
+    usingStamps:"Selos aplicados",
     fullMenu: "Cardápio Completo",
+    halfAndHalf: "Meio a Meio",
+    firstHalf: "Primeira metade",
+          secondHalf: "Segunda metade",
+          selectHalf: "Selecione o sabor",
+          halfPizzaNotice: "Escolha dois sabores para sua pizza (apenas para tamanho família)",
+          
+          
+          // Bordas
+          borderType: "Tipo de Borda",
+          thinBorder: "Fina (tradicional)",
+          thickBorder: "Grossa (recheada)",
+          stuffedCrust: "Borda Recheada",
+          noBorder: "Sem borda recheada",
+          cheeseCrust: "Borda de Queijo",
+          pepperoniCrust: "Borda de Pepperoni",
+          catupiryCrust: "Borda de Catupiry",
+          
+          // Massas
+          pasta: "Massas",
+          pastaOptions: "Opções de Massa",
+          penne: "Penne",
+          spaghetti: "Espaguete",
+          fettuccine: "Fettuccine",
+          gnocchi: "Nhoque",
+          choosePasta: "Escolha seu tipo de massa",
+          pastaWith: "Massa com",
+          
+          // Tamanhos
+          individual: "Individual (25cm)",
+          media: "Média (32cm)",
+          familia: "Família (41cm)",
+          size: "Tamanho",
+          
+          // Outros
+          extras: "Extras",
+          addToCart: "Adicionar ao Carrinho",
+          quantity: "Quantidade",
+          total: "Total",
+          extrasTotal: "Total de extras",
     
     // Categories
 
@@ -139,6 +181,9 @@ export const translations = {
     orderSentSuccess:"Thanks! We’ve received your order and we’re getting it ready",
     orderPreparingTitle: "We're preparing your order with care!",
     orderPreparingDescription: "If you need anything, feel free to give us a call:",
+    stampsAvailable:"Stamps Balance",
+    useStamps:"Redeem Stamps",
+    usingStamps:"Stamps Applied",
     
     // Categories
     entradas: "Starters",

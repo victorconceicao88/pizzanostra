@@ -23,7 +23,7 @@ class ThermalPrinter {
     }
   }
 
-  async printOrder(order) {
+async printOrder(order) {
     if (!this.initialized) {
       await this.initialize();
       if (!this.initialized) {
@@ -67,9 +67,19 @@ class ThermalPrinter {
 
           // Itens do pedido
           order.itens.forEach(item => {
-            this.printer
-              .text(`${item.quantidade}x ${item.nome}`)
-              .text(`  ${this.formatCurrency(item.preco * item.quantidade)}`);
+            if (item.halfAndHalf) {
+              // Tratamento especial para pizzas meia a meia
+              this.printer
+                .text(`${item.quantidade}x ${item.nome}`)
+                .text(`  1ª Metade: ${item.halfPizza1}`)
+                .text(`  2ª Metade: ${item.halfPizza2}`)
+                .text(`  ${this.formatCurrency(item.preco * item.quantidade)}`);
+            } else {
+              // Itens normais
+              this.printer
+                .text(`${item.quantidade}x ${item.nome}`)
+                .text(`  ${this.formatCurrency(item.preco * item.quantidade)}`);
+            }
 
             if (item.tamanho) {
               this.printer.text(`  Tamanho: ${item.tamanho}`);

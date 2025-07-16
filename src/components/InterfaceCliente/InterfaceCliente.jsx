@@ -293,17 +293,44 @@ const CustomizationModal = ({
     size: 'media',
     border: null,
     quantity: 1,
-    extras: []
+    extras: [],
+    halfAndHalf: false,
+    halfPizza1: null,
+    halfPizza2: null,
+    borderType: 'fina'
   }
 }) => {
   const [selection, setSelection] = useState(initialSelection);
   const [activeTab, setActiveTab] = useState('size');
-  const basePrice = product.sizes ? (product.sizes[selection.size] || product.sizes.media) : product.price;
+  const isFamilySize = product.sizes && selection.size === 'familia';
+  const isPizza = ['tradicionais', 'vegetarianas'].includes(product.category);
+  
+  const getBasePrice = () => {
+    if (selection.halfAndHalf && isFamilySize) {
+      const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas)
+        .find(p => p.id === (selection.halfPizza1 || product.id));
+      const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas)
+        .find(p => p.id === selection.halfPizza2);
+      
+      const price1 = pizza1?.sizes?.[selection.size] || 0;
+      const price2 = pizza2?.sizes?.[selection.size] || 0;
+      return (price1 + price2) / 2;
+    }
+    return product.sizes ? (product.sizes[selection.size] || product.sizes.media) : product.price;
+  };
+
+  const basePrice = getBasePrice();
   const extrasTotal = selection.extras.reduce((sum, extra) => sum + extra.price, 0);
   const totalPrice = (basePrice + extrasTotal) * selection.quantity;
   
   const handleSizeChange = (size) => {
-    setSelection(prev => ({ ...prev, size }));
+    setSelection(prev => ({ 
+      ...prev, 
+      size,
+      halfAndHalf: size === 'familia' ? prev.halfAndHalf : false,
+      halfPizza1: size === 'familia' ? (prev.halfPizza1 || product.id) : null,
+      halfPizza2: size === 'familia' ? prev.halfPizza2 : null
+    }));
   };
   
   const handleBorderChange = (border) => {
@@ -325,6 +352,26 @@ const CustomizationModal = ({
     });
   };
   
+  const toggleHalfAndHalf = () => {
+    setSelection(prev => ({
+      ...prev,
+      halfAndHalf: !prev.halfAndHalf,
+      halfPizza1: !prev.halfAndHalf ? product.id : prev.halfPizza1,
+      halfPizza2: !prev.halfAndHalf ? null : prev.halfPizza2
+    }));
+  };
+
+  const selectHalfPizza = (pizzaId) => {
+    setSelection(prev => ({
+      ...prev,
+      halfPizza2: pizzaId
+    }));
+  };
+
+  const handleBorderTypeChange = (type) => {
+    setSelection(prev => ({ ...prev, borderType: type }));
+  };
+
   const handleQuantityChange = (newQuantity) => {
     setSelection(prev => ({ ...prev, quantity: Math.max(1, newQuantity) }));
   };
@@ -333,7 +380,106 @@ const CustomizationModal = ({
     onAddToCart(product, selection);
     onClose();
   };
-  
+
+  const renderHalfAndHalfSection = () => {
+    const firstHalfPizza = menuData.tradicionais.concat(menuData.vegetarianas)
+      .find(p => p.id === (selection.halfPizza1 || product.id));
+    const secondHalfPizza = selection.halfPizza2 
+      ? menuData.tradicionais.concat(menuData.vegetarianas)
+          .find(p => p.id === selection.halfPizza2)
+      : null;
+
+    const firstHalfPrice = firstHalfPizza?.sizes?.[selection.size] || 0;
+    const secondHalfPrice = secondHalfPizza?.sizes?.[selection.size] || 0;
+
+    return (
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <label className="font-medium text-gray-700">
+            {t(language, 'halfAndHalf')}
+          </label>
+          <button
+            onClick={toggleHalfAndHalf}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              selection.halfAndHalf ? 'bg-green-600' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                selection.halfAndHalf ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+        
+        {selection.halfAndHalf && (
+          <div className="space-y-3">
+            <div className="bg-gray-50 p-3 rounded-lg mb-2">
+              <p className="text-sm font-medium text-gray-700">
+                {t(language, 'firstHalf')}: 
+                <span className="ml-2 font-bold">
+                  {typeof firstHalfPizza.name === 'object' 
+                    ? firstHalfPizza.name[language] 
+                    : firstHalfPizza.name} ({(firstHalfPrice / 2).toFixed(2)}€)
+                </span>
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                {t(language, 'secondHalf')}
+              </label>
+              <select
+                value={selection.halfPizza2 || ''}
+                onChange={(e) => selectHalfPizza(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-lg"
+              >
+                <option value="">{t(language, 'selectHalf')}</option>
+                {menuData.tradicionais.concat(menuData.vegetarianas)
+                  .filter(p => p.id !== (selection.halfPizza1 || product.id))
+                  .map(pizza => (
+                    <option key={`half2-${pizza.id}`} value={pizza.id}>
+                      {typeof pizza.name === 'object' ? pizza.name[language] : pizza.name} ({(pizza.sizes?.[selection.size] / 2 || 0).toFixed(2)}€)
+                    </option>
+                  ))}
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderBorderTypeSection = () => (
+    <div className="mb-4">
+      <label className="block text-gray-700 mb-2 font-medium">
+        {t(language, 'borderType')}
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => handleBorderTypeChange('fina')}
+          className={`py-2 rounded-lg transition-all ${
+            selection.borderType === 'fina'
+              ? 'bg-white border-2 border-[#016730] text-gray-800'
+              : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+          }`}
+        >
+          {t(language, 'thinBorder')}
+        </button>
+        <button
+          onClick={() => handleBorderTypeChange('grossa')}
+          className={`py-2 rounded-lg transition-all ${
+            selection.borderType === 'grossa'
+              ? 'bg-white border-2 border-[#016730] text-gray-800'
+              : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+          }`}
+        >
+          {t(language, 'thickBorder')}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -404,6 +550,12 @@ const CustomizationModal = ({
                     </button>
                   ))}
                 </div>
+                
+                {/* Seção Meio a Meio (apenas para pizzas de 41cm) */}
+                {isPizza && isFamilySize && renderHalfAndHalfSection()}
+                
+                {/* Seção Tipo de Borda (apenas para pizzas de 41cm) */}
+                {isPizza && isFamilySize && renderBorderTypeSection()}
               </div>
             )}
             
@@ -514,11 +666,20 @@ const CustomizationModal = ({
           
           <button
             onClick={handleAddToCart}
-            className="w-full py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center"
+            disabled={isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2}
+            className={`w-full py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center ${
+              isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             <FaShoppingCart className="mr-2" size={16} />
             {t(language, 'addToCart')}
           </button>
+
+          {isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 && (
+            <p className="text-red-500 text-xs mt-2 text-center">
+              Por favor, selecione o sabor para a segunda metade
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -642,123 +803,298 @@ const CartItem = ({
   onToggleUseStamps,
   itemsWithStamps,
 }) => {
-  const isEligibleForStamps = ['tradicionais', 'vegetarianas', 'entradas'].includes(item.category) && 
-                            !item.isBorder;
+  // Verifica se o item é elegível para selos
+const isEligibleForStamps = () => {
+  const category = item.category?.toLowerCase();
+
+  // Corrige categorias válidas
+  const categoriasValidas = ['tradicionais', 'vegetarianas'];
+
+  // Pizzas meia a meia tamanho família — elegível
+  if (item.halfAndHalf && item.selectedSize === 'familia') return true;
+
+  // Pizzas normais elegíveis
+  if (categoriasValidas.includes(category) && !item.isBorder) {
+    if (['individual', 'media', 'familia'].includes(item.selectedSize)) return true;
+  }
+
+  // Entradas — elegíveis
+  if (category === 'entradas') return true;
+
+  return false;
+};
+
+
+  const getPizzaName = (id) => {
+    const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
+    return typeof pizza?.name === 'object' ? pizza.name[language] : pizza?.name || 'Desconhecido';
+  };
+
   const calculateStampsNeeded = () => {
+    // Meia-a-meia família usa 12 selos (como pizza família normal)
+    if (item.halfAndHalf && item.selectedSize === 'familia') return 12 * item.quantity;
+    
+    // Entradas usam 5 selos cada
     if (item.category === 'entradas') return 5 * item.quantity;
-    if (item.selectedSize === 'individual') return 10 * item.quantity;
-    if (item.selectedSize === 'media') return 11 * item.quantity;
-    if (item.selectedSize === 'familia') return 12 * item.quantity;
+    
+    // Pizzas normais
+    const size = item.selectedSize || 'media';
+    if (size === 'individual') return 10 * item.quantity;
+    if (size === 'media') return 11 * item.quantity;
+    if (size === 'familia') return 12 * item.quantity;
+    
     return 0;
   };
 
-  const stampsNeeded = calculateStampsNeeded();
-  const useStamps = itemsWithStamps[item.id] || false;
-  
-
   const handleToggleUseStamps = () => {
     const needed = calculateStampsNeeded();
-    if (!useStamps && needed > selosDisponiveis) {
+    if (!itemsWithStamps[item.id] && needed > selosDisponiveis) {
       toast.error(t(language, 'notEnoughStamps'));
       return;
     }
-    onToggleUseStamps(item.id, !useStamps, needed);
+    onToggleUseStamps(item.id, !itemsWithStamps[item.id], needed);
   };
-  
-  const basePrice = item.price || 0;
-  const extrasTotal = item.extras?.reduce((sum, extra) => sum + extra.price, 0) || 0;
-  const itemTotal = (basePrice + extrasTotal) * item.quantity;
-  
+
+  const useStamps = itemsWithStamps[item.id] || false;
+
+  // Renderização para pizza meia a meia
+// Renderização para pizza meia a meia
+if (item.halfAndHalf && item.selectedSize === 'familia') {
+  console.log('é elegível?', isEligibleForStamps());
+
+  const pizza1 = getPizzaName(item.halfPizza1 || item.id);
+  const pizza2 = getPizzaName(item.halfPizza2);
+
   return (
-    <div className="py-3 sm:py-4 flex justify-between items-center">
-      <div className="flex items-center">
-        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg overflow-hidden mr-3 sm:mr-4 relative">
-          <div className="w-full h-full bg-gradient-to-br from-red-600 to-[#016730] flex items-center justify-center">
+    <div className="py-4 flex justify-between items-start border-b border-gray-100">
+      <div className="flex items-start flex-1 gap-4">
+        <div className="relative">
+          <div className="w-14 h-14 bg-gradient-to-br from-red-600 to-[#016730] rounded-lg flex items-center justify-center">
             <Pizza size={20} className="text-white" />
           </div>
-          <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-600 text-white text-xs font-bold w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full">
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
             {item.quantity}
-          </div>
+          </span>
         </div>
-        <div>
-          <h3 className="font-medium text-gray-800 text-sm sm:text-base">
-            {typeof item.name === 'object' ? item.name[language] : item.name}
-            {item.isBorder && ` (${t(language, 'border')})`}
-          </h3>
-          <p className="text-xs sm:text-sm text-gray-500">
-            {useStamps ? (
-              <span className="text-[#016730] font-medium">
-                {t(language, 'paidWithStamps')} ({stampsNeeded} {t(language, 'stamps')})
-              </span>
-            ) : (
-              <>
-                {itemTotal.toFixed(2)}€
-                {extrasTotal > 0 && (
-                  <span className="text-xs text-gray-400 ml-1 line-through">
-                    {(basePrice * item.quantity).toFixed(2)}€
-                  </span>
-                )}
-              </>
+
+        <div className="flex-1">
+          <div className="flex justify-between items-start">
+            <h3 className="font-medium text-gray-900 text-sm">
+              {typeof item.name === 'object' ? item.name[language] : item.name}
+            </h3>
+          </div>
+
+          <div className="mt-2 flex flex-col gap-2">
+            <div className="flex items-start">
+              <span className="w-16 text-xs text-gray-500">Tamanho:</span>
+              <span className="text-sm font-medium">{t(language, item.selectedSize)}</span>
+            </div>
+
+            <div className="flex items-start">
+              <span className="w-16 text-xs text-gray-500">1ª Metade:</span>
+              <span className="text-sm font-medium">{pizza1}</span>
+            </div>
+
+            <div className="flex items-start">
+              <span className="w-16 text-xs text-gray-500">2ª Metade:</span>
+              <span className="text-sm font-medium">{pizza2}</span>
+            </div>
+
+            {item.borderType && (
+              <div className="flex items-start">
+                <span className="w-16 text-xs text-gray-500">Borda:</span>
+                <span className="text-sm font-medium">
+                  {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
+                </span>
+              </div>
             )}
-          </p>
-          {item.selectedSize && (
-            <p className="text-xs text-gray-500">
-              {t(language, 'size')}: {t(language, item.selectedSize)}
-            </p>
-          )}
-          {item.extras?.length > 0 && (
-            <p className="text-xs text-gray-500">
-              {t(language, 'extras')}: {item.extras.map(extra => 
-                typeof extra.name === 'object' ? extra.name[language] : extra.name
-              ).join(', ')}
-            </p>
-          )}
+
+            {item.extras?.length > 0 && (
+              <div className="flex items-start">
+                <span className="w-16 text-xs text-gray-500">Extras:</span>
+                <span className="text-sm font-medium">
+                  {item.extras.map(extra =>
+                    typeof extra.name === 'object' ? extra.name[language] : extra.name
+                  ).join(', ')}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      
-      <div className="flex items-center">
-        {isEligibleForStamps && (
-          <div className="mr-2 sm:mr-4 flex items-center">
-            <input
-              type="checkbox"
-              id={`use-stamps-${item.id}`}
-              checked={useStamps}
-              onChange={handleToggleUseStamps}
-              className="mr-2 h-4 w-4 text-[#016730] focus:ring-[#016730] border-gray-300 rounded"
-            />
-            <label htmlFor={`use-stamps-${item.id}`} className="text-xs text-gray-700">
-              {t(language, 'useStampsForItem', { selos: calculateStampsNeeded() })}
-            </label>
-          </div>
-        )}
-        
+
+      <div className="flex flex-col items-end ml-2">
         {!useStamps && (
-          <>
+          <div className="flex items-center gap-2">
             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
-              <button 
+              <button
                 onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
               >
                 <Minus size={12} />
               </button>
-              <span className="w-8 h-7 sm:w-10 sm:h-8 flex items-center justify-center border-l border-r border-gray-200 text-xs sm:text-sm">
+              <span className="w-8 h-7 flex items-center justify-center border-l border-r border-gray-200 text-sm">
+                {item.quantity}
+              </span>
+              <button
+                onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+                className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <Plus size={12} />
+              </button>
+            </div>
+            <button
+              onClick={() => onRemove(item.id)}
+              className="w-7 h-7 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {isEligibleForStamps() && (
+        <div className="mt-3 flex items-center justify-between bg-amber-50 p-3 rounded-lg">
+          <div className="flex items-center">
+            <FaCoins className="text-amber-500 mr-2" />
+            <span className="text-sm font-medium text-amber-800">
+              {t(language, 'stampsAvailable')}: {selosDisponiveis}
+            </span>
+          </div>
+          
+          <button
+            onClick={handleToggleUseStamps}
+            className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${
+              useStamps
+                ? 'bg-green-100 text-green-800'
+                : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+            } transition-colors`}
+          >
+            {useStamps ? (
+              <>
+                <FaCheck className="mr-1" size={10} />
+                {t(language, 'usingStamps')} ({calculateStampsNeeded()})
+              </>
+            ) : (
+              <>
+                <FaCoins className="mr-1" size={10} />
+                {t(language, 'useStamps')} ({calculateStampsNeeded()})
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      </div>
+    </div>
+  );
+}
+  // Renderização normal para outros itens
+  return (
+    <div className="py-4 flex justify-between items-start border-b border-gray-100">
+      <div className="flex items-start flex-1 gap-4">
+        <div className="relative">
+          <div className="w-14 h-14 bg-gradient-to-br from-red-600 to-[#016730] rounded-lg flex items-center justify-center">
+            {item.category === 'bebidas' ? (
+              <Wine size={20} className="text-white" />
+            ) : (
+              <Pizza size={20} className="text-white" />
+            )}
+          </div>
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+            {item.quantity}
+          </span>
+        </div>
+        
+        <div className="flex-1">
+          <div className="flex justify-between items-start">
+            <h3 className="font-medium text-gray-900 text-sm">
+              {typeof item.name === 'object' ? item.name[language] : item.name}
+            </h3>
+            <div className="text-sm font-bold text-[#016730]">
+              {useStamps ? (
+                <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                  {calculateStampsNeeded()} selos
+                </span>
+              ) : (
+                `${(item.price * item.quantity).toFixed(2)}€`
+              )}
+            </div>
+          </div>
+
+          <div className="mt-2 flex flex-col gap-2">
+            {item.selectedSize && (
+              <div className="flex items-start">
+                <span className="w-16 text-xs text-gray-500">Tamanho:</span>
+                <span className="text-sm font-medium">{t(language, item.selectedSize)}</span>
+              </div>
+            )}
+            
+            {item.borderType && (
+              <div className="flex items-start">
+                <span className="w-16 text-xs text-gray-500">Borda:</span>
+                <span className="text-sm font-medium">
+                  {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
+                </span>
+              </div>
+            )}
+            
+            {item.extras?.length > 0 && (
+              <div className="flex items-start">
+                <span className="w-16 text-xs text-gray-500">Extras:</span>
+                <span className="text-sm font-medium">
+                  {item.extras.map(extra => 
+                    typeof extra.name === 'object' ? extra.name[language] : extra.name
+                  ).join(', ')}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-end ml-2">
+        {!useStamps && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+              <button 
+                onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+                className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <Minus size={12} />
+              </button>
+              <span className="w-8 h-7 flex items-center justify-center border-l border-r border-gray-200 text-sm">
                 {item.quantity}
               </span>
               <button 
                 onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
               >
                 <Plus size={12} />
               </button>
             </div>
             <button 
               onClick={() => onRemove(item.id)}
-              className="ml-2 sm:ml-4 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              className="w-7 h-7 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
             >
               <X size={16} />
             </button>
-          </>
+          </div>
         )}
+        
+        {isEligibleForStamps() && (
+            <button 
+              onClick={handleToggleUseStamps}
+              className={`mt-2 text-xs px-3 py-1 rounded-full ${
+                useStamps 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              } transition-colors`}
+            >
+              {useStamps 
+                ? `Usando ${calculateStampsNeeded()} selos` 
+                : `Usar selos (${calculateStampsNeeded()})`}
+            </button>
+          )}
+
       </div>
     </div>
   );
@@ -1026,11 +1362,6 @@ const CheckoutFlow = ({
               <span className="text-xs sm:text-sm text-gray-500">
                 {cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')}
               </span>
-              {user && (
-                <span className="text-xs sm:text-sm bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
-                  {selosDisponiveis} {t(language, 'stampsAvailable')}
-                </span>
-              )}
             </div>
             
             {cart.length === 0 ? (
@@ -1093,25 +1424,33 @@ const CheckoutFlow = ({
                       {finalTotal.toFixed(2)}€
                     </span>
                   </div>
-                  {selosUsados > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <FaCoins className="text-amber-600 mr-2" />
-                          <span className="font-medium text-amber-800">
-                            {t(language, 'stampsUsed')}: {selosUsados}
+                                  {selosUsados > 0 && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center">
+                            <FaCoins className="text-amber-600 mr-2" />
+                            <span className="font-medium text-amber-800">
+                              {t(language, 'stampsUsed')}: {selosUsados}
+                            </span>
+                          </div>
+                          <span className="bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">
+                            {t(language, 'paidWithStamps')}
                           </span>
                         </div>
-                        <span className="bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">
-                          {t(language, 'paidWithStamps')}
-                        </span>
+                        <div className="grid grid-cols-2 gap-2 mt-3">
+                          {cart.filter(item => itemsWithStamps[item.id]).map(item => (
+                            <div key={item.id} className="bg-amber-100 p-2 rounded-lg">
+                              <p className="text-xs font-medium text-amber-800 truncate">
+                                {typeof item.name === 'object' ? item.name[language] : item.name}
+                              </p>
+                              <p className="text-xs text-amber-600">
+                                {itemsWithStamps[item.id]} {t(language, 'stamps')}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <p className="text-sm text-amber-700 mt-2 flex items-center">
-                        <FaInfoCircle className="mr-2" />
-                        {t(language, 'onlyChargeDelivery')}
-                      </p>
-                    </div>
-                  )}            
+                    )}          
                   {Math.floor(cartTotal / 15) > 0 && (
                     <StampRewardPreview cartTotal={cartTotal} language={language} />
                   )}
@@ -1828,106 +2167,217 @@ const InterfaceClienteInner = () => {
     setCanCheckout(basicCheck && deliveryCheck && cart.length > 0);
   }, [customerInfo, deliveryOption, cart]);
 
-  const addToCart = (product, selection) => {
-    const { size, border, quantity, extras } = selection;
-    
-    const createBaseItem = (itemProduct, itemSize, itemQuantity, itemExtras) => ({
-      ...itemProduct,
-      quantity: itemQuantity,
-      price: itemProduct.sizes ? (itemProduct.sizes[itemSize] || itemProduct.sizes.media) : itemProduct.price,
-      selectedSize: itemSize,
-      extras: itemExtras,
-      originalPrice: itemProduct.sizes ? (itemProduct.sizes[itemSize] || itemProduct.sizes.media) : itemProduct.price,
-      category: itemProduct.category || 'outros'
+const addToCart = (product, selection) => {
+  const { size, border, quantity, extras, halfAndHalf, halfPizza1, halfPizza2, borderType } = selection;
+
+  const getPizzaName = (id) => {
+    const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
+    return typeof pizza?.name === 'object' ? pizza.name[language] : pizza?.name || 'Desconhecido';
+  };
+
+  const createBaseItem = (itemProduct, itemSize, itemQuantity, itemExtras) => ({
+    ...itemProduct,
+    quantity: itemQuantity,
+    price: itemProduct.sizes ? (itemProduct.sizes[itemSize] || itemProduct.sizes.media) : itemProduct.price,
+    selectedSize: itemSize,
+    extras: itemExtras,
+    originalPrice: itemProduct.sizes ? (itemProduct.sizes[itemSize] || itemProduct.sizes.media) : itemProduct.price,
+    category: itemProduct.category || 'outros',
+    isBorder: false
+  });
+
+  if (halfAndHalf && size === 'familia') {
+    setCart(prevCart => {
+      const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas).find(p => p.id === halfPizza1);
+      const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas).find(p => p.id === halfPizza2);
+      const avgPrice = (pizza1?.sizes?.[size] + pizza2?.sizes?.[size]) / 2;
+
+      const halfHalfItem = {
+        id: `${halfPizza1}-${halfPizza2}-${size}-${Date.now()}`,
+        name: {
+          pt: `½ ${pizza1?.name?.pt || pizza1?.name} + ½ ${pizza2?.name?.pt || pizza2?.name}`,
+          en: `½ ${pizza1?.name?.en || pizza1?.name} + ½ ${pizza2?.name?.en || pizza2?.name}`,
+          es: `½ ${pizza1?.name?.es || pizza1?.name} + ½ ${pizza2?.name?.es || pizza2?.name}`
+        },
+        quantity,
+        price: avgPrice,
+        originalPrice: avgPrice,
+        selectedSize: size,
+        extras,
+        halfAndHalf: true,
+        halfPizza1: halfPizza1,
+        halfPizza2: halfPizza2,
+        borderType,
+        category: 'pizzas',
+        isBorder: false,
+        stampsEligible: true // Adiciona flag para selos
+      };
+
+      const existingIndex = prevCart.findIndex(item =>
+        item.id === halfHalfItem.id &&
+        item.selectedSize === size &&
+        JSON.stringify(item.extras) === JSON.stringify(extras) &&
+        item.borderType === borderType
+      );
+
+      if (existingIndex >= 0) {
+        const updatedCart = [...prevCart];
+        updatedCart[existingIndex].quantity += quantity;
+        return updatedCart;
+      }
+
+      // Adiciona borda se selecionada
+      if (border && menuData.bordas.find(b => b.id === border)) {
+        const borderItem = menuData.bordas.find(b => b.id === border);
+        const borderPrice = borderItem.sizes[size] || borderItem.sizes.media;
+        
+        return [
+          ...prevCart, 
+          halfHalfItem,
+          {
+            ...borderItem,
+            id: `${borderItem.id}-${halfPizza1}-${halfPizza2}`,
+            quantity,
+            price: borderPrice,
+            selectedSize: size,
+            isBorder: true,
+            originalPrice: borderPrice,
+            category: 'bordas'
+          }
+        ];
+      }
+
+      return [...prevCart, halfHalfItem];
     });
 
-    if (product.sizes) {
-      setCart(prevCart => {
-        const existingItem = prevCart.find(item => 
+    setAddedItemName(`½ ${getPizzaName(halfPizza1)} + ½ ${getPizzaName(halfPizza2)}`);
+    setShowAddedNotification(true);
+    return;
+  }
+
+  // Lógica para produtos com tamanhos (pizzas normais)
+  if (product.sizes) {
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => 
+        item.id === product.id && 
+        item.selectedSize === size && 
+        item.selectedBorder === border &&
+        JSON.stringify(item.extras) === JSON.stringify(extras) &&
+        !item.isBorder
+      );
+      
+      if (existingItem) {
+        return prevCart.map(item =>
           item.id === product.id && 
           item.selectedSize === size && 
           item.selectedBorder === border &&
           JSON.stringify(item.extras) === JSON.stringify(extras) &&
           !item.isBorder
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
         );
-        
-        if (existingItem) {
-          return prevCart.map(item =>
-            item.id === product.id && 
-            item.selectedSize === size && 
-            item.selectedBorder === border &&
-            JSON.stringify(item.extras) === JSON.stringify(extras) &&
-            !item.isBorder
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          );
-        } else {
-          const newItem = createBaseItem(product, size, quantity, extras);
-          newItem.selectedBorder = border;
+      } else {
+        const newItem = createBaseItem(product, size, quantity, extras);
+        newItem.selectedBorder = border;
+        newItem.stampsEligible = ['tradicionais', 'vegetarianas'].includes(product.category);
 
-          if (border && menuData.bordas.find(b => b.id === border)) {
-            const borderItem = menuData.bordas.find(b => b.id === border);
-            const borderPrice = borderItem.sizes[size] || borderItem.sizes.media;
-            
-            return [
-              ...prevCart, 
-              newItem,
-              {
-                ...borderItem,
-                id: `${borderItem.id}-${product.id}`,
-                quantity,
-                price: borderPrice,
-                selectedSize: size,
-                isBorder: true,
-                originalPrice: borderPrice,
-                category: 'bordas'
-              }
-            ];
-          }
+        if (border && menuData.bordas.find(b => b.id === border)) {
+          const borderItem = menuData.bordas.find(b => b.id === border);
+          const borderPrice = borderItem.sizes[size] || borderItem.sizes.media;
           
-          return [...prevCart, newItem];
+          return [
+            ...prevCart, 
+            newItem,
+            {
+              ...borderItem,
+              id: `${borderItem.id}-${product.id}`,
+              quantity,
+              price: borderPrice,
+              selectedSize: size,
+              isBorder: true,
+              originalPrice: borderPrice,
+              category: 'bordas'
+            }
+          ];
         }
-      });
-    } else {
-      setCart(prevCart => {
-        const existingItem = prevCart.find(item => 
+        
+        return [...prevCart, newItem];
+      }
+    });
+  } else {
+    // Lógica para produtos sem tamanhos (bebidas, entradas)
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => 
+        item.id === product.id &&
+        JSON.stringify(item.extras) === JSON.stringify(extras) &&
+        !item.isBorder
+      );
+      
+      if (existingItem) {
+        return prevCart.map(item =>
           item.id === product.id &&
           JSON.stringify(item.extras) === JSON.stringify(extras) &&
           !item.isBorder
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
         );
-        
-        if (existingItem) {
-          return prevCart.map(item =>
-            item.id === product.id &&
-            JSON.stringify(item.extras) === JSON.stringify(extras) &&
-            !item.isBorder
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          );
-        } else {
-          return [...prevCart, createBaseItem(product, null, quantity, extras)];
-        }
-      });
-    }
-    
-    setAddedItemName(typeof product.name === 'object' ? product.name[language] : product.name);
-    setShowAddedNotification(true);
-  };
+      } else {
+        const newItem = createBaseItem(product, null, quantity, extras);
+        newItem.stampsEligible = product.category === 'entradas'; // Entradas usam selos
+        return [...prevCart, newItem];
+      }
+    });
+  }
+
+  setAddedItemName(typeof product.name === 'object' ? product.name[language] : product.name);
+  setShowAddedNotification(true);
+};
+
 
 const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSelecionada) => {
   if (isSubmitting) return;
   setIsSubmitting(true);
-
 
   try {
     if (cart.length === 0) {
       throw new Error(t(language, 'emptyCart'));
     }
 
-    // Cálculos do pedido (mantidos iguais)
+    // Validações de meio a meio e borda
+    cart.forEach(item => {
+      if (item.halfAndHalf && item.selectedSize !== 'familia') {
+        throw new Error('Opção meio a meio disponível apenas para pizzas de 41cm');
+      }
+      
+      if (item.borderType && item.selectedSize !== 'familia') {
+        throw new Error('Seleção de borda disponível apenas para pizzas de 41cm');
+      }
+
+      if (item.halfAndHalf && (!item.halfPizza1 || !item.halfPizza2)) {
+        throw new Error('Por favor, selecione ambas as metades para a pizza meio a meio');
+      }
+    });
+
+    // Função auxiliar para obter preço da pizza
+    const getPizzaPrice = (pizzaId, size) => {
+      const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === pizzaId);
+      return pizza?.sizes?.[size] || pizza?.price || 0;
+    };
+
+    // Cálculos do pedido
     const totalSemTaxa = cart.reduce((total, item) => {
       if (itemsWithStamps[item.id]) return total;
-      const precoBase = item.price || item.sizes?.[item.selectedSize] || 0;
+      
+      let precoBase;
+      if (item.halfAndHalf && item.selectedSize === 'familia') {
+        // Calcula média de preço para pizza meio a meio
+        const price1 = getPizzaPrice(item.halfPizza1 || item.id, item.selectedSize);
+        const price2 = getPizzaPrice(item.halfPizza2, item.selectedSize);
+        precoBase = (price1 + price2) / 2;
+      } else {
+        precoBase = item.price || item.sizes?.[item.selectedSize] || 0;
+      }
+
       const extras = item.extras?.reduce((sum, extra) => sum + extra.price, 0) || 0;
       return total + ((precoBase + extras) * item.quantity);
     }, 0);
@@ -1955,13 +2405,58 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
 
     const selosGanhos = user ? Math.floor(totalSemTaxa / 15) : 0;
 
-    // Gerando número do pedido amigável (5 dígitos)
+    // Gerando número do pedido
     const timestamp = Date.now();
     const numeroPedido = String(timestamp).slice(-5).padStart(5, '0');
     setOrderNumber(numeroPedido);
 
     // Criando referência do documento
     const pedidoRef = doc(collection(db, 'pedidos'));
+
+    // Preparando itens para o Firestore
+    const itensFirestore = cart.map(item => {
+      // Obter nomes das pizzas para meia a meia
+      const getPizzaName = (id) => {
+        const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
+        return typeof pizza?.name === 'object' ? pizza.name[language] : pizza?.name || 'Desconhecido';
+      };
+
+      const itemData = {
+        id: item.id,
+        nome: typeof item.name === 'object' ? item.name[language] : item.name,
+        quantidade: item.quantity,
+        preco: itemsWithStamps[item.id] ? 0 : (item.price || item.sizes?.[item.selectedSize] || 0),
+        tamanho: item.selectedSize || null,
+        borda: item.selectedBorder || null,
+        isBorder: item.isBorder || false,
+        pagoComSelos: !!itemsWithStamps[item.id],
+        selosUsados: itemsWithStamps[item.id]
+          ? (item.category === 'entradas' ? 5 * item.quantity
+             : item.selectedSize === 'individual' ? 10 * item.quantity
+             : item.selectedSize === 'media' ? 11 * item.quantity
+             : item.selectedSize === 'familia' ? 12 * item.quantity
+             : 0)
+          : 0,
+        halfAndHalf: item.halfAndHalf || false,
+        halfPizza1: item.halfAndHalf ? item.halfPizza1 : null,
+        halfPizza2: item.halfAndHalf ? item.halfPizza2 : null,
+        halfPizza1Name: item.halfAndHalf ? getPizzaName(item.halfPizza1 || item.id) : null,
+        halfPizza2Name: item.halfAndHalf ? getPizzaName(item.halfPizza2) : null,
+        borderType: item.borderType || 'fina',
+        categoria: item.category || 'outros'
+      };
+
+      // Adiciona extras se existirem
+      if (item.extras?.length > 0) {
+        itemData.extras = item.extras.map(extra => ({
+          id: extra.id,
+          nome: typeof extra.name === 'object' ? extra.name[language] : extra.name,
+          preco: itemsWithStamps[item.id] ? 0 : extra.price
+        }));
+      }
+
+      return itemData;
+    });
 
     const pedidoData = {
       cliente: {
@@ -1978,28 +2473,7 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         ? `${customerInfo.endereco}, ${customerInfo.localidade}, ${customerInfo.codigoPostal}`
         : null,
       zonaEntrega: entregaSelecionada === 'entrega' ? zonaSelecionada : null,
-      itens: cart.map(item => ({
-        id: item.id,
-        nome: typeof item.name === 'object' ? item.name[language] : item.name,
-        quantidade: item.quantity,
-        preco: itemsWithStamps[item.id] ? 0 : (item.price || item.sizes?.[item.selectedSize] || 0),
-        tamanho: item.selectedSize || null,
-        borda: item.selectedBorder || null,
-        extras: item.extras?.map(extra => ({
-          id: extra.id,
-          nome: typeof extra.name === 'object' ? extra.name[language] : extra.name,
-          preco: itemsWithStamps[item.id] ? 0 : extra.price
-        })) || [],
-        isBorder: item.isBorder || false,
-        pagoComSelos: !!itemsWithStamps[item.id],
-        selosUsados: itemsWithStamps[item.id]
-          ? (item.category === 'entradas' ? 5 * item.quantity
-             : item.selectedSize === 'individual' ? 10 * item.quantity
-             : item.selectedSize === 'media' ? 11 * item.quantity
-             : item.selectedSize === 'familia' ? 12 * item.quantity
-             : 0)
-          : 0
-      })),
+      itens: itensFirestore,
       subtotal: totalSemTaxa,
       taxaEntrega,
       total: totalFinal,
@@ -2007,10 +2481,10 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       selosGanhos,
       metodoPagamento: paymentMethod,
       status: 'pendente',
-      criadoEm: new Date(),
-      atualizadoEm: new Date(),
-      numeroPedido, // Número amigável de 5 dígitos
-      idFirebase: pedidoRef.id, // Mantemos o ID do Firebase como referência interna
+      criadoEm: serverTimestamp(),
+      atualizadoEm: serverTimestamp(),
+      numeroPedido,
+      idFirebase: pedidoRef.id,
       userId: user?.uid || null,
       detalhesPagamento: {
         valorPago: paymentMethod === 'dinheiro' && valorPagoNum !== null ? valorPagoNum : null,
@@ -2024,14 +2498,14 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     // Salvando o pedido
     await setDoc(pedidoRef, pedidoData);
 
-   if (user) {
-  const userRef = doc(db, 'users', user.uid);
-  await updateDoc(userRef, {
-    selos: increment(selosGanhos - selosUsados),
-    selosAtualizadoEm: serverTimestamp()
-  });
-}
-
+    // Atualizando selos do usuário
+    if (user) {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        selos: increment(selosGanhos - selosUsados),
+        selosAtualizadoEm: serverTimestamp()
+      });
+    }
 
     // Limpando o carrinho e mostrando confirmação
     setCart([]);

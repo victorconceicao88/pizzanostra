@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { db, auth } from '../../firebase';
 import { 
   collection, 
@@ -155,6 +155,8 @@ const InterfaceAdmin = () => {
   const [stampChange, setStampChange] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
+  const listenerMounted = useRef(false);
+
 
   const thermalPrinter = {
     printOrder: async (order) => {
@@ -167,82 +169,78 @@ const InterfaceAdmin = () => {
       }
     }
   };
- 
-  useEffect(() => {
+useEffect(() => {
+  // Flag para controlar se já estamos processando um pedido
+  let isProcessing = false;
+
   const q = query(
-    collection(db, "pedidos"), 
+    collection(db, "pedidos"),
     orderBy("criadoEm", "desc"),
     limit(50)
   );
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    const updatedOrders = snapshot.docs.map(doc => {
-      const data = doc.data();
-      const timestamp = data.criadoEm;
-
-      return {
-        id: doc.id,
-        ...data,
-        valorPago: data.valorPago || 0,
-        troco: data.troco || 0,
-        enderecoCompleto: data.enderecoCompleto || 
-          (data.cliente?.endereco && data.cliente?.localidade 
-            ? `${data.cliente.endereco}, ${data.cliente.localidade}` 
-            : null),
-        zonaEntrega: data.zonaEntrega || null,
-        bairro: data.bairro || data.cliente?.localidade || null,
-        tipoEntrega: data.tipoEntrega || 
-          (data.cliente?.endereco ? 'entrega' : 'retirada'),
-        cliente: {
-          nome: data.cliente?.nome || 'Não informado',
-          telefone: data.cliente?.telefone || 'Não informado',
-          endereco: data.cliente?.endereco || null,
-          localidade: data.cliente?.localidade || null,
-          codigoPostal: data.cliente?.codigoPostal || null,
-          nif: data.cliente?.nif || null,
-          userId: data.cliente?.userId || null
-        },
-        criadoEm: timestamp ? timestamp.toDate() : new Date()
-      };
-    });
+    // Atualiza a lista de pedidos
+    const updatedOrders = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      criadoEm: doc.data().criadoEm?.toDate() || new Date()
+    }));
 
     setOrders(updatedOrders);
-    setLoading(false);
 
-    // Verifica apenas alterações do tipo 'added'
-    snapshot.docChanges().forEach(change => {
-      if (change.type === 'added') {
-        const newData = change.doc.data();
+    // Evita loop de carregamento chamando setLoading(false) apenas uma vez
+    if (loading) {
+      setLoading(false);
+    }
 
-        // Impede impressão duplicada
-        if (newData.status === 'impresso') return;
+    // Processa apenas novos pedidos não impressos
+    snapshot.docChanges().forEach(async (change) => {
+      if (change.type === 'added' && !isProcessing) {
+        const orderData = change.doc.data();
 
-        const newOrder = {
-          id: change.doc.id,
-          ...newData,
-          criadoEm: newData.criadoEm?.toDate?.() || new Date()
-        };
+        // Ignora pedidos já marcados como impressos
+        if (orderData.status === 'impresso') return;
 
-        console.log('🖨️ Novo pedido detectado, enviando para impressão...');
+        isProcessing = true;
 
-        thermalPrinter.printOrder(newOrder)
-          .then(() => {
-            updateDoc(doc(db, "pedidos", newOrder.id), {
-              status: 'impresso',
-              impressoEm: serverTimestamp(),
-              impressoPor: auth.currentUser.uid
-            });
-          })
-          .catch(error => {
-            console.error('❌ Falha na impressão automática:', error);
-            setTimeout(() => thermalPrinter.printOrder(newOrder), 5000);
+        try {
+          // Marca como impresso ANTES de imprimir
+          await updateDoc(doc(db, "pedidos", change.doc.id), {
+            status: 'impresso',
+            impressoEm: serverTimestamp(),
+            impressoPor: auth.currentUser.uid
           });
+
+          // Prepara os dados do pedido
+          const orderToPrint = {
+            id: change.doc.id,
+            ...orderData,
+            criadoEm: orderData.criadoEm?.toDate() || new Date()
+          };
+
+          // Envia para impressão
+          await thermalPrinter.printOrder(orderToPrint);
+
+        } catch (error) {
+          console.error("Erro ao processar pedido:", error);
+
+          // Reverte o status em caso de erro
+          await updateDoc(doc(db, "pedidos", change.doc.id), {
+            status: 'pendente',
+            impressoEm: null
+          });
+        } finally {
+          isProcessing = false;
+        }
       }
     });
   });
 
   return () => unsubscribe();
-}, []); // Remova 'orders' da dependência
+}, []);
+
+
 
   const refreshOrders = async () => {
     setLoading(true);
@@ -787,6 +785,16 @@ const InterfaceAdmin = () => {
                                       {item.tamanho && (
                                         <p className="text-xs text-gray-500 mt-1">
                                           Tamanho: {item.tamanho.charAt(0).toUpperCase() + item.tamanho.slice(1)}
+                                        </p>
+                                      )}
+                                      {item.halfAndHalf && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          Meia a meia: {item.halfPizza1Name} + {item.halfPizza2Name}
+                                        </p>
+                                      )}
+                                      {item.borderType && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          Borda: {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
                                         </p>
                                       )}
                                       {item.extras?.length > 0 && (

@@ -170,6 +170,8 @@ export const LanguageProvider = ({ children }) => {
         registerToEarn:"Cadastre-se para ganhar",
         registerToEarnDescription:"Cadastre-se gratuitamente e comece a ganhar recompensas." ,
         registerNow:"Cadastre-se agora",
+        onlyChargeDelivery:"Este pedido foi pago com selos. A taxa de entrega será cobrada apenas se optar por entrega ao domicílio.",
+  
      
       },
       en: {
