@@ -170,8 +170,10 @@ const InterfaceAdmin = () => {
       }
     }
   };
+
 useEffect(() => {
   let isProcessing = false;
+  let isInitialLoad = true; // Flag para controle do carregamento inicial
 
   const q = query(
     collection(db, "pedidos"),
@@ -188,12 +190,13 @@ useEffect(() => {
 
     setOrders(updatedOrders);
 
-    if (loading) {
+    if (loading && isInitialLoad) {
       setLoading(false);
+      isInitialLoad = false;
     }
 
     snapshot.docChanges().forEach(async (change) => {
-      if (change.type === 'added' && !isProcessing) {
+      if (change.type === 'added' && !isProcessing && !isInitialLoad) {
         const orderData = change.doc.data();
 
         if (orderData.status === 'impresso') return;
@@ -219,13 +222,9 @@ useEffect(() => {
             };
 
             await thermalPrinter.printOrder(orderToPrint);
-          } else {
-            console.warn(`Pedido ${change.doc.id} não encontrado para atualização.`);
           }
         } catch (error) {
           console.error("Erro ao processar pedido:", error);
-
-          // Tenta reverter o status, se o documento ainda existir
           const revertSnap = await getDoc(pedidoRef);
           if (revertSnap.exists()) {
             await updateDoc(pedidoRef, {
@@ -242,7 +241,6 @@ useEffect(() => {
 
   return () => unsubscribe();
 }, []);
-
 
   const refreshOrders = async () => {
     setLoading(true);
