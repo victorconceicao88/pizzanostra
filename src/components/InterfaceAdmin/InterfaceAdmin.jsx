@@ -11,7 +11,8 @@ import {
   getDocs,
   serverTimestamp,
   deleteDoc,
-  limit
+  limit,
+  getDoc
 } from 'firebase/firestore';
 import { 
   FaMapMarkerAlt,
@@ -170,7 +171,6 @@ const InterfaceAdmin = () => {
     }
   };
 useEffect(() => {
-  // Flag para controlar se já estamos processando um pedido
   let isProcessing = false;
 
   const q = query(
@@ -180,7 +180,6 @@ useEffect(() => {
   );
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    // Atualiza a lista de pedidos
     const updatedOrders = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -189,47 +188,51 @@ useEffect(() => {
 
     setOrders(updatedOrders);
 
-    // Evita loop de carregamento chamando setLoading(false) apenas uma vez
     if (loading) {
       setLoading(false);
     }
 
-    // Processa apenas novos pedidos não impressos
     snapshot.docChanges().forEach(async (change) => {
       if (change.type === 'added' && !isProcessing) {
         const orderData = change.doc.data();
 
-        // Ignora pedidos já marcados como impressos
         if (orderData.status === 'impresso') return;
 
         isProcessing = true;
 
+        const pedidoRef = doc(db, "pedidos", change.doc.id);
+        const pedidoSnap = await getDoc(pedidoRef);
+
         try {
-          // Marca como impresso ANTES de imprimir
-          await updateDoc(doc(db, "pedidos", change.doc.id), {
-            status: 'impresso',
-            impressoEm: serverTimestamp(),
-            impressoPor: auth.currentUser.uid
-          });
+          if (pedidoSnap.exists()) {
+            // Marca como impresso
+            await updateDoc(pedidoRef, {
+              status: 'impresso',
+              impressoEm: serverTimestamp(),
+              impressoPor: auth.currentUser.uid
+            });
 
-          // Prepara os dados do pedido
-          const orderToPrint = {
-            id: change.doc.id,
-            ...orderData,
-            criadoEm: orderData.criadoEm?.toDate() || new Date()
-          };
+            const orderToPrint = {
+              id: change.doc.id,
+              ...orderData,
+              criadoEm: orderData.criadoEm?.toDate() || new Date()
+            };
 
-          // Envia para impressão
-          await thermalPrinter.printOrder(orderToPrint);
-
+            await thermalPrinter.printOrder(orderToPrint);
+          } else {
+            console.warn(`Pedido ${change.doc.id} não encontrado para atualização.`);
+          }
         } catch (error) {
           console.error("Erro ao processar pedido:", error);
 
-          // Reverte o status em caso de erro
-          await updateDoc(doc(db, "pedidos", change.doc.id), {
-            status: 'pendente',
-            impressoEm: null
-          });
+          // Tenta reverter o status, se o documento ainda existir
+          const revertSnap = await getDoc(pedidoRef);
+          if (revertSnap.exists()) {
+            await updateDoc(pedidoRef, {
+              status: 'pendente',
+              impressoEm: null
+            });
+          }
         } finally {
           isProcessing = false;
         }
@@ -239,7 +242,6 @@ useEffect(() => {
 
   return () => unsubscribe();
 }, []);
-
 
 
   const refreshOrders = async () => {
