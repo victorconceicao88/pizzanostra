@@ -103,8 +103,12 @@ class ThermalPrinter {
                 .text(`${item.quantidade}x ${this.sanitizeText(item.nome).toUpperCase()}`)
                 .text(`Tamanho: ${item.tamanho?.toLowerCase() || 'padrao'}`);
 
-              if (item.observacoes) {
-                this.printer.text(`Obs: ${this.sanitizeText(item.observacoes)}`);
+              if (item.borderType) {
+                this.printer.text(`Borda: ${item.borderType === 'grossa' ? 'GROSSA' : 'FINA'}`);
+              }
+
+              if (item.halfAndHalf) {
+                this.printer.text(`Meia a meia: ${item.halfPizza1Name} + ${item.halfPizza2Name}`);
               }
 
               if (item.extras?.length) {
@@ -184,15 +188,27 @@ class ThermalPrinter {
           if (Array.isArray(order.itens)) {
             order.itens.forEach(item => {
               const itemText = `${item.quantidade}x ${this.sanitizeText(item.nome)}`;
-              const priceText = `${this.formatCurrency(item.preco || 0)} EUR`;
+              const priceText = item.pagoComSelos ? 'GRÁTIS (SELOS)' : `${this.formatCurrency(item.preco || 0)} EUR`;
               this.printer
                 .text(this.printLine(itemText, priceText))
-                .text(`Tamanho: ${item.tamanho?.toLowerCase() || 'padrao'}`)
-                .text('-------------------------------------------');
+                .text(`Tamanho: ${item.tamanho?.toLowerCase() || 'padrao'}`);
+
+              if (item.borderType) {
+                this.printer.text(`Borda: ${item.borderType === 'grossa' ? 'GROSSA' : 'FINA'}`);
+              }
+
+              if (item.halfAndHalf) {
+                this.printer.text(`Meia a meia: ${item.halfPizza1Name} + ${item.halfPizza2Name}`);
+              }
+
+              if (item.extras?.length) {
+                this.printer.text(`Extras: ${this.sanitizeText(item.extras.map(e => e.nome).join(', '))}`);
+              }
+
+              this.printer.text('-------------------------------------------');
             });
           }
 
-          // Formatação alinhada dos valores
           this.printer.text(this.printLine('Subtotal:', `${this.formatCurrency(order.subtotal || 0)} EUR`));
 
           if (isDelivery && order.taxaEntrega) {
@@ -217,7 +233,6 @@ class ThermalPrinter {
               .text('-------------------------------------------');
           }
 
-          // Rodapé promocional
           this.printer
             .feed(1)
             .align('CT')
