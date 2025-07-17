@@ -3325,7 +3325,7 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       <FaChevronLeft size={16} className="relative" />
     </button>
 
-    {/* Lista de categorias com snapping e bloqueio de overscroll */}
+  
     <div
       id="categories-scroll"
       ref={ref}
