@@ -2676,6 +2676,8 @@ const InterfaceClienteInner = () => {
   const [nifNumber, setNifNumber] = useState('');
   const [codigoPostal, setCodigoPostal] = useState('');
   const [valorPago, setValorPago] = useState('');
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
 const categories = [
   { id: 'todos', name: t(language, 'todos'), icon: <GiFullPizza size={20} color="#9C27B0" /> },       // Roxo
@@ -2692,6 +2694,30 @@ const categories = [
   { id: 'hamburgueres', name: t(language, 'hamburgueres'), icon: <GiHamburger size={20} color="#FF7043" /> },// Laranja claro
   { id: 'sucos', name: t(language, 'sucos'), icon: <GiFruitBowl size={20} color="#FFB300" /> },              // Amarelo/laranja
 ];
+  const updateScrollButtons = () => {
+  const container = ref.current;
+  if (container) {
+    setCanScrollLeft(container.scrollLeft > 0);
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+    setCanScrollRight(container.scrollLeft < maxScrollLeft - 5);
+  }
+};
+
+useEffect(() => {
+  updateScrollButtons();
+  const container = ref.current;
+  if (container) {
+    container.addEventListener('scroll', updateScrollButtons);
+    window.addEventListener('resize', updateScrollButtons);
+  }
+
+  return () => {
+    if (container) {
+      container.removeEventListener('scroll', updateScrollButtons);
+      window.removeEventListener('resize', updateScrollButtons);
+    }
+  };
+}, []);
 
   // Persistir carrinho no localStorage
   const [cart, setCart] = useState(() => {
@@ -3320,22 +3346,25 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     {/* Seta esquerda */}
     <button
       onClick={() => {
-        const container = document.getElementById('categories-scroll');
-        if (container) {
+        const container = ref.current;
+        if (container && canScrollLeft) {
           container.scrollBy({ left: -400, behavior: 'smooth' });
         }
       }}
-      className="absolute left-0 top-[45%] -translate-y-1/2 z-20 w-11 h-11 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 hover:bg-gray-100 transition-all border border-gray-300"
+      className={`absolute left-0 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all ${
+        canScrollLeft ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'
+      }`}
+      style={{ top: '40%' }}
       aria-label="Scroll categories left"
     >
-      <FaChevronLeft size={20} />
+      <FaChevronLeft size={16} className="relative" />
     </button>
 
     {/* Lista de categorias */}
     <div
-      className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-8"
       id="categories-scroll"
       ref={ref}
+      className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-10"
     >
       {categories.map((category) => (
         <button
@@ -3352,18 +3381,24 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     {/* Seta direita */}
     <button
       onClick={() => {
-        const container = document.getElementById('categories-scroll');
-        if (container) {
-          container.scrollBy({ left: 400, behavior: 'smooth' });
+        const container = ref.current;
+        const maxScrollLeft = container?.scrollWidth - container?.clientWidth;
+
+        if (container && canScrollRight) {
+          container.scrollBy({ left: 300, behavior: 'smooth' });
         }
       }}
-      className="absolute right-0 top-[45%] -translate-y-1/2 z-20 w-11 h-11 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 hover:bg-gray-100 transition-all border border-gray-300"
+      className={`absolute right-0 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all ${
+        canScrollRight ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'
+      }`}
+      style={{ top: '40%' }}
       aria-label="Scroll categories right"
     >
-      <FaChevronRight size={20} />
+      <FaChevronRight size={16} className="relative" />
     </button>
   </div>
 </div>
+
         <div>
           {renderProducts()}
         </div>
