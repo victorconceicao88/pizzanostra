@@ -72,8 +72,11 @@ class ThermalPrinter {
           const createdDate = new Date(order.criadoEm?.seconds * 1000 || Date.now());
           const cliente = order.cliente || {};
           const isDelivery = order.tipoEntrega === 'entrega';
+          const pizzaCategories = ['tradicionais', 'entradas', 'vegetarianas', 'doces'];
+          const printSizeAndBorderCategories = ['tradicionais', 'vegetarianas'];
 
           // ============ VIA COZINHA ============
+
           this.printer
             .align('CT')
             .style('B')
@@ -93,26 +96,34 @@ class ThermalPrinter {
             .text(`TIPO: ${isDelivery ? 'ENTREGA' : 'RETIRADA'}`)
             .text(`DATA: ${createdDate.toLocaleDateString('pt-PT')} - HORA: ${createdDate.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`)
             .feed(1)
+            .style('B')
             .text('ITENS:')
-            .text('-------------------------------------------')
-            .feed(1);
+            .style('NORMAL')
+            .text('-------------------------------------------');
 
           if (Array.isArray(order.itens)) {
             order.itens.forEach((item, index) => {
-              this.printer
-                .text(`${item.quantidade}x ${this.sanitizeText(item.nome).toUpperCase()}`)
-                .text(`Tamanho: ${item.tamanho?.toLowerCase() || 'padrao'}`);
-
-              if (item.borderType) {
-                this.printer.text(`Borda: ${item.borderType === 'grossa' ? 'GROSSA' : 'FINA'}`);
-              }
-
               if (item.halfAndHalf) {
-                this.printer.text(`Meia a meia: ${item.halfPizza1Name} + ${item.halfPizza2Name}`);
-              }
+                this.printer.text(`1x MEIA A MEIA: ${this.sanitizeText(item.halfPizza1Name)} + ${this.sanitizeText(item.halfPizza2Name)}`);
+              } else {
+                const itemNome = this.sanitizeText(item.nome).toUpperCase();
+                this.printer.text(`${item.quantidade}x ${itemNome}`);
 
-              if (item.extras?.length) {
-                this.printer.text(`Extras: ${this.sanitizeText(item.extras.map(e => e.nome).join(', '))}`);
+                if (item.categoria === 'hamburgueres') {
+                  this.printer.text(`  Tipo carne: ${item.meatType === 'frango' ? 'FRANGO' : 'VACA'}`);
+                  if (item.withMenu) {
+                    this.printer.text('  COM MENU (BEBIDA + BATATAS)');
+                  }
+                } else if (printSizeAndBorderCategories.includes(item.categoria)) {
+                  this.printer.text(`  Tamanho: ${item.tamanho?.toLowerCase() || 'padrao'}`);
+                  if (item.borderType) {
+                    this.printer.text(`  Borda: ${item.borderType === 'grossa' ? 'GROSSA' : 'FINA'}`);
+                  }
+                }
+
+                if (item.extras?.length) {
+                  this.printer.text(`  Extras: ${this.sanitizeText(item.extras.map(e => e.nome).join(', '))}`);
+                }
               }
 
               if (index < order.itens.length - 1) {
@@ -124,7 +135,9 @@ class ThermalPrinter {
           if (order.observacoes) {
             this.printer
               .feed(1)
-              .text('OBSERVACOES:')
+              .style('B')
+              .text('OBSERVAÇÕES:')
+              .style('NORMAL')
               .text('-------------------------------------------')
               .text(this.sanitizeText(order.observacoes))
               .feed(1);
@@ -140,6 +153,7 @@ class ThermalPrinter {
             .cut();
 
           // ============ VIA ENTREGADOR ============
+
           this.printer
             .align('CT')
             .style('B')
@@ -170,10 +184,10 @@ class ThermalPrinter {
             this.printer
               .text('-------------------------------------------')
               .style('B')
-              .text('ENDERECO:')
+              .text('ENDEREÇO:')
               .style('NORMAL')
               .text(this.sanitizeText(order.enderecoCompleto || 'NAO INFORMADO'))
-              .text(cliente.codigoPostal ? `CODIGO POSTAL: ${cliente.codigoPostal}` : '')
+              .text(cliente.codigoPostal ? `CÓDIGO POSTAL: ${cliente.codigoPostal}` : '')
               .text('-------------------------------------------');
           }
 
@@ -181,28 +195,38 @@ class ThermalPrinter {
             .feed(1)
             .style('B')
             .text('ITENS:')
-            .text('-------------------------------------------')
             .style('NORMAL')
-            .feed(1);
+            .text('-------------------------------------------');
 
           if (Array.isArray(order.itens)) {
             order.itens.forEach(item => {
-              const itemText = `${item.quantidade}x ${this.sanitizeText(item.nome)}`;
+              const itemText = item.halfAndHalf ? 
+                `1x MEIA A MEIA` : 
+                `${item.quantidade}x ${this.sanitizeText(item.nome)}`;
+              
               const priceText = item.pagoComSelos ? 'GRÁTIS (SELOS)' : `${this.formatCurrency(item.preco || 0)} EUR`;
-              this.printer
-                .text(this.printLine(itemText, priceText))
-                .text(`Tamanho: ${item.tamanho?.toLowerCase() || 'padrao'}`);
-
-              if (item.borderType) {
-                this.printer.text(`Borda: ${item.borderType === 'grossa' ? 'GROSSA' : 'FINA'}`);
-              }
+              this.printer.text(this.printLine(itemText, priceText));
 
               if (item.halfAndHalf) {
-                this.printer.text(`Meia a meia: ${item.halfPizza1Name} + ${item.halfPizza2Name}`);
+                this.printer.text(`  ${this.sanitizeText(item.halfPizza1Name)} + ${this.sanitizeText(item.halfPizza2Name)}`);
+              } else if (item.categoria === 'hamburgueres') {
+                this.printer.text(`  Tipo carne: ${item.meatType === 'frango' ? 'FRANGO' : 'VACA'}`);
+                if (item.withMenu) {
+                  this.printer.text('  COM MENU (BEBIDA + BATATAS)');
+                }
+              } else if (pizzaCategories.includes(item.categoria)) {
+                const sizeText = item.tamanho ? ` (${item.tamanho.toLowerCase()})` : '';
+                this.printer.text(`  Tamanho: ${item.tamanho?.toLowerCase() || 'padrao'}${sizeText}`);
+                if (item.borderType) {
+                  this.printer.text(`  Borda: ${item.borderType === 'grossa' ? 'GROSSA' : 'FINA'}`);
+                }
               }
 
               if (item.extras?.length) {
-                this.printer.text(`Extras: ${this.sanitizeText(item.extras.map(e => e.nome).join(', '))}`);
+                const extrasText = item.extras
+                  .map(e => `${this.sanitizeText(e.nome)} (+${this.formatCurrency(e.preco || 0)} EUR)`)
+                  .join(', ');
+                this.printer.text(`  Extras: ${extrasText}`);
               }
 
               this.printer.text('-------------------------------------------');
@@ -213,6 +237,10 @@ class ThermalPrinter {
 
           if (isDelivery && order.taxaEntrega) {
             this.printer.text(this.printLine('Taxa de Entrega:', `${this.formatCurrency(order.taxaEntrega)} EUR`));
+          }
+
+          if (order.selosUsados > 0) {
+            this.printer.text(this.printLine('Desconto (Selos):', `-${this.formatCurrency(order.subtotal + (order.taxaEntrega || 0) - order.total)} EUR`));
           }
 
           this.printer.text('-------------------------------------------')
@@ -233,6 +261,16 @@ class ThermalPrinter {
               .text('-------------------------------------------');
           }
 
+          if (order.observacoes) {
+            this.printer
+              .feed(1)
+              .style('B')
+              .text('OBSERVAÇÕES:')
+              .style('NORMAL')
+              .text(this.sanitizeText(order.observacoes))
+              .text('-------------------------------------------');
+          }
+
           this.printer
             .feed(1)
             .align('CT')
@@ -246,7 +284,7 @@ class ThermalPrinter {
             .text('Rápido, fácil e direto com a PIZZA NOSTRA!')
             .style('NORMAL')
             .feed(1)
-            .text('OBRIGADO PELA PREFERÊNCIA!')
+            .text('OBRIGADO PELA PREFERENCIA!')
             .feed(2)
             .cut();
 

@@ -627,6 +627,128 @@ export const menuData = {
     }
   ],
   
+  hamburgueres: [
+    {
+      id: 'hamburger',
+      name: {
+        pt: 'Hamburger',
+        en: 'Hamburger',
+        es: 'Hamburguesa'
+      },
+      category: "hamburgueres",
+      description: {
+        pt: 'Pão Brioche, Carne 100% Vaca 120g, Alface, Tomate, Cebola, Pepino Pickles e Molho Especial',
+        en: 'Brioche bread, 100% Beef 120g, Lettuce, Tomato, Onion, Pickles Cucumber and Special Sauce',
+        es: 'Pan Brioche, Carne 100% Vaca 120g, Lechuga, Tomate, Cebolla, Pepinillos y Salsa Especial'
+      },
+      prices: {
+        sandwich: 5.50,
+        menu: 8.50
+      },
+      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1998&q=80',
+      popular: true,
+      rating: 4.9,
+      ratingCount: 87
+    },
+    {
+      id: 'cheese-burger',
+      name: {
+        pt: 'Cheese Burger',
+        en: 'Cheese Burger',
+        es: 'Hamburguesa con Queso'
+      },
+      category: "hamburgueres",
+      description: {
+        pt: 'Pão Brioche, Carne 100% Vaca 120g, Queijo, Alface, Tomate, Cebola, Pepino Pickles e Molho Especial',
+        en: 'Brioche bread, 100% Beef 120g, Cheese, Lettuce, Tomato, Onion, Pickles Cucumber and Special Sauce',
+        es: 'Pan Brioche, Carne 100% Vaca 120g, Queso, Lechuga, Tomate, Cebolla, Pepinillos y Salsa Especial'
+      },
+      prices: {
+        sandwich: 6.50,
+        menu: 9.50
+      },
+      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1998&q=80',
+      popular: true
+    },
+    {
+      id: 'cheese-bacon',
+      name: {
+        pt: 'Cheese Bacon',
+        en: 'Cheese Bacon',
+        es: 'Hamburguesa con Queso y Bacon'
+      },
+      category: "hamburgueres",
+      description: {
+        pt: 'Pão Brioche, Carne 100% Vaca 120g, Queijo, Bacon, Alface, Tomate, Cebola, Pepino Pickles e Molho Especial',
+        en: 'Brioche bread, 100% Beef 120g, Cheese, Bacon, Lettuce, Tomato, Onion, Pickles Cucumber and Special Sauce',
+        es: 'Pan Brioche, Carne 100% Vaca 120g, Queso, Bacon, Lechuga, Tomate, Cebolla, Pepinillos y Salsa Especial'
+      },
+      prices: {
+        sandwich: 7.50,
+        menu: 10.50
+      },
+      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1998&q=80'
+    },
+    {
+      id: 'egg-cheese-bacon',
+      name: {
+        pt: 'Egg Cheese Bacon',
+        en: 'Egg Cheese Bacon',
+        es: 'Hamburguesa con Huevo, Queso y Bacon'
+      },
+      category: "hamburgueres",
+      description: {
+        pt: 'Pão Brioche, Carne 100% Vaca 120g, Queijo, Ovo, Bacon, Alface, Tomate, Cebola, Pepino Pickles e Molho Especial',
+        en: 'Brioche bread, 100% Beef 120g, Cheese, Egg, Bacon, Lettuce, Tomato, Onion, Pickles Cucumber and Special Sauce',
+        es: 'Pan Brioche, Carne 100% Vaca 120g, Queso, Huevo, Bacon, Lechuga, Tomate, Cebolla, Pepinillos y Salsa Especial'
+      },
+      prices: {
+        sandwich: 8.50,
+        menu: 11.50
+      },
+      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1998&q=80'
+    },
+    {
+      id: 'x-tudo',
+      name: {
+        pt: 'X-Tudo',
+        en: 'X-Everything',
+        es: 'Hamburguesa Completa'
+      },
+      category: "hamburgueres",
+      description: {
+        pt: 'Pão Brioche, Carne 100% Vaca 120g, Queijo, Ovo, Bacon, Fiambre, Calabresa, Alface, Tomate, Cebola, Pepino Pickles e Molho Especial',
+        en: 'Brioche bread, 100% Beef 120g, Cheese, Egg, Bacon, Ham, Sausage, Lettuce, Tomato, Onion, Pickles Cucumber and Special Sauce',
+        es: 'Pan Brioche, Carne 100% Vaca 120g, Queso, Huevo, Bacon, Jamón, Salchicha, Lechuga, Tomate, Cebolla, Pepinillos y Salsa Especial'
+      },
+      prices: {
+        sandwich: 10.50,
+        menu: 13.50
+      },
+      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1998&q=80',
+      popular: true
+    },
+    {
+      id: 'big-nostra',
+      name: {
+        pt: 'Big Nostra',
+        en: 'Big Nostra',
+        es: 'Gran Nostra'
+      },
+      category: "hamburgueres",
+      description: {
+        pt: 'Pão Brioche, 2 Carnes 100% Vaca 120g cada, 2 Queijo, Ovo, Bacon, Fiambre, Alface, Tomate, Cebola, Pepino Pickles e Molho Especial',
+        en: 'Brioche bread, 2 Meats 100% Beef 120g each, 2 Cheese, Egg, Bacon, Ham, Lettuce, Tomato, Onion, Pickles Cucumber and Special Sauce',
+        es: 'Pan Brioche, 2 Carnes 100% Vaca 120g cada, 2 Queso, Huevo, Bacon, Jamón, Lechuga, Tomate, Cebolla, Pepinillos y Salsa Especial'
+      },
+      prices: {
+        sandwich: 13.00,
+        menu: 16.00
+      },
+      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1998&q=80'
+    }
+  ],
+  
   doces: [
     {
       id: 'banana-canela',

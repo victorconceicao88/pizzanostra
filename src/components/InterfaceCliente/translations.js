@@ -19,8 +19,15 @@ export const translations = {
           secondHalf: "Segunda metade",
           selectHalf: "Selecione o sabor",
           halfPizzaNotice: "Escolha dois sabores para sua pizza (apenas para tamanho família)",
-          
-          
+          chooseMeatType:"Qual carne você gostaria?",
+          selectMeatTypeRequired:"Você precisa escolher a carne antes de seguir.",
+          meatType:"Tipo de Carne",
+          includeMenu:"Deseja incluir o menu?",
+          menuIncludes: "Este menu vem com:",
+          withMenu:"Com menu",
+          withoutMenu:"Versão simples (sem menu)",
+
+                 
           // Bordas
           borderType: "Tipo de Borda",
           thinBorder: "Fina (tradicional)",

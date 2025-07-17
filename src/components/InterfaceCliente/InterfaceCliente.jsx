@@ -27,7 +27,8 @@ const categoryImages = {
   massas: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
   sobremesas: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
   bebidas: 'https://images.unsplash.com/photo-1536935338788-846bb9981813?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-  vinhos: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
+  vinhos: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  hamburgueres: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
 };
 
 // Adicionais para pizzas
@@ -56,6 +57,16 @@ const pizzaExtras = [
   { id: 'tomate', name: { pt: 'Tomate', en: 'Tomato', es: 'Tomate' }, price: 1.50 }
 ];
 
+// Adicionais para hambúrgueres
+const burgerExtras = [
+  { id: 'bacon', name: { pt: 'Bacon', en: 'Bacon', es: 'Tocino' }, price: 1.50 },
+  { id: 'queijo', name: { pt: 'Queijo Extra', en: 'Extra Cheese', es: 'Queso Extra' }, price: 1.00 },
+  { id: 'ovo', name: { pt: 'Ovo', en: 'Egg', es: 'Huevo' }, price: 1.00 },
+  { id: 'cebola', name: { pt: 'Cebola Caramelizada', en: 'Caramelized Onion', es: 'Cebolla Caramelizada' }, price: 0.80 },
+  { id: 'picles', name: { pt: 'Picles', en: 'Pickles', es: 'Pepinillos' }, price: 0.50 },
+  { id: 'molho', name: { pt: 'Molho Especial', en: 'Special Sauce', es: 'Salsa Especial' }, price: 0.70 }
+];
+
 // Definir as recompensas de selos
 const STAMP_REWARDS = {
   pizzas: {
@@ -66,6 +77,271 @@ const STAMP_REWARDS = {
   entradas: {
     pao_alho: { selos: 5, label: { pt: "Pão de Alho", en: "Garlic Bread", es: "Pan de Ajo" } }
   }
+};
+
+const BurgerCustomizationModal = ({ 
+  product, 
+  onClose, 
+  onAddToCart,
+  language,
+  initialSelection = {
+    meatType: null,
+    withMenu: false,
+    quantity: 1,
+    extras: []
+  }
+}) => {
+  const [selection, setSelection] = useState(initialSelection);
+  const [activeTab, setActiveTab] = useState('meat');
+  
+  const basePrice = selection.withMenu 
+  ? product.prices.menu 
+  : product.prices.sandwich;
+  const extrasTotal = selection.extras.reduce((sum, extra) => sum + extra.price, 0);
+  const totalPrice = (basePrice + extrasTotal) * selection.quantity;
+  
+  const handleMeatChange = (meatType) => {
+    setSelection(prev => ({ ...prev, meatType }));
+  };
+  
+  const toggleMenu = () => {
+    setSelection(prev => ({ ...prev, withMenu: !prev.withMenu }));
+  };
+  
+  const toggleExtra = (extra) => {
+    setSelection(prev => {
+      const extras = prev.extras || [];
+      const extraIndex = extras.findIndex(e => e.id === extra.id);
+      
+      if (extraIndex >= 0) {
+        const newExtras = [...extras];
+        newExtras.splice(extraIndex, 1);
+        return { ...prev, extras: newExtras };
+      } else {
+        return { ...prev, extras: [...extras, extra] };
+      }
+    });
+  };
+
+  const handleQuantityChange = (newQuantity) => {
+    setSelection(prev => ({ ...prev, quantity: Math.max(1, newQuantity) }));
+  };
+  
+  const handleAddToCart = () => {
+    if (!selection.meatType) {
+      toast.error(t(language, 'selectMeatType'));
+      return;
+    }
+    
+    onAddToCart(product, selection);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        {/* Italian flag lines at the top */}
+        <div className="h-2 w-full bg-green-600"></div>
+        <div className="h-2 w-full bg-white"></div>
+        <div className="h-2 w-full bg-red-600"></div>
+        
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-800">
+              {typeof product.name === 'object' ? product.name[language] : product.name}
+            </h3>
+            <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
+              <X size={20} />
+            </button>
+          </div>
+          
+          {product.description && (
+            <p className="text-gray-600 text-sm mb-4">
+              {typeof product.description === 'object' ? product.description[language] : product.description}
+            </p>
+          )}
+          
+          {/* Tab Navigation */}
+          <div className="flex border-b border-gray-200 mb-4">
+            <button
+              onClick={() => setActiveTab('meat')}
+              className={`py-2 px-4 font-medium text-sm ${activeTab === 'meat' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              {t(language, 'meatType')}
+            </button>
+            <button
+              onClick={() => setActiveTab('menu')}
+              className={`py-2 px-4 font-medium text-sm ${activeTab === 'menu' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              {t(language, 'menu')}
+            </button>
+            <button
+              onClick={() => setActiveTab('extras')}
+              className={`py-2 px-4 font-medium text-sm ${activeTab === 'extras' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              {t(language, 'extras')} ({selection.extras.length})
+            </button>
+          </div>
+        
+          {/* Tab Content */}
+          <div className="mb-6">
+            {activeTab === 'meat' && (
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-700">{t(language, 'chooseMeatType')}</h4>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleMeatChange('vaca')}
+                    className={`p-4 rounded-lg border-2 flex flex-col items-center transition-all ${
+                      selection.meatType === 'vaca'
+                        ? 'border-[#016730] bg-green-50 text-[#016730]'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-bold">Vaca (Boi)</span>
+                    <span className="text-xs text-gray-500 mt-1">Carne bovina</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleMeatChange('frango')}
+                    className={`p-4 rounded-lg border-2 flex flex-col items-center transition-all ${
+                      selection.meatType === 'frango'
+                        ? 'border-[#016730] bg-green-50 text-[#016730]'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-bold">Frango</span>
+                    <span className="text-xs text-gray-500 mt-1">Carne de frango</span>
+                  </button>
+                </div>
+                
+                {!selection.meatType && (
+                  <p className="text-red-500 text-sm mt-2">{t(language, 'selectMeatTypeRequired')}</p>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'menu' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-gray-700">{t(language, 'includeMenu')}</h4>
+                      <p className="text-sm text-gray-500">
+                        {t(language, 'menuIncludes')} 1 Bebida Lata 330ml + Batatas Fritas
+                      </p>
+                    </div>
+                    <button
+                      onClick={toggleMenu}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        selection.withMenu ? 'bg-green-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          selection.withMenu ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">
+                        {selection.withMenu ? t(language, 'withMenu') : t(language, 'withoutMenu')}
+                      </span>
+                      <span className="font-bold text-[#016730]">
+                        {selection.withMenu 
+                          ? `${product.prices.menu.toFixed(2)}€` 
+                          : `${product.prices.sandwich.toFixed(2)}€`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            
+            {activeTab === 'extras' && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1">
+                {burgerExtras.map(extra => {
+                  const isSelected = selection.extras.some(e => e.id === extra.id);
+                  return (
+                    <button
+                      key={extra.id}
+                      onClick={() => toggleExtra(extra)}
+                      className={`p-2 rounded-lg flex flex-col items-start transition-all border ${
+                        isSelected
+                          ? 'bg-green-50 border-[#016730]'
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center w-full">
+                        {isSelected && (
+                          <FaCheck className="text-[#016730] mr-1 flex-shrink-0" size={12} />
+                        )}
+                        <span className="text-xs font-medium text-left truncate">
+                          {typeof extra.name === 'object' ? extra.name[language] : extra.name}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500 mt-1">
+                        +{extra.price.toFixed(2)}€
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          
+          {selection.extras.length > 0 && activeTab !== 'extras' && (
+            <div className="mb-4 text-xs text-[#016730] font-medium">
+              {t(language, 'extrasTotal')}: +{selection.extras.reduce((sum, extra) => sum + extra.price, 0).toFixed(2)}€
+            </div>
+          )}
+          
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">{t(language, 'quantity')}</h4>
+              <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => handleQuantityChange(selection.quantity - 1)}
+                  disabled={selection.quantity <= 1}
+                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="w-8 h-8 flex items-center justify-center text-sm font-medium border-l border-r border-gray-200">
+                  {selection.quantity}
+                </span>
+                <button
+                  onClick={() => handleQuantityChange(selection.quantity + 1)}
+                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="text-right">
+              <div className="text-sm text-gray-500">{t(language, 'total')}</div>
+              <div className="text-2xl font-bold text-[#016730]">
+                {totalPrice.toFixed(2)}€
+              </div>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleAddToCart}
+            disabled={!selection.meatType}
+            className={`w-full py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center ${
+              !selection.meatType ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            <FaShoppingCart className="mr-2" size={16} />
+            {t(language, 'addToCart')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const OrderConfirmationModal = ({ 
@@ -98,36 +374,36 @@ const OrderConfirmationModal = ({
     setTimeout(() => setIsPhoneSaved(false), 2000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-xl border border-gray-100">
+ return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-xl w-full max-w-md mx-2 sm:mx-auto overflow-hidden shadow-xl border border-gray-100 max-h-[95vh] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-center">
-          <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-            <FaCheckCircle className="text-white text-4xl" />
+        <div className="bg-gradient-to-r from-green-600 to-green-700 p-4 sm:p-6 text-center">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 backdrop-blur-sm">
+            <FaCheckCircle className="text-white text-3xl sm:text-4xl" />
           </div>
-          <h3 className="text-2xl font-bold text-white">
+          <h3 className="text-xl sm:text-2xl font-bold text-white">
             {t(language, 'orderSentSuccess')}!
           </h3>
-          <p className="text-white/90 mt-2">
+          <p className="text-white/90 text-sm sm:text-base mt-2">
             Seu pedido está sendo preparado com carinho
           </p>
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
           {/* Order Number Card */}
-          <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-gray-50 rounded-lg p-4 sm:p-5 border border-gray-200">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
               <div className="flex items-center">
-                <FaClipboardList className="text-green-600 mr-3" size={20} />
-                <h4 className="font-semibold text-gray-800">
+                <FaClipboardList className="text-green-600 mr-2 sm:mr-3" size={18} />
+                <h4 className="font-semibold text-gray-800 text-sm sm:text-base">
                   {t(language, 'orderNumber')}
                 </h4>
               </div>
               <button
                 onClick={copyOrderNumber}
-                className={`px-3 py-1 rounded-full text-sm flex items-center ${
+                className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center ${
                   isCopied 
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -135,39 +411,39 @@ const OrderConfirmationModal = ({
               >
                 {isCopied ? (
                   <>
-                    <FaCheck className="mr-1" size={14} />
+                    <FaCheck className="mr-1" size={12} />
                     Copiado
                   </>
                 ) : (
                   <>
-                    <FaCopy className="mr-1" size={14} />
+                    <FaCopy className="mr-1" size={12} />
                     Copiar
                   </>
                 )}
               </button>
             </div>
-            <div className="bg-white p-3 rounded border border-gray-300 text-center">
-              <p className="text-2xl font-bold text-gray-900 font-mono tracking-wider">
+            <div className="bg-white p-2 sm:p-3 rounded border border-gray-300 text-center">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 font-mono tracking-wider">
                 #{orderNumber}
               </p>
             </div>
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p className="text-xs text-gray-500 mt-1 sm:mt-2 text-center">
               Guarde este número para referência futura
             </p>
           </div>
 
           {/* Contact Card */}
-          <div className="bg-blue-50 rounded-lg p-5 border border-blue-200">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-blue-50 rounded-lg p-4 sm:p-5 border border-blue-200">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
               <div className="flex items-center">
-                <FaPhone className="text-blue-600 mr-3" size={20} />
-                <h4 className="font-semibold text-gray-800">
+                <FaPhone className="text-blue-600 mr-2 sm:mr-3" size={18} />
+                <h4 className="font-semibold text-gray-800 text-sm sm:text-base">
                   Contato da Pizzaria
                 </h4>
               </div>
               <button
                 onClick={savePhoneNumber}
-                className={`px-3 py-1 rounded-full text-sm flex items-center ${
+                className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center ${
                   isPhoneSaved 
                     ? 'bg-blue-100 text-blue-800' 
                     : 'bg-blue-200 text-blue-700 hover:bg-blue-300'
@@ -175,38 +451,38 @@ const OrderConfirmationModal = ({
               >
                 {isPhoneSaved ? (
                   <>
-                    <FaCheck className="mr-1" size={14} />
+                    <FaCheck className="mr-1" size={12} />
                     Salvo
                   </>
                 ) : (
                   <>
-                    <FaAddressBook className="mr-1" size={14} />
+                    <FaAddressBook className="mr-1" size={12} />
                     Salvar
                   </>
                 )}
               </button>
             </div>
-            <div className="bg-white p-3 rounded border border-blue-300 text-center">
+            <div className="bg-white p-2 sm:p-3 rounded border border-blue-300 text-center">
               <a 
                 href={`tel:${phoneNumber}`} 
-                className="text-xl font-semibold text-blue-800 hover:text-blue-900 flex items-center justify-center"
+                className="text-lg sm:text-xl font-semibold text-blue-800 hover:text-blue-900 flex items-center justify-center"
               >
                 <FaPhone className="mr-2" />
                 {phoneNumber}
               </a>
             </div>
-            <p className="text-xs text-blue-600 mt-2 text-center">
+            <p className="text-xs text-blue-600 mt-1 sm:mt-2 text-center">
               Ligue em caso de dúvidas sobre seu pedido
             </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-3 sm:pt-4">
             <button
               onClick={onClose}
-              className="py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              className="py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
             >
-              <FaTimes /> Fechar
+              <FaTimes size={14} /> Fechar
             </button>
             
             {!user ? (
@@ -215,16 +491,16 @@ const OrderConfirmationModal = ({
                   onClose();
                   navigate('/fidelidade');
                 }}
-                className="py-3 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg text-white hover:from-amber-600 hover:to-amber-700 transition-colors flex items-center justify-center gap-2"
+                className="py-2 sm:py-3 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg text-white hover:from-amber-600 hover:to-amber-700 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
               >
-                <FaUserPlus /> Registrar Agora
+                <FaUserPlus size={14} /> Registrar
               </button>
             ) : (
               <button
                 onClick={onNewOrder}
-                className="py-3 bg-gradient-to-r from-green-600 to-green-700 rounded-lg text-white hover:from-green-700 hover:to-green-800 transition-colors flex items-center justify-center gap-2"
+                className="py-2 sm:py-3 bg-gradient-to-r from-green-600 to-green-700 rounded-lg text-white hover:from-green-700 hover:to-green-800 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
               >
-                <FaPlus /> Novo Pedido
+                <FaPlus size={14} /> Novo Pedido
               </button>
             )}
           </div>
@@ -233,6 +509,7 @@ const OrderConfirmationModal = ({
     </div>
   );
 };
+
 const LanguageSelector = () => {
   const { language, setLanguage } = useLanguage();
   
@@ -268,15 +545,15 @@ const LanguageSelector = () => {
 
 const CategoryHeader = ({ category, language }) => {
   return (
-    <div className="relative rounded-2xl overflow-hidden mb-8 h-64">
+    <div className="relative rounded-xl sm:rounded-2xl overflow-hidden mb-4 sm:mb-6 h-48 sm:h-56 md:h-64">
       <img 
         src={categoryImages[category.id]} 
         alt={typeof category.name === 'object' ? category.name[language] : category.name}
         className="w-full h-full object-cover"
         loading="lazy"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 flex items-end p-6">
-        <h2 className="text-3xl font-bold text-white">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 flex items-end p-4 sm:p-6">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
           {typeof category.name === 'object' ? category.name[language] : category.name}
         </h2>
       </div>
@@ -393,31 +670,31 @@ const CustomizationModal = ({
     const secondHalfPrice = secondHalfPizza?.sizes?.[selection.size] || 0;
 
     return (
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <label className="font-medium text-gray-700">
+      <div className="mb-3 sm:mb-4">
+        <div className="flex items-center justify-between mb-1 sm:mb-2">
+          <label className="font-medium text-gray-700 text-sm sm:text-base">
             {t(language, 'halfAndHalf')}
           </label>
           <button
             onClick={toggleHalfAndHalf}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-5 sm:h-6 w-10 sm:w-11 items-center rounded-full transition-colors ${
               selection.halfAndHalf ? 'bg-green-600' : 'bg-gray-200'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                selection.halfAndHalf ? 'translate-x-6' : 'translate-x-1'
+              className={`inline-block h-3 sm:h-4 w-3 sm:w-4 transform rounded-full bg-white transition-transform ${
+                selection.halfAndHalf ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
               }`}
             />
           </button>
         </div>
         
         {selection.halfAndHalf && (
-          <div className="space-y-3">
-            <div className="bg-gray-50 p-3 rounded-lg mb-2">
-              <p className="text-sm font-medium text-gray-700">
+          <div className="space-y-2 sm:space-y-3">
+            <div className="bg-gray-50 p-2 sm:p-3 rounded-lg mb-1 sm:mb-2">
+              <p className="text-xs sm:text-sm font-medium text-gray-700">
                 {t(language, 'firstHalf')}: 
-                <span className="ml-2 font-bold">
+                <span className="ml-1 sm:ml-2 font-bold">
                   {typeof firstHalfPizza.name === 'object' 
                     ? firstHalfPizza.name[language] 
                     : firstHalfPizza.name} ({(firstHalfPrice / 2).toFixed(2)}€)
@@ -426,13 +703,13 @@ const CustomizationModal = ({
             </div>
             
             <div>
-              <label className="block text-sm text-gray-600 mb-1">
+              <label className="block text-xs sm:text-sm text-gray-600 mb-1">
                 {t(language, 'secondHalf')}
               </label>
               <select
                 value={selection.halfPizza2 || ''}
                 onChange={(e) => selectHalfPizza(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg"
+                className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-xs sm:text-sm"
               >
                 <option value="">{t(language, 'selectHalf')}</option>
                 {menuData.tradicionais.concat(menuData.vegetarianas)
@@ -451,14 +728,14 @@ const CustomizationModal = ({
   };
 
   const renderBorderTypeSection = () => (
-    <div className="mb-4">
-      <label className="block text-gray-700 mb-2 font-medium">
+    <div className="mb-3 sm:mb-4">
+      <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-sm sm:text-base">
         {t(language, 'borderType')}
       </label>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => handleBorderTypeChange('fina')}
-          className={`py-2 rounded-lg transition-all ${
+          className={`py-2 rounded-lg transition-all text-xs sm:text-sm ${
             selection.borderType === 'fina'
               ? 'bg-white border-2 border-[#016730] text-gray-800'
               : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
@@ -468,7 +745,7 @@ const CustomizationModal = ({
         </button>
         <button
           onClick={() => handleBorderTypeChange('grossa')}
-          className={`py-2 rounded-lg transition-all ${
+          className={`py-2 rounded-lg transition-all text-xs sm:text-sm ${
             selection.borderType === 'grossa'
               ? 'bg-white border-2 border-[#016730] text-gray-800'
               : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
@@ -481,55 +758,55 @@ const CustomizationModal = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50">
+      <div className="bg-white rounded-xl sm:rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Italian flag lines at the top */}
-        <div className="h-2 w-full bg-green-600"></div>
-        <div className="h-2 w-full bg-white"></div>
-        <div className="h-2 w-full bg-red-600"></div>
+        <div className="h-1 sm:h-2 w-full bg-green-600"></div>
+        <div className="h-1 sm:h-2 w-full bg-white"></div>
+        <div className="h-1 sm:h-2 w-full bg-red-600"></div>
         
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-800">
+        <div className="p-4 sm:p-6">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800">
               {typeof product.name === 'object' ? product.name[language] : product.name}
             </h3>
             <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
           
           {product.description && (
-            <p className="text-gray-600 text-sm mb-4">
+            <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
               {typeof product.description === 'object' ? product.description[language] : product.description}
             </p>
           )}
           
           {/* Tab Navigation */}
-          <div className="flex border-b border-gray-200 mb-4">
+          <div className="flex border-b border-gray-200 mb-3 sm:mb-4">
             <button
               onClick={() => setActiveTab('size')}
-              className={`py-2 px-4 font-medium text-sm ${activeTab === 'size' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm ${activeTab === 'size' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
             >
               {t(language, 'Size')}
             </button>
             {product.sizes && menuData.bordas.length > 0 && (
               <button
                 onClick={() => setActiveTab('border')}
-                className={`py-2 px-4 font-medium text-sm ${activeTab === 'border' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm ${activeTab === 'border' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 {t(language, 'Stuffed')}
               </button>
             )}
             <button
               onClick={() => setActiveTab('extras')}
-              className={`py-2 px-4 font-medium text-sm ${activeTab === 'extras' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm ${activeTab === 'extras' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
             >
               {t(language, 'extras')} ({selection.extras.length})
             </button>
           </div>
         
           {/* Tab Content */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             {activeTab === 'size' && product.sizes && (
               <div>
                 <div className="grid grid-cols-3 gap-2">
@@ -537,14 +814,14 @@ const CustomizationModal = ({
                     <button
                       key={size}
                       onClick={() => handleSizeChange(size)}
-                      className={`py-3 rounded-lg transition-all flex flex-col items-center ${
+                      className={`py-2 sm:py-3 rounded-lg transition-all flex flex-col items-center text-xs sm:text-sm ${
                         selection.size === size
                           ? 'bg-white border-2 border-[#016730] text-gray-800 shadow-md'
                           : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
                       }`}
                     >
                       <div className="text-xs font-medium">{t(language, size)}</div>
-                      <div className="font-bold text-sm">
+                      <div className="font-bold">
                         {product.sizes[size]?.toFixed(2) || '0.00'}€
                       </div>
                     </button>
@@ -563,31 +840,31 @@ const CustomizationModal = ({
               <div className="space-y-2">
                 <button
                   onClick={() => handleBorderChange(null)}
-                  className={`w-full px-3 py-2 rounded-lg flex items-center justify-between transition-all ${
+                  className={`w-full px-3 py-2 rounded-lg flex items-center justify-between transition-all text-xs sm:text-sm ${
                     selection.border === null
                       ? 'bg-white border-2 border-[#016730] text-gray-800'
                       : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
                   }`}
                 >
-                  <span className="text-sm">{t(language, 'noBorder')}</span>
-                  <span className="text-xs text-gray-500">+0.00€</span>
+                  <span>{t(language, 'noBorder')}</span>
+                  <span className="text-gray-500">+0.00€</span>
                 </button>
                 {menuData.bordas.map(border => (
                   <button
                     key={border.id}
                     onClick={() => handleBorderChange(border.id)}
-                    className={`w-full px-3 py-2 rounded-lg flex items-center justify-between transition-all ${
+                    className={`w-full px-3 py-2 rounded-lg flex items-center justify-between transition-all text-xs sm:text-sm ${
                       selection.border === border.id
                         ? 'bg-white border-2 border-[#016730] text-gray-800'
                         : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
                     }`}
                   >
                     <div className="flex flex-col items-start">
-                      <span className="text-sm">
+                      <span>
                         {typeof border.name === 'object' ? border.name[language] : border.name}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-gray-500">
                       +{border.sizes[selection.size || 'media'].toFixed(2)}€
                     </span>
                   </button>
@@ -596,14 +873,14 @@ const CustomizationModal = ({
             )}
             
             {activeTab === 'extras' && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 sm:max-h-60 overflow-y-auto p-1">
                 {pizzaExtras.map(extra => {
                   const isSelected = selection.extras.some(e => e.id === extra.id);
                   return (
                     <button
                       key={extra.id}
                       onClick={() => toggleExtra(extra)}
-                      className={`p-2 rounded-lg flex flex-col items-start transition-all border ${
+                      className={`p-2 rounded-lg flex flex-col items-start transition-all border text-xs sm:text-sm ${
                         isSelected
                           ? 'bg-green-50 border-[#016730]'
                           : 'bg-white border-gray-200 hover:border-gray-300'
@@ -611,13 +888,13 @@ const CustomizationModal = ({
                     >
                       <div className="flex items-center w-full">
                         {isSelected && (
-                          <FaCheck className="text-[#016730] mr-1 flex-shrink-0" size={12} />
+                          <FaCheck className="text-[#016730] mr-1 flex-shrink-0" size={10} />
                         )}
-                        <span className="text-xs font-medium text-left truncate">
+                        <span className="font-medium text-left truncate">
                           {typeof extra.name === 'object' ? extra.name[language] : extra.name}
                         </span>
                       </div>
-                      <span className="text-xs text-gray-500 mt-1">
+                      <span className="text-gray-500 mt-1">
                         +{extra.price.toFixed(2)}€
                       </span>
                     </button>
@@ -628,37 +905,37 @@ const CustomizationModal = ({
           </div>
           
           {selection.extras.length > 0 && activeTab !== 'extras' && (
-            <div className="mb-4 text-xs text-[#016730] font-medium">
+            <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-[#016730] font-medium">
               {t(language, 'extrasTotal')}: +{selection.extras.reduce((sum, extra) => sum + extra.price, 0).toFixed(2)}€
             </div>
           )}
           
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">{t(language, 'quantity')}</h4>
+              <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1">{t(language, 'quantity')}</h4>
               <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <button
                   onClick={() => handleQuantityChange(selection.quantity - 1)}
                   disabled={selection.quantity <= 1}
-                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                  className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
                 >
-                  <Minus size={14} />
+                  <Minus size={12} />
                 </button>
-                <span className="w-8 h-8 flex items-center justify-center text-sm font-medium border-l border-r border-gray-200">
+                <span className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-medium border-l border-r border-gray-200">
                   {selection.quantity}
                 </span>
                 <button
                   onClick={() => handleQuantityChange(selection.quantity + 1)}
-                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
                 >
-                  <Plus size={14} />
+                  <Plus size={12} />
                 </button>
               </div>
             </div>
             
             <div className="text-right">
-              <div className="text-sm text-gray-500">{t(language, 'total')}</div>
-              <div className="text-2xl font-bold text-[#016730]">
+              <div className="text-xs sm:text-sm text-gray-500">{t(language, 'total')}</div>
+              <div className="text-xl sm:text-2xl font-bold text-[#016730]">
                 {totalPrice.toFixed(2)}€
               </div>
             </div>
@@ -667,16 +944,16 @@ const CustomizationModal = ({
           <button
             onClick={handleAddToCart}
             disabled={isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2}
-            className={`w-full py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center ${
+            className={`w-full py-2 sm:py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center text-sm sm:text-base ${
               isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            <FaShoppingCart className="mr-2" size={16} />
+            <FaShoppingCart className="mr-2" size={14} />
             {t(language, 'addToCart')}
           </button>
 
           {isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 && (
-            <p className="text-red-500 text-xs mt-2 text-center">
+            <p className="text-red-500 text-xs mt-1 sm:mt-2 text-center">
               Por favor, selecione o sabor para a segunda metade
             </p>
           )}
@@ -692,7 +969,7 @@ const ProductCard = ({ product, language, onAddToCart }) => {
   const handleAddClick = (e) => {
     e.stopPropagation();
     
-    if (product.sizes) {
+    if (product.sizes || product.category === 'hamburgueres') {
       setIsModalOpen(true);
     } else {
       onAddToCart(product, {
@@ -704,36 +981,46 @@ const ProductCard = ({ product, language, onAddToCart }) => {
     }
   };
 
+  const getDisplayPrice = () => {
+    if (product.category === 'hamburgueres') {
+      return product.prices.sandwich.toFixed(2);
+    }
+    if (product.sizes) {
+      return product.sizes.media.toFixed(2);
+    }
+    return product.price.toFixed(2);
+  };
+
   return (
     <>
-      <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow border-2 border-[#016730]">
-        <div className="p-4">
+      <div className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow border-2 border-[#016730]">
+        <div className="p-3 sm:p-4">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-gray-800 mb-1">
+              <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-1">
                 {typeof product.name === 'object' ? product.name[language] : product.name}
               </h3>
               {product.description && (
-                <p className="text-gray-600 text-sm line-clamp-2 mb-2">
+                <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 mb-2">
                   {typeof product.description === 'object' ? product.description[language] : product.description}
                 </p>
               )}
             </div>
             
             <div className="text-right ml-2">
-              <span className="text-lg font-bold text-red-600">
-                {product.sizes ? product.sizes.media.toFixed(2) : product.price.toFixed(2)}€
+              <span className="text-base sm:text-lg font-bold text-red-600">
+                {getDisplayPrice()}€
               </span>
             </div>
           </div>
           
-          <div className="flex justify-between items-center mt-3">
+          <div className="flex justify-between items-center mt-2 sm:mt-3">
             {product.rating && (
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
                   i < Math.floor(product.rating) ? 
-                    <FaStar key={i} className="text-amber-400 text-sm" /> : 
-                    <FaRegStar key={i} className="text-amber-400 text-sm" />
+                    <FaStar key={i} className="text-amber-400 text-xs sm:text-sm" /> : 
+                    <FaRegStar key={i} className="text-amber-400 text-xs sm:text-sm" />
                 ))}
                 <span className="ml-1 text-xs text-gray-500">({product.ratingCount || 0})</span>
               </div>
@@ -741,16 +1028,23 @@ const ProductCard = ({ product, language, onAddToCart }) => {
             
             <button
               onClick={handleAddClick}
-              className="px-3 py-1 bg-white border border-[#016730] text-gray-800 rounded-lg font-medium flex items-center justify-center gap-1 shadow-sm hover:shadow-md transition-all text-sm"
+              className="px-2 sm:px-3 py-1 bg-white border border-[#016730] text-gray-800 rounded-lg font-medium flex items-center justify-center gap-1 shadow-sm hover:shadow-md transition-all text-xs sm:text-sm"
             >
-              <Plus size={14} weight="bold" className="text-[#016730]" />
+              <Plus size={12} weight="bold" className="text-[#016730]" />
               {t(language, 'add')}
             </button>
           </div>
         </div>
       </div>
       
-      {isModalOpen && (
+      {isModalOpen && product.category === 'hamburgueres' ? (
+        <BurgerCustomizationModal
+          product={product}
+          onClose={() => setIsModalOpen(false)}
+          onAddToCart={onAddToCart}
+          language={language}
+        />
+      ) : isModalOpen && (
         <CustomizationModal
           product={product}
           onClose={() => setIsModalOpen(false)}
@@ -766,13 +1060,13 @@ const StampRewardPreview = ({ cartTotal, language }) => {
   const stampsEarned = Math.floor(cartTotal / 15);
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4">
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-medium text-amber-800 flex items-center">
-          <FaCoins className="mr-2 text-amber-600" />
+    <div className="bg-amber-50 border border-amber-200 rounded-lg sm:rounded-xl p-3 sm:p-4 mt-3 sm:mt-4">
+      <div className="flex items-center justify-between mb-1 sm:mb-2">
+        <h4 className="font-medium text-amber-800 text-sm sm:text-base flex items-center">
+          <FaCoins className="mr-1 sm:mr-2 text-amber-600" size={14} />
           {t(language, 'stampsEarned')}
         </h4>
-        <span className="bg-amber-200 text-amber-800 px-2 py-1 rounded-full text-xs">
+        <span className="bg-amber-200 text-amber-800 px-2 py-1 rounded-full text-xs sm:text-sm">
           +{stampsEarned} {t(language, 'stamps')}
         </span>
       </div>
@@ -781,13 +1075,13 @@ const StampRewardPreview = ({ cartTotal, language }) => {
         {[...Array(Math.min(5, stampsEarned))].map((_, i) => (
           <div
             key={i}
-            className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white shadow-md mx-1"
+            className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-white shadow-md mx-1"
           >
-            <FaCoins size={14} />
+            <FaCoins size={10} />
           </div>
         ))}
         {stampsEarned > 5 && (
-          <span className="ml-2 text-amber-600 font-medium">+{stampsEarned - 5}</span>
+          <span className="ml-1 sm:ml-2 text-amber-600 font-medium text-xs sm:text-sm">+{stampsEarned - 5}</span>
         )}
       </div>
     </div>
@@ -803,41 +1097,15 @@ const CartItem = ({
   onToggleUseStamps,
   itemsWithStamps,
 }) => {
-  // Verifica se o item é elegível para selos
-const isEligibleForStamps = () => {
-  const category = item.category?.toLowerCase();
-
-  // Corrige categorias válidas
-  const categoriasValidas = ['tradicionais', 'vegetarianas'];
-
-  // Pizzas meia a meia tamanho família — elegível
-  if (item.halfAndHalf && item.selectedSize === 'familia') return true;
-
-  // Pizzas normais elegíveis
-  if (categoriasValidas.includes(category) && !item.isBorder) {
-    if (['individual', 'media', 'familia'].includes(item.selectedSize)) return true;
-  }
-
-  // Entradas — elegíveis
-  if (category === 'entradas') return true;
-
-  return false;
-};
-
-
-  const getPizzaName = (id) => {
-    const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
-    return typeof pizza?.name === 'object' ? pizza.name[language] : pizza?.name || 'Desconhecido';
+  const isEligibleForStamps = () => {
+    const category = item.category?.toLowerCase();
+    const categoriasValidas = ['tradicionais', 'vegetarianas', 'entradas'];
+    return categoriasValidas.includes(category) && !item.isBorder;
   };
 
   const calculateStampsNeeded = () => {
-    // Meia-a-meia família usa 12 selos (como pizza família normal)
-    if (item.halfAndHalf && item.selectedSize === 'familia') return 12 * item.quantity;
-    
-    // Entradas usam 5 selos cada
     if (item.category === 'entradas') return 5 * item.quantity;
     
-    // Pizzas normais
     const size = item.selectedSize || 'media';
     if (size === 'individual') return 10 * item.quantity;
     if (size === 'media') return 11 * item.quantity;
@@ -858,160 +1126,258 @@ const isEligibleForStamps = () => {
   const useStamps = itemsWithStamps[item.id] || false;
 
   // Renderização para pizza meia a meia
-// Renderização para pizza meia a meia
-if (item.halfAndHalf && item.selectedSize === 'familia') {
-  console.log('é elegível?', isEligibleForStamps());
+  if (item.halfAndHalf && item.selectedSize === 'familia') {
+    const getPizzaName = (id) => {
+      const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
+      return typeof pizza?.name === 'object' ? pizza.name[language] : pizza?.name || 'Desconhecido';
+    };
 
-  const pizza1 = getPizzaName(item.halfPizza1 || item.id);
-  const pizza2 = getPizzaName(item.halfPizza2);
+    const pizza1 = getPizzaName(item.halfPizza1 || item.id);
+    const pizza2 = getPizzaName(item.halfPizza2);
 
-  return (
-    <div className="py-4 flex justify-between items-start border-b border-gray-100">
-      <div className="flex items-start flex-1 gap-4">
-        <div className="relative">
-          <div className="w-14 h-14 bg-gradient-to-br from-red-600 to-[#016730] rounded-lg flex items-center justify-center">
-            <Pizza size={20} className="text-white" />
+    return (
+      <div className="py-3 sm:py-4 flex justify-between items-start border-b border-gray-100">
+        <div className="flex items-start flex-1 gap-3 sm:gap-4">
+          <div className="relative">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-red-600 to-[#016730] rounded-lg flex items-center justify-center">
+              <Pizza size={18} className="text-white" />
+            </div>
+            <span className="absolute -top-1 sm:-top-2 -right-1 sm:-right-2 bg-red-600 text-white text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full">
+              {item.quantity}
+            </span>
           </div>
-          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
-            {item.quantity}
-          </span>
+
+          <div className="flex-1">
+            <div className="flex justify-between items-start">
+              <h3 className="font-medium text-gray-900 text-xs sm:text-sm">
+                {typeof item.name === 'object' ? item.name[language] : item.name}
+              </h3>
+              <div className="text-xs sm:text-sm font-bold text-[#016730]">
+                {useStamps ? (
+                  <span className="text-xs bg-amber-100 text-amber-800 px-1 sm:px-2 py-0.5 sm:py-1 rounded-full">
+                    {calculateStampsNeeded()} selos
+                  </span>
+                ) : (
+                  `${(item.price * item.quantity).toFixed(2)}€`
+                )}
+              </div>
+            </div>
+
+            <div className="mt-1 sm:mt-2 flex flex-col gap-1 sm:gap-2">
+              <div className="flex items-start">
+                <span className="w-12 sm:w-16 text-xs text-gray-500">Tamanho:</span>
+                <span className="text-xs sm:text-sm font-medium">{t(language, item.selectedSize)}</span>
+              </div>
+
+              <div className="flex items-start">
+                <span className="w-12 sm:w-16 text-xs text-gray-500">1ª Metade:</span>
+                <span className="text-xs sm:text-sm font-medium">{pizza1}</span>
+              </div>
+
+              <div className="flex items-start">
+                <span className="w-12 sm:w-16 text-xs text-gray-500">2ª Metade:</span>
+                <span className="text-xs sm:text-sm font-medium">{pizza2}</span>
+              </div>
+
+              {item.borderType && (
+                <div className="flex items-start">
+                  <span className="w-12 sm:w-16 text-xs text-gray-500">Borda:</span>
+                  <span className="text-xs sm:text-sm font-medium">
+                    {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
+                  </span>
+                </div>
+              )}
+
+              {item.extras?.length > 0 && (
+                <div className="flex items-start">
+                  <span className="w-12 sm:w-16 text-xs text-gray-500">Extras:</span>
+                  <span className="text-xs sm:text-sm font-medium">
+                    {item.extras.map(extra =>
+                      typeof extra.name === 'object' ? extra.name[language] : extra.name
+                    ).join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <h3 className="font-medium text-gray-900 text-sm">
-              {typeof item.name === 'object' ? item.name[language] : item.name}
-            </h3>
-          </div>
-
-          <div className="mt-2 flex flex-col gap-2">
-            <div className="flex items-start">
-              <span className="w-16 text-xs text-gray-500">Tamanho:</span>
-              <span className="text-sm font-medium">{t(language, item.selectedSize)}</span>
+        <div className="flex flex-col items-end ml-1 sm:ml-2">
+          {!useStamps && (
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+                <button
+                  onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+                  className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                >
+                  <Minus size={10} />
+                </button>
+                <span className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center border-l border-r border-gray-200 text-xs sm:text-sm">
+                  {item.quantity}
+                </span>
+                <button
+                  onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+                  className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                >
+                  <Plus size={10} />
+                </button>
+              </div>
+              <button
+                onClick={() => onRemove(item.id)}
+                className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
             </div>
-
-            <div className="flex items-start">
-              <span className="w-16 text-xs text-gray-500">1ª Metade:</span>
-              <span className="text-sm font-medium">{pizza1}</span>
-            </div>
-
-            <div className="flex items-start">
-              <span className="w-16 text-xs text-gray-500">2ª Metade:</span>
-              <span className="text-sm font-medium">{pizza2}</span>
-            </div>
-
-            {item.borderType && (
-              <div className="flex items-start">
-                <span className="w-16 text-xs text-gray-500">Borda:</span>
-                <span className="text-sm font-medium">
-                  {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
+          )}
+          
+          {isEligibleForStamps() && (
+            <div className="mt-2 sm:mt-3 flex items-center justify-between bg-amber-50 p-2 sm:p-3 rounded-lg">
+              <div className="flex items-center">
+                <FaCoins className="text-amber-500 mr-1 sm:mr-2" size={12} />
+                <span className="text-xs sm:text-sm font-medium text-amber-800">
+                  {t(language, 'stampsAvailable')}: {selosDisponiveis}
                 </span>
               </div>
-            )}
-
-            {item.extras?.length > 0 && (
-              <div className="flex items-start">
-                <span className="w-16 text-xs text-gray-500">Extras:</span>
-                <span className="text-sm font-medium">
-                  {item.extras.map(extra =>
-                    typeof extra.name === 'object' ? extra.name[language] : extra.name
-                  ).join(', ')}
-                </span>
-              </div>
-            )}
-          </div>
+              
+              <button
+                onClick={handleToggleUseStamps}
+                className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium flex items-center ${
+                  useStamps
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                } transition-colors`}
+              >
+                {useStamps ? (
+                  <>
+                    <FaCheck className="mr-1" size={10} />
+                    {t(language, 'usingStamps')} ({calculateStampsNeeded()})
+                  </>
+                ) : (
+                  <>
+                    <FaCoins className="mr-1" size={10} />
+                    {t(language, 'useStamps')} ({calculateStampsNeeded()})
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
+    );
+  }
 
-      <div className="flex flex-col items-end ml-2">
-        {!useStamps && (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
-              <button
-                onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-                className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <Minus size={12} />
-              </button>
-              <span className="w-8 h-7 flex items-center justify-center border-l border-r border-gray-200 text-sm">
-                {item.quantity}
-              </span>
-              <button
-                onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-                className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <Plus size={12} />
-              </button>
+  // Renderização para hambúrgueres
+  if (item.category === 'hamburgueres') {
+    return (
+      <div className="py-3 sm:py-4 flex justify-between items-start border-b border-gray-100">
+        <div className="flex items-start flex-1 gap-3 sm:gap-4">
+          <div className="relative">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-red-600 to-[#016730] rounded-lg flex items-center justify-center">
+              <Hamburger size={18} className="text-white" />
             </div>
-            <button
-              onClick={() => onRemove(item.id)}
-              className="w-7 h-7 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-
-        {isEligibleForStamps() && (
-        <div className="mt-3 flex items-center justify-between bg-amber-50 p-3 rounded-lg">
-          <div className="flex items-center">
-            <FaCoins className="text-amber-500 mr-2" />
-            <span className="text-sm font-medium text-amber-800">
-              {t(language, 'stampsAvailable')}: {selosDisponiveis}
+            <span className="absolute -top-1 sm:-top-2 -right-1 sm:-right-2 bg-red-600 text-white text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full">
+              {item.quantity}
             </span>
           </div>
           
-          <button
-            onClick={handleToggleUseStamps}
-            className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${
-              useStamps
-                ? 'bg-green-100 text-green-800'
-                : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-            } transition-colors`}
-          >
-            {useStamps ? (
-              <>
-                <FaCheck className="mr-1" size={10} />
-                {t(language, 'usingStamps')} ({calculateStampsNeeded()})
-              </>
-            ) : (
-              <>
-                <FaCoins className="mr-1" size={10} />
-                {t(language, 'useStamps')} ({calculateStampsNeeded()})
-              </>
-            )}
-          </button>
+          <div className="flex-1">
+            <div className="flex justify-between items-start">
+              <h3 className="font-medium text-gray-900 text-xs sm:text-sm">
+                {typeof item.name === 'object' ? item.name[language] : item.name}
+              </h3>
+              <div className="text-xs sm:text-sm font-bold text-[#016730]">
+                {(item.price * item.quantity).toFixed(2)}€
+              </div>
+            </div>
+
+            <div className="mt-1 sm:mt-2 flex flex-col gap-1 sm:gap-2">
+              <div className="flex items-start">
+                <span className="w-12 sm:w-16 text-xs text-gray-500">Carne:</span>
+                <span className="text-xs sm:text-sm font-medium">
+                  {item.meatType === 'frango' ? 'Frango' : 'Vaca (Boi)'}
+                </span>
+              </div>
+              
+              {item.withMenu && (
+                <div className="flex items-start">
+                  <span className="w-12 sm:w-16 text-xs text-gray-500">Menu:</span>
+                  <span className="text-xs sm:text-sm font-medium">
+                    Inclui Bebida + Batatas
+                  </span>
+                </div>
+              )}
+              
+              {item.extras?.length > 0 && (
+                <div className="flex items-start">
+                  <span className="w-12 sm:w-16 text-xs text-gray-500">Extras:</span>
+                  <span className="text-xs sm:text-sm font-medium">
+                    {item.extras.map(extra => 
+                      typeof extra.name === 'object' ? extra.name[language] : extra.name
+                    ).join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+
+        <div className="flex flex-col items-end ml-1 sm:ml-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+              <button 
+                onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+                className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <Minus size={10} />
+              </button>
+              <span className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center border-l border-r border-gray-200 text-xs sm:text-sm">
+                {item.quantity}
+              </span>
+              <button 
+                onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+                className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <Plus size={10} />
+              </button>
+            </div>
+            <button 
+              onClick={() => onRemove(item.id)}
+              className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+
   // Renderização normal para outros itens
   return (
-    <div className="py-4 flex justify-between items-start border-b border-gray-100">
-      <div className="flex items-start flex-1 gap-4">
+    <div className="py-3 sm:py-4 flex justify-between items-start border-b border-gray-100">
+      <div className="flex items-start flex-1 gap-3 sm:gap-4">
         <div className="relative">
-          <div className="w-14 h-14 bg-gradient-to-br from-red-600 to-[#016730] rounded-lg flex items-center justify-center">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-red-600 to-[#016730] rounded-lg flex items-center justify-center">
             {item.category === 'bebidas' ? (
-              <Wine size={20} className="text-white" />
+              <Wine size={18} className="text-white" />
             ) : (
-              <Pizza size={20} className="text-white" />
+              <Pizza size={18} className="text-white" />
             )}
           </div>
-          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+          <span className="absolute -top-1 sm:-top-2 -right-1 sm:-right-2 bg-red-600 text-white text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full">
             {item.quantity}
           </span>
         </div>
         
         <div className="flex-1">
           <div className="flex justify-between items-start">
-            <h3 className="font-medium text-gray-900 text-sm">
+            <h3 className="font-medium text-gray-900 text-xs sm:text-sm">
               {typeof item.name === 'object' ? item.name[language] : item.name}
             </h3>
-            <div className="text-sm font-bold text-[#016730]">
+            <div className="text-xs sm:text-sm font-bold text-[#016730]">
               {useStamps ? (
-                <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                <span className="text-xs bg-amber-100 text-amber-800 px-1 sm:px-2 py-0.5 sm:py-1 rounded-full">
                   {calculateStampsNeeded()} selos
                 </span>
               ) : (
@@ -1020,18 +1386,18 @@ if (item.halfAndHalf && item.selectedSize === 'familia') {
             </div>
           </div>
 
-          <div className="mt-2 flex flex-col gap-2">
+          <div className="mt-1 sm:mt-2 flex flex-col gap-1 sm:gap-2">
             {item.selectedSize && (
               <div className="flex items-start">
-                <span className="w-16 text-xs text-gray-500">Tamanho:</span>
-                <span className="text-sm font-medium">{t(language, item.selectedSize)}</span>
+                <span className="w-12 sm:w-16 text-xs text-gray-500">Tamanho:</span>
+                <span className="text-xs sm:text-sm font-medium">{t(language, item.selectedSize)}</span>
               </div>
             )}
             
             {item.borderType && (
               <div className="flex items-start">
-                <span className="w-16 text-xs text-gray-500">Borda:</span>
-                <span className="text-sm font-medium">
+                <span className="w-12 sm:w-16 text-xs text-gray-500">Borda:</span>
+                <span className="text-xs sm:text-sm font-medium">
                   {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
                 </span>
               </div>
@@ -1039,8 +1405,8 @@ if (item.halfAndHalf && item.selectedSize === 'familia') {
             
             {item.extras?.length > 0 && (
               <div className="flex items-start">
-                <span className="w-16 text-xs text-gray-500">Extras:</span>
-                <span className="text-sm font-medium">
+                <span className="w-12 sm:w-16 text-xs text-gray-500">Extras:</span>
+                <span className="text-xs sm:text-sm font-medium">
                   {item.extras.map(extra => 
                     typeof extra.name === 'object' ? extra.name[language] : extra.name
                   ).join(', ')}
@@ -1051,50 +1417,49 @@ if (item.halfAndHalf && item.selectedSize === 'familia') {
         </div>
       </div>
 
-      <div className="flex flex-col items-end ml-2">
+      <div className="flex flex-col items-end ml-1 sm:ml-2">
         {!useStamps && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
               <button 
                 onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-                className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
               >
-                <Minus size={12} />
+                <Minus size={10} />
               </button>
-              <span className="w-8 h-7 flex items-center justify-center border-l border-r border-gray-200 text-sm">
+              <span className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center border-l border-r border-gray-200 text-xs sm:text-sm">
                 {item.quantity}
               </span>
               <button 
                 onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-                className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
               >
-                <Plus size={12} />
+                <Plus size={10} />
               </button>
             </div>
             <button 
               onClick={() => onRemove(item.id)}
-              className="w-7 h-7 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
             >
-              <X size={16} />
+              <X size={14} />
             </button>
           </div>
         )}
         
         {isEligibleForStamps() && (
-            <button 
-              onClick={handleToggleUseStamps}
-              className={`mt-2 text-xs px-3 py-1 rounded-full ${
-                useStamps 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-              } transition-colors`}
-            >
-              {useStamps 
-                ? `Usando ${calculateStampsNeeded()} selos` 
-                : `Usar selos (${calculateStampsNeeded()})`}
-            </button>
-          )}
-
+          <button 
+            onClick={handleToggleUseStamps}
+            className={`mt-1 sm:mt-2 text-xs px-2 sm:px-3 py-1 rounded-full ${
+              useStamps 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            } transition-colors`}
+          >
+            {useStamps 
+              ? `Usando ${calculateStampsNeeded()} selos` 
+              : `Usar selos (${calculateStampsNeeded()})`}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1104,20 +1469,20 @@ const ExpandableCategorySection = ({ title, products, language, onAddToCart }) =
   const [isExpanded, setIsExpanded] = useState(false);
   
   return (
-    <div className="mb-8">
+    <div className="mb-6 sm:mb-8">
       <div 
-        className="flex justify-between items-center p-4 bg-white rounded-xl shadow-sm cursor-pointer border border-gray-200 hover:border-[#016730] transition-colors"
+        className="flex justify-between items-center p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm cursor-pointer border border-gray-200 hover:border-[#016730] transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+        <h3 className="text-base sm:text-lg font-bold text-gray-800">{title}</h3>
         <div className="flex items-center">
-          <span className="text-sm text-gray-500 mr-2">
+          <span className="text-xs sm:text-sm text-gray-500 mr-1 sm:mr-2">
             {products.length} {t(language, 'items')}
           </span>
           {isExpanded ? (
-            <FaAngleDown className="text-gray-500" />
+            <FaAngleDown className="text-gray-500" size={14} />
           ) : (
-            <FaAngleRight className="text-gray-500" />
+            <FaAngleRight className="text-gray-500" size={14} />
           )}
         </div>
       </div>
@@ -1134,7 +1499,7 @@ const ExpandableCategorySection = ({ title, products, language, onAddToCart }) =
             }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-3 sm:mt-4">
               {products.map(product => (
                 <ProductCard 
                   key={product.id} 
@@ -1351,36 +1716,34 @@ const CheckoutFlow = ({
     return hasBasicInfo;
   };
 
-  
-
   const renderStep = () => {
     switch (step) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between">
-              <span className="text-xs sm:text-sm text-gray-500">
+              <span className="text-xs text-gray-500">
                 {cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')}
               </span>
             </div>
             
             {cart.length === 0 ? (
-              <div className="text-center py-8 sm:py-12">
+              <div className="text-center py-6 sm:py-8">
                 <div className="animate-bounce">
-                  <Pizza size={48} className="mx-auto text-gray-300 mb-3 sm:mb-4" />
+                  <Pizza size={40} className="mx-auto text-gray-300 mb-2 sm:mb-3" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-medium text-gray-700 mb-1 sm:mb-2">{t(language, 'emptyCart')}</h3>
-                <p className="text-gray-500 mb-4 sm:mb-6 text-sm sm:text-base">{t(language, 'emptyCartMessage')}</p>
+                <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-1">{t(language, 'emptyCart')}</h3>
+                <p className="text-gray-500 mb-3 sm:mb-4 text-xs sm:text-sm">{t(language, 'emptyCartMessage')}</p>
                 <button
                   onClick={onClose}
-                  className="px-6 py-2 sm:px-8 sm:py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors text-sm sm:text-base"
+                  className="px-4 sm:px-6 py-2 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors text-sm sm:text-base"
                 >
                   {t(language, 'exploreMenu')}
                 </button>
               </div>
             ) : (
               <>
-                <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto pr-2 -mr-2">
+                <div className="divide-y divide-gray-200 max-h-80 sm:max-h-96 overflow-y-auto pr-1 -mr-1">
                   {cart.map(item => (
                     <CartItem
                       key={`${item.id}-${item.selectedSize}-${item.selectedBorder}-${item.extras?.map(e => e.id).join('-')}`}
@@ -1395,68 +1758,69 @@ const CheckoutFlow = ({
                   ))}
                 </div>
                 
-                <div className="bg-gray-50 rounded-xl p-4 sm:p-5 mt-4 sm:mt-6 border border-gray-200">
-                  <div className="flex justify-between py-1 sm:py-2 text-sm sm:text-base">
+                <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 mt-3 sm:mt-4 border border-gray-200">
+                  <div className="flex justify-between py-1 text-xs sm:text-sm">
                     <span className="text-gray-700">{t(language, 'subtotal')}:</span>
                     <span className="font-medium">{cartTotal.toFixed(2)}€</span>
                   </div>
                   
                   {deliveryOption === 'entrega' && (
-                    <div className="flex justify-between py-1 sm:py-2 text-xs sm:text-sm text-gray-500">
+                    <div className="flex justify-between py-1 text-xs text-gray-500">
                       <span>{t(language, 'deliveryFee')}:</span>
                       <span>{deliveryFee.toFixed(2)}€</span>
                     </div>
                   )}
                   
                   {selosUsados > 0 && (
-                    <div className="flex justify-between py-1 sm:py-2 text-[#016730]">
+                    <div className="flex justify-between py-1 text-[#016730] text-xs sm:text-sm">
                       <span className="flex items-center">
                         {t(language, 'stampsUsed')} ({selosUsados} {t(language, 'stamps')})
-                        <FaCoins className="ml-1" size={14} />
+                        <FaCoins className="ml-1" size={12} />
                       </span>
                       <span className="font-bold">-{(cartTotal + deliveryFee - finalTotal).toFixed(2)}€</span>
                     </div>
                   )}
                   
-                  <div className="flex justify-between py-2 sm:py-3 border-t border-gray-200 mt-1 sm:mt-2">
-                    <span className="font-bold text-sm sm:text-base">{t(language, 'estimatedTotal')}:</span>
-                    <span className="font-bold text-xl sm:text-2xl text-[#016730]">
+                  <div className="flex justify-between py-2 border-t border-gray-200 mt-1">
+                    <span className="font-bold text-xs sm:text-sm">{t(language, 'estimatedTotal')}:</span>
+                    <span className="font-bold text-lg sm:text-xl text-[#016730]">
                       {finalTotal.toFixed(2)}€
                     </span>
                   </div>
-                                  {selosUsados > 0 && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center">
-                            <FaCoins className="text-amber-600 mr-2" />
-                            <span className="font-medium text-amber-800">
-                              {t(language, 'stampsUsed')}: {selosUsados}
-                            </span>
-                          </div>
-                          <span className="bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">
-                            {t(language, 'paidWithStamps')}
+                
+                  {selosUsados > 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+                      <div className="flex items-center justify-between mb-1 sm:mb-2">
+                        <div className="flex items-center">
+                          <FaCoins className="text-amber-600 mr-1 sm:mr-2" size={12} />
+                          <span className="font-medium text-amber-800 text-xs sm:text-sm">
+                            {t(language, 'stampsUsed')}: {selosUsados}
                           </span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 mt-3">
-                          {cart.filter(item => itemsWithStamps[item.id]).map(item => (
-                            <div key={item.id} className="bg-amber-100 p-2 rounded-lg">
-                              <p className="text-xs font-medium text-amber-800 truncate">
-                                {typeof item.name === 'object' ? item.name[language] : item.name}
-                              </p>
-                              <p className="text-xs text-amber-600">
-                                {itemsWithStamps[item.id]} {t(language, 'stamps')}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
+                        <span className="bg-amber-200 text-amber-800 px-2 py-1 rounded-full text-xs font-bold">
+                          {t(language, 'paidWithStamps')}
+                        </span>
                       </div>
-                    )}          
+                      <div className="grid grid-cols-2 gap-1 sm:gap-2 mt-2 sm:mt-3">
+                        {cart.filter(item => itemsWithStamps[item.id]).map(item => (
+                          <div key={item.id} className="bg-amber-100 p-1 sm:p-2 rounded-lg">
+                            <p className="text-xs font-medium text-amber-800 truncate">
+                              {typeof item.name === 'object' ? item.name[language] : item.name}
+                            </p>
+                            <p className="text-xxs sm:text-xs text-amber-600">
+                              {itemsWithStamps[item.id]} {t(language, 'stamps')}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}          
                   {Math.floor(cartTotal / 15) > 0 && (
                     <StampRewardPreview cartTotal={cartTotal} language={language} />
                   )}
                   {!user && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700">
-                      <FaInfoCircle className="inline mr-2" />
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs sm:text-sm text-blue-700">
+                      <FaInfoCircle className="inline mr-1 sm:mr-2" size={12} />
                       {t(language, 'guestStampNotice')}
                     </div>
                   )}
@@ -1464,9 +1828,9 @@ const CheckoutFlow = ({
                 
                 <button
                   onClick={() => setStep(2)}
-                  className="w-full mt-4 sm:mt-6 py-3 sm:py-4 bg-gradient-to-r from-red-600 to-[#016730] rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center text-sm sm:text-base"
+                  className="w-full mt-3 sm:mt-4 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg sm:rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center text-sm sm:text-base"
                 >
-                  <FaShoppingCart className="mr-2" size={16} />
+                  <FaShoppingCart className="mr-1 sm:mr-2" size={14} />
                   {t(language, 'proceedToCheckout')}
                 </button>
               </>
@@ -1493,13 +1857,13 @@ const CheckoutFlow = ({
         };
 
         return (
-          <div className="space-y-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="mb-4 sm:mb-6">
+              <div className="flex items-center justify-between mb-1 sm:mb-2">
                 {[1, 2, 3, 4].map((stepNum) => (
                   <div key={stepNum} className="flex flex-col items-center relative">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
                         stepNum < 2
                           ? 'bg-green-600 text-white'
                           : stepNum === 2
@@ -1510,7 +1874,7 @@ const CheckoutFlow = ({
                       {stepNum}
                     </div>
                     {stepNum < 4 && (
-                      <div className="absolute top-4 left-14 w-16 h-0.5 bg-gray-200">
+                      <div className="absolute top-3 left-8 sm:left-14 w-8 sm:w-16 h-0.5 bg-gray-200">
                         <div
                           className={`h-full ${
                             stepNum < 2 ? 'bg-green-600' : 'bg-gray-200'
@@ -1521,7 +1885,7 @@ const CheckoutFlow = ({
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between text-xs text-gray-500 px-2">
+              <div className="flex justify-between text-xxs sm:text-xs text-gray-500 px-1 sm:px-2">
                 <span>Carrinho</span>
                 <span className="text-green-600 font-medium">Informações</span>
                 <span>Pagamento</span>
@@ -1529,91 +1893,91 @@ const CheckoutFlow = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6">
               <button
                 onClick={() => setDeliveryOption('retirada')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 flex flex-col items-center transition-all ${
                   deliveryOption === 'retirada'
                     ? 'border-green-600 bg-green-50 text-green-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <FaStore className="text-xl mb-2" />
-                <span className="font-bold">Retirada</span>
-                <span className="text-xs text-gray-500 mt-1">Sem taxa</span>
+                <FaStore className="text-lg sm:text-xl mb-1 sm:mb-2" />
+                <span className="font-bold text-xs sm:text-sm">Retirada</span>
+                <span className="text-xxs sm:text-xs text-gray-500 mt-1">Sem taxa</span>
               </button>
 
               <button
                 onClick={() => setDeliveryOption('entrega')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 flex flex-col items-center transition-all ${
                   deliveryOption === 'entrega'
                     ? 'border-green-600 bg-green-50 text-green-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <FaMotorcycle className="text-xl mb-2" />
-                <span className="font-bold">Entrega</span>
-                <span className="text-xs text-gray-500 mt-1">Taxa: {selectedZone ? deliveryAreas[selectedZone]?.taxa.toFixed(2) + '€' : '--'}</span>
+                <FaMotorcycle className="text-lg sm:text-xl mb-1 sm:mb-2" />
+                <span className="font-bold text-xs sm:text-sm">Entrega</span>
+                <span className="text-xxs sm:text-xs text-gray-500 mt-1">Taxa: {selectedZone ? deliveryAreas[selectedZone]?.taxa.toFixed(2) + '€' : '--'}</span>
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-gray-700 mb-2 font-medium">Nome Completo*</label>
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Nome Completo*</label>
                 <input
                   type="text"
                   value={customerInfo.nome}
                   onChange={(e) => setCustomerInfo({...customerInfo, nome: e.target.value})}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
                   placeholder="Seu nome completo"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2 font-medium">Telefone*</label>
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Telefone*</label>
                 <input
                   type="tel"
                   value={customerInfo.telefone}
                   onChange={handleTelefoneChange}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
                   placeholder="912345678"
                   required
                 />
                 {customerInfo.telefone && customerInfo.telefone.length !== 9 && (
-                  <p className="text-red-500 text-xs mt-1">O telefone deve ter 9 dígitos</p>
+                  <p className="text-red-500 text-xxs sm:text-xs mt-1">O telefone deve ter 9 dígitos</p>
                 )}
               </div>
 
               {deliveryOption === 'entrega' && (
                 <>
                   <div>
-                    <label className="block text-gray-700 mb-2 font-medium">Endereço Completo*</label>
+                    <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Endereço Completo*</label>
                     <input
                       type="text"
                       value={customerInfo.endereco}
                       onChange={(e) =>
                         setCustomerInfo({ ...customerInfo, endereco: e.target.value })
                       }
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
                       placeholder="Rua, número, complemento, apartamento..."
                       required
                     />
                   </div>
 
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2 font-medium">Código Postal*</label>
+                  <div className="mb-3 sm:mb-4">
+                    <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Código Postal*</label>
                     <input
                       type="text"
                       value={codigoPostal}
                       onChange={handleCodigoPostalChange}
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
                       placeholder="Ex: 1234-567"
                       required
                     />
                   </div>
 
-                  <label className="block text-gray-700 mb-2 font-medium">Zona de Entrega*</label>
+                  <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Zona de Entrega*</label>
                   <div className="relative">
                     <Combobox
                       value={customerInfo.localidade}
@@ -1627,13 +1991,13 @@ const CheckoutFlow = ({
                     >
                       <div className="relative">
                         <Combobox.Input
-                          className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                          className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
                           placeholder="Busque sua zona ou bairro"
                           displayValue={(bairro) => bairro}
                           onChange={(event) => setQuery(event.target.value)}
                         />
-                        <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-4">
-                          <FaChevronDown className="text-gray-400" />
+                        <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4">
+                          <FaChevronDown className="text-gray-400 text-xs sm:text-sm" />
                         </Combobox.Button>
                       </div>
                       <Transition
@@ -1643,10 +2007,10 @@ const CheckoutFlow = ({
                         leaveTo="opacity-0"
                         afterLeave={() => setQuery('')}
                       >
-                        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+                        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none text-xs sm:text-sm">
                           {Object.entries(deliveryAreas).map(([zona, dados]) => (
                             <div key={zona}>
-                              <div className="px-4 py-2 text-sm text-gray-500 bg-gray-50">
+                              <div className="px-3 sm:px-4 py-1 sm:py-2 text-xs text-gray-500 bg-gray-50">
                                 {zona}
                               </div>
                               {dados.bairros[language]
@@ -1660,12 +2024,12 @@ const CheckoutFlow = ({
                                     key={bairro}
                                     value={bairro}
                                     className={({ active }) =>
-                                      `px-4 py-2 cursor-pointer ${active ? 'bg-green-100' : 'bg-white'}`
+                                      `px-3 sm:px-4 py-1 sm:py-2 cursor-pointer ${active ? 'bg-green-100' : 'bg-white'}`
                                     }
                                   >
                                     {({ selected }) => (
                                       <div className="flex items-center">
-                                        {selected && <FaCheck className="text-green-500 mr-2" />}
+                                        {selected && <FaCheck className="text-green-500 mr-1 sm:mr-2" size={10} />}
                                         <span className={`${selected ? 'font-medium' : 'font-normal'}`}>
                                           {bairro}
                                         </span>
@@ -1682,8 +2046,8 @@ const CheckoutFlow = ({
                 </>
               )}
 
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2 font-medium">NIF (Opcional)</label>
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">NIF (Opcional)</label>
                 <input
                   type="text"
                   value={customerInfo.nif}
@@ -1691,34 +2055,34 @@ const CheckoutFlow = ({
                     ...customerInfo,
                     nif: e.target.value
                   })}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
                   placeholder="Digite o NIF"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2 font-medium">Observações</label>
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Observações</label>
                 <textarea
                   value={customerInfo.observacoes}
                   onChange={(e) => setCustomerInfo({...customerInfo, observacoes: e.target.value})}
-                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
                   placeholder="Pontos de referência, instruções especiais..."
                   rows={3}
                 />
               </div>
             </div>
 
-            <div className="flex justify-between gap-4 pt-6 border-t border-gray-200">
+            <div className="flex justify-between gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 py-2 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 hover:bg-gray-50 transition-colors text-xs sm:text-sm"
               >
                 Voltar
               </button>
               <button
                 onClick={() => setStep(3)}
                 disabled={!validarDados()}
-                className={`flex-1 py-3 rounded-xl text-white font-bold transition-colors ${
+                className={`flex-1 py-2 sm:py-3 rounded-lg sm:rounded-xl text-white font-bold transition-colors text-xs sm:text-sm ${
                   validarDados()
                     ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-gray-400 cursor-not-allowed'
@@ -1732,13 +2096,13 @@ const CheckoutFlow = ({
       }
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="mb-4 sm:mb-6">
+              <div className="flex items-center justify-between mb-1 sm:mb-2">
                 {[1, 2, 3, 4].map((stepNum) => (
                   <div key={stepNum} className="flex flex-col items-center relative">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
                         stepNum < 3
                           ? 'bg-green-600 text-white'
                           : stepNum === 3
@@ -1749,7 +2113,7 @@ const CheckoutFlow = ({
                       {stepNum}
                     </div>
                     {stepNum < 4 && (
-                      <div className="absolute top-4 left-14 w-16 h-0.5 bg-gray-200">
+                      <div className="absolute top-3 left-8 sm:left-14 w-8 sm:w-16 h-0.5 bg-gray-200">
                         <div
                           className={`h-full ${
                             stepNum < 3 ? 'bg-green-600' : 'bg-gray-200'
@@ -1760,7 +2124,7 @@ const CheckoutFlow = ({
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between text-xs text-gray-500 px-2">
+              <div className="flex justify-between text-xxs sm:text-xs text-gray-500 px-1 sm:px-2">
                 <span>Carrinho</span>
                 <span>Informações</span>
                 <span className="text-green-600 font-medium">Pagamento</span>
@@ -1769,16 +2133,16 @@ const CheckoutFlow = ({
             </div>
 
             {user && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <FaCoins className="text-amber-600 mr-2" />
-                    <span className="font-medium text-amber-800">
+                    <FaCoins className="text-amber-600 mr-1 sm:mr-2" size={12} />
+                    <span className="font-medium text-amber-800 text-xs sm:text-sm">
                       {selosDisponiveis} {t(language, 'stampsAvailable')}
                     </span>
                   </div>
                   {selosUsados > 0 && (
-                    <span className="text-sm bg-amber-200 text-amber-800 px-2 py-1 rounded-full">
+                    <span className="text-xxs sm:text-xs bg-amber-200 text-amber-800 px-1 sm:px-2 py-1 rounded-full">
                       {t(language, 'stampsUsed')}: {selosUsados}
                     </span>
                   )}
@@ -1786,93 +2150,93 @@ const CheckoutFlow = ({
               </div>
             )}
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
               <button
                 onClick={() => setPaymentMethod('mbway')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-2 sm:p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'mbway' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                  <DeviceMobile size={20} weight={paymentMethod === 'mbway' ? 'fill' : 'regular'} />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
+                  <DeviceMobile size={16} weight={paymentMethod === 'mbway' ? 'fill' : 'regular'} />
                 </div>
-                <span className="font-bold text-sm">{t(language, 'mbway')}</span>
-                <span className="text-xs text-gray-500 mt-1">{t(language, 'mbwayDescription')}</span>
+                <span className="font-bold text-xxs sm:text-xs">{t(language, 'mbway')}</span>
+                <span className="text-xxs text-gray-500 mt-1">{t(language, 'mbwayDescription')}</span>
               </button>
               
               <button
                 onClick={() => setPaymentMethod('dinheiro')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-2 sm:p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'dinheiro' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-2">
-                  <Money size={20} weight={paymentMethod === 'dinheiro' ? 'fill' : 'regular'} />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
+                  <Money size={16} weight={paymentMethod === 'dinheiro' ? 'fill' : 'regular'} />
                 </div>
-                <span className="font-bold text-sm">{t(language, 'cash')}</span>
-                <span className="text-xs text-gray-500 mt-1">{t(language, 'cashDescription')}</span>
+                <span className="font-bold text-xxs sm:text-xs">{t(language, 'cash')}</span>
+                <span className="text-xxs text-gray-500 mt-1">{t(language, 'cashDescription')}</span>
               </button>
               
               <button
                 onClick={() => setPaymentMethod('cartao')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-2 sm:p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'cartao' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2">
-                  <CreditCard size={20} weight={paymentMethod === 'cartao' ? 'fill' : 'regular'} />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
+                  <CreditCard size={16} weight={paymentMethod === 'cartao' ? 'fill' : 'regular'} />
                 </div>
-                <span className="font-bold text-sm">{t(language, 'card')}</span>
-                <span className="text-xs text-gray-500 mt-1">{t(language, 'cardDescription')}</span>
+                <span className="font-bold text-xxs sm:text-xs">{t(language, 'card')}</span>
+                <span className="text-xxs text-gray-500 mt-1">{t(language, 'cardDescription')}</span>
               </button>
 
               <button
                 onClick={() => setPaymentMethod('multibanco')}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-2 sm:p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'multibanco' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                  <FaMoneyBillWave size={20} />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
+                  <FaMoneyBillWave size={16} />
                 </div>
-                <span className="font-bold text-sm">Multibanco</span>
-                <span className="text-xs text-gray-500 mt-1">Pague na entrega</span>
+                <span className="font-bold text-xxs sm:text-xs">Multibanco</span>
+                <span className="text-xxs text-gray-500 mt-1">Pague na entrega</span>
               </button>
             </div>
 
             {paymentMethod === 'mbway' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <label className="block text-gray-700 mb-2 font-medium text-sm sm:text-base">{t(language, 'mbwayNumber')}</label>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">{t(language, 'mbwayNumber')}</label>
                 <div className="flex items-center border border-blue-300 bg-white rounded-lg overflow-hidden">
-                  <span className="px-3 py-2 bg-blue-100 text-blue-800 text-sm">+351</span>
+                  <span className="px-2 sm:px-3 py-1 sm:py-2 bg-blue-100 text-blue-800 text-xxs sm:text-xs">+351</span>
                   <input
                     type="tel"
                     value={mbwayNumber}
                     onChange={(e) => setMbwayNumber(e.target.value)}
-                    className="flex-1 p-2 sm:p-3 focus:outline-none text-sm sm:text-base"
+                    className="flex-1 p-2 sm:p-3 focus:outline-none text-xs sm:text-sm"
                     placeholder="912 345 678"
                     required
                   />
                 </div>
-                <p className="text-xs sm:text-sm text-blue-700 mt-2 flex items-center">
-                  <FaQrcode className="mr-1" /> {t(language, 'mbwayDescription')}
+                <p className="text-xxs sm:text-xs text-blue-700 mt-1 sm:mt-2 flex items-center">
+                  <FaQrcode className="mr-1" size={10} /> {t(language, 'mbwayDescription')}
                 </p>
               </div>
             )}
             
             {paymentMethod === 'dinheiro' && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-2 font-medium text-sm sm:text-base">{t(language, 'changeFor')}</label>
+                  <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">{t(language, 'changeFor')}</label>
                   <div className="flex items-center border border-green-300 bg-white rounded-lg overflow-hidden">
-                    <span className="px-3 py-2 bg-green-100 text-green-800">
-                      <CurrencyEur size={18} />
+                    <span className="px-2 sm:px-3 py-1 sm:py-2 bg-green-100 text-green-800">
+                      <CurrencyEur size={14} />
                     </span>
                     <input
                        type="number"
                         value={valorPago}
                         onChange={(e) => setValorPago(e.target.value)}
-                      className="flex-1 p-2 sm:p-3 focus:outline-none text-sm sm:text-base"
+                      className="flex-1 p-2 sm:p-3 focus:outline-none text-xs sm:text-sm"
                       placeholder={t(language, 'changeExample')}
                       required
                     />
@@ -1880,29 +2244,29 @@ const CheckoutFlow = ({
                 </div>
                 
                 {valorPago && (
-                  <div className="bg-white p-3 rounded-lg border border-green-200">
+                  <div className="bg-white p-2 sm:p-3 rounded-lg border border-green-200">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-700">Valor pago:</span>
-                      <span className="font-bold">{parseFloat(valorPago).toFixed(2)}€</span>
+                      <span className="font-medium text-gray-700 text-xs sm:text-sm">Valor pago:</span>
+                      <span className="font-bold text-xs sm:text-sm">{parseFloat(valorPago).toFixed(2)}€</span>
                     </div>
                     <div className="flex justify-between items-center mt-1">
-                      <span className="font-medium text-gray-700">Total do pedido:</span>
-                      <span className="font-medium">{finalTotal.toFixed(2)}€</span>
+                      <span className="font-medium text-gray-700 text-xs sm:text-sm">Total do pedido:</span>
+                      <span className="font-medium text-xs sm:text-sm">{finalTotal.toFixed(2)}€</span>
                     </div>
-                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-green-100">
-                      <span className="font-bold text-green-700">Troco:</span>
-                      <span className="font-bold text-green-700">
+                    <div className="flex justify-between items-center mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-green-100">
+                      <span className="font-bold text-green-700 text-xs sm:text-sm">Troco:</span>
+                      <span className="font-bold text-green-700 text-xs sm:text-sm">
                         {troco >= 0 ? troco.toFixed(2) + '€' : 'Valor insuficiente'}
                       </span>
                     </div>
                     {troco >= 0 ? (
-                      <p className="text-xs text-green-600 mt-2 flex items-center">
-                        <FaInfoCircle className="mr-1" />
+                      <p className="text-xxs sm:text-xs text-green-600 mt-1 sm:mt-2 flex items-center">
+                        <FaInfoCircle className="mr-1" size={10} />
                         O entregador estará preparado com o troco de {troco.toFixed(2)}€
                       </p>
                     ) : (
-                      <p className="text-xs text-red-500 mt-2 flex items-center">
-                        <FaExclamationTriangle className="mr-1" />
+                      <p className="text-xxs sm:text-xs text-red-500 mt-1 sm:mt-2 flex items-center">
+                        <FaExclamationTriangle className="mr-1" size={10} />
                         O valor pago deve ser maior ou igual ao total do pedido
                       </p>
                     )}
@@ -1912,32 +2276,32 @@ const CheckoutFlow = ({
             )}
 
             {paymentMethod === 'multibanco' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center">
-                  <FaInfoCircle className="text-blue-600 mr-2" />
-                  <p className="text-sm text-blue-700">
+                  <FaInfoCircle className="text-blue-600 mr-1 sm:mr-2" size={12} />
+                  <p className="text-xxs sm:text-xs text-blue-700">
                     Você pode pagar com Multibanco quando o entregador chegar. O valor total será {finalTotal.toFixed(2)}€.
                   </p>
                 </div>
               </div>
             )}
 
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-              <h3 className="font-bold text-gray-800 mb-3 text-sm sm:text-base">{t(language, 'orderSummary')}</h3>
+            <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200">
+              <h3 className="font-bold text-gray-800 mb-2 sm:mb-3 text-xs sm:text-sm">{t(language, 'orderSummary')}</h3>
               
-              <div className="space-y-2">
+              <div className="space-y-1 sm:space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 text-sm sm:text-base">{t(language, 'subtotal')} ({cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')})</span>
-                  <span className="font-medium">{cartTotal.toFixed(2)}€</span>
+                  <span className="text-gray-600 text-xxs sm:text-xs">{t(language, 'subtotal')} ({cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')})</span>
+                  <span className="font-medium text-xxs sm:text-xs">{cartTotal.toFixed(2)}€</span>
                 </div>
                 
                 {deliveryOption === 'entrega' && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600 text-sm sm:text-base">{t(language, 'deliveryFee')}</span>
-                    <span className="font-medium">
+                    <span className="text-gray-600 text-xxs sm:text-xs">{t(language, 'deliveryFee')}</span>
+                    <span className="font-medium text-xxs sm:text-xs">
                       {deliveryFee.toFixed(2)}€
                       {customerInfo.localidade && (
-                        <span className="text-xs text-gray-500 ml-1">({customerInfo.localidade})</span>
+                        <span className="text-xxs text-gray-500 ml-1">({customerInfo.localidade})</span>
                       )}
                     </span>
                   </div>
@@ -1945,34 +2309,34 @@ const CheckoutFlow = ({
                 
                 {selosUsados > 0 && (
                   <div className="flex justify-between text-[#016730]">
-                    <span className="text-sm sm:text-base">{t(language, 'stampsUsed')}</span>
-                    <span className="font-medium">
+                    <span className="text-xxs sm:text-xs">{t(language, 'stampsUsed')}</span>
+                    <span className="font-medium text-xxs sm:text-xs">
                       -{(cartTotal + deliveryFee - finalTotal).toFixed(2)}€ ({selosUsados} {t(language, 'stamps')})
                     </span>
                   </div>
                 )}
               </div>
               
-              <div className="flex justify-between py-2 sm:py-3 border-t border-gray-200 mt-1 sm:mt-2">
+              <div className="flex justify-between py-1 sm:py-2 border-t border-gray-200 mt-1 sm:mt-2">
                 <div>
-                  <span className="font-bold text-sm sm:text-base">{t(language, 'estimatedTotal')}:</span>
-                  <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
-                    <FaRegClock className="mr-1" />
+                  <span className="font-bold text-xxs sm:text-xs">{t(language, 'estimatedTotal')}:</span>
+                  <div className="flex items-center text-xxs sm:text-xs text-gray-500 mt-1">
+                    <FaRegClock className="mr-1" size={10} />
                     <span>{t(language, 'estimatedTime')}: {estimatedTime}</span>
                   </div>
                 </div>
-                <span className="font-bold text-xl sm:text-2xl text-[#016730]">
+                <span className="font-bold text-lg sm:text-xl text-[#016730]">
                   {finalTotal.toFixed(2)}€
                 </span>
               </div>
               
-              <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200 flex items-center">
-                <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
-                  <FaMotorcycle className="text-[#016730]" size={16} />
+              <div className="mt-2 sm:mt-3 bg-white p-2 sm:p-3 rounded-lg border border-gray-200 flex items-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-50 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+                  <FaMotorcycle className="text-[#016730]" size={12} />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-800 text-sm sm:text-base">{t(language, deliveryOption === 'retirada' ? 'pickup' : 'delivery')}</p>
-                  <p className="text-xs sm:text-sm text-gray-500">
+                  <p className="font-medium text-gray-800 text-xs sm:text-sm">{t(language, deliveryOption === 'retirada' ? 'pickup' : 'delivery')}</p>
+                  <p className="text-xxs sm:text-xs text-gray-500">
                     {deliveryOption === 'retirada' ? 
                       t(language, 'pickupAddress') : 
                       customerInfo.endereco ? `${customerInfo.endereco}, ${customerInfo.localidade}` : t(language, 'addressPlaceholder')}
@@ -1981,22 +2345,22 @@ const CheckoutFlow = ({
               </div>
 
               {includeNif && nifNumber && (
-                <div className="mt-4 bg-white p-3 rounded-lg border border-gray-200">
-                  <p className="font-medium text-gray-800 text-sm sm:text-base">NIF na fatura</p>
-                  <p className="text-xs sm:text-sm text-gray-500">{nifNumber}</p>
+                <div className="mt-2 sm:mt-3 bg-white p-2 sm:p-3 rounded-lg border border-gray-200">
+                  <p className="font-medium text-gray-800 text-xs sm:text-sm">NIF na fatura</p>
+                  <p className="text-xxs sm:text-xs text-gray-500">{nifNumber}</p>
                 </div>
               )}
             </div>
             
-            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200">
               <button
                 onClick={() => setStep(2)}
-                className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium flex-1 sm:flex-none text-sm sm:text-base"
+                className="px-4 sm:px-6 py-2 border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium flex-1 sm:flex-none text-xs sm:text-sm"
               >
                 {t(language, 'back')}
               </button>
              <button
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+              className="bg-green-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded hover:bg-green-700 transition text-xs sm:text-sm"
               onClick={() => {
                 console.log('🛵 DeliveryOption:', deliveryOption);
                 console.log('📍 SelectedZone:', selectedZone);
@@ -2016,17 +2380,17 @@ const CheckoutFlow = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50">
+      <div className="bg-white rounded-lg sm:rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-4 sm:p-6">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800">
               {step === 1 ? t(language, 'yourCart') : 
                step === 2 ? t(language, 'deliveryInfo') : 
                step === 3 ? t(language, 'paymentMethod') : t(language, 'orderConfirmed')}
             </h3>
             <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
           
@@ -2083,17 +2447,18 @@ const InterfaceClienteInner = () => {
   const [valorPago, setValorPago] = useState('');
 
   const categories = [
-    { id: 'todos', name: t(language, 'todos'), icon: <Wine size={24} />, color: 'bg-purple-500' },
-    { id: 'tradicionais', name: t(language, 'tradicionais'), icon: <Pizza size={24} />, color: 'bg-red-500' },
-    { id: 'vegetarianas', name: t(language, 'vegetarianas'), icon: <Leaf size={24} />, color: 'bg-green-500' },
+    { id: 'todos', name: t(language, 'todos'), icon: <Wine size={20} />, color: 'bg-purple-500' },
+    { id: 'tradicionais', name: t(language, 'tradicionais'), icon: <Pizza size={20} />, color: 'bg-red-500' },
+    { id: 'vegetarianas', name: t(language, 'vegetarianas'), icon: <Leaf size={20} />, color: 'bg-green-500' },
     { id: 'entradas', name: t(language, 'entradas'), icon: <FaBreadSlice />, color: 'bg-amber-500' },
-    { id: 'petiscos', name: t(language, 'petiscos'), icon: <Hamburger size={24} />, color: 'bg-orange-500' },
-    { id: 'doces', name: t(language, 'doces'), icon: <IceCream size={24} />, color: 'bg-pink-500' },
+    { id: 'petiscos', name: t(language, 'petiscos'), icon: <Hamburger size={20} />, color: 'bg-orange-500' },
+    { id: 'doces', name: t(language, 'doces'), icon: <IceCream size={20} />, color: 'bg-pink-500' },
     { id: 'bordas', name: t(language, 'bordas'), icon: <FaPizzaSlice />, color: 'bg-yellow-500' },
     { id: 'massas', name: t(language, 'massas'), icon: <FaPizzaSlice />, color: 'bg-blue-500' },
     { id: 'sobremesas', name: t(language, 'sobremesas'), icon: <FaIceCream />, color: 'bg-indigo-500' },
     { id: 'bebidas', name: t(language, 'bebidas'), icon: <FaWineGlassAlt />, color: 'bg-blue-500' },
     { id: 'vinhos', name: t(language, 'vinhos'), icon: <FaWineGlassAlt />, color: 'bg-rose-500' },
+    { id: 'hamburgueres', name: t(language, 'hamburgueres'), icon: <Hamburger size={20} />, color: 'bg-amber-600' }
   ];
 
   // Persistir carrinho no localStorage
@@ -2168,7 +2533,7 @@ const InterfaceClienteInner = () => {
   }, [customerInfo, deliveryOption, cart]);
 
 const addToCart = (product, selection) => {
-  const { size, border, quantity, extras, halfAndHalf, halfPizza1, halfPizza2, borderType } = selection;
+  const { size, border, quantity, extras, halfAndHalf, halfPizza1, halfPizza2, borderType, meatType, withMenu } = selection;
 
   const getPizzaName = (id) => {
     const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
@@ -2185,6 +2550,49 @@ const addToCart = (product, selection) => {
     category: itemProduct.category || 'outros',
     isBorder: false
   });
+
+  // Lógica para hambúrgueres
+  if (product.category === 'hamburgueres') {
+   const itemPrice = withMenu ? product.prices.menu : product.prices.sandwich;
+    
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => 
+        item.id === product.id && 
+        item.meatType === meatType && 
+        item.withMenu === withMenu &&
+        JSON.stringify(item.extras) === JSON.stringify(extras)
+      );
+      
+      if (existingItem) {
+        return prevCart.map(item =>
+          item.id === product.id && 
+          item.meatType === meatType && 
+          item.withMenu === withMenu &&
+          JSON.stringify(item.extras) === JSON.stringify(extras)
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      } else {
+       const newItem = {
+        ...product,
+        id: `${product.id}-${meatType}-${withMenu ? 'menu' : 'no-menu'}`,
+        quantity,
+        price: itemPrice,
+        originalPrice: itemPrice, // Adicione esta linha
+        meatType,
+        withMenu,
+        extras,
+        category: 'hamburgueres'
+      };
+        
+        return [...prevCart, newItem];
+      }
+    });
+    
+    setAddedItemName(`${typeof product.name === 'object' ? product.name[language] : product.name} (${meatType === 'frango' ? 'Frango' : 'Vaca'})`);
+    setShowAddedNotification(true);
+    return;
+  }
 
   if (halfAndHalf && size === 'familia') {
     setCart(prevCart => {
@@ -2210,7 +2618,7 @@ const addToCart = (product, selection) => {
         borderType,
         category: 'pizzas',
         isBorder: false,
-        stampsEligible: true // Adiciona flag para selos
+        stampsEligible: true
       };
 
       const existingIndex = prevCart.findIndex(item =>
@@ -2323,7 +2731,7 @@ const addToCart = (product, selection) => {
         );
       } else {
         const newItem = createBaseItem(product, null, quantity, extras);
-        newItem.stampsEligible = product.category === 'entradas'; // Entradas usam selos
+        newItem.stampsEligible = product.category === 'entradas';
         return [...prevCart, newItem];
       }
     });
@@ -2332,7 +2740,6 @@ const addToCart = (product, selection) => {
   setAddedItemName(typeof product.name === 'object' ? product.name[language] : product.name);
   setShowAddedNotification(true);
 };
-
 
 const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSelecionada) => {
   if (isSubmitting) return;
@@ -2374,6 +2781,8 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         const price1 = getPizzaPrice(item.halfPizza1 || item.id, item.selectedSize);
         const price2 = getPizzaPrice(item.halfPizza2, item.selectedSize);
         precoBase = (price1 + price2) / 2;
+      } else if (item.category === 'hamburgueres') {
+        precoBase = item.price;
       } else {
         precoBase = item.price || item.sizes?.[item.selectedSize] || 0;
       }
@@ -2443,7 +2852,9 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         halfPizza1Name: item.halfAndHalf ? getPizzaName(item.halfPizza1 || item.id) : null,
         halfPizza2Name: item.halfAndHalf ? getPizzaName(item.halfPizza2) : null,
         borderType: item.borderType || 'fina',
-        categoria: item.category || 'outros'
+        categoria: item.category || 'outros',
+        meatType: item.meatType || null,
+        withMenu: item.withMenu || false
       };
 
       // Adiciona extras se existirem
@@ -2530,10 +2941,10 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
   const renderProducts = () => {
     if (activeCategory === 'todos') {
       return (
-        <div className="space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="space-y-8 sm:space-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {categories.filter(c => c.id !== 'todos').map(category => (
-              <div key={category.id} className="space-y-6">
+              <div key={category.id} className="space-y-4 sm:space-y-6">
                 <CategoryHeader category={category} language={language} />
                 <ExpandableCategorySection
                   title={typeof category.name === 'object' ? category.name[language] : category.name}
@@ -2551,7 +2962,7 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     return (
       <div>
         <CategoryHeader category={categories.find(c => c.id === activeCategory)} language={language} />
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <ExpandableCategorySection
             title={typeof categories.find(c => c.id === activeCategory).name === 'object' 
               ? categories.find(c => c.id === activeCategory).name[language] 
@@ -2576,18 +2987,18 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
             transition={{ duration: 0.3 }}
             className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50"
           >
-            <div className="bg-[#016730] text-white px-4 py-3 rounded-lg shadow-lg flex items-center">
-              <FaCheck className="mr-2" />
+            <div className="bg-[#016730] text-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg flex items-center text-xs sm:text-sm">
+              <FaCheck className="mr-1 sm:mr-2" size={12} />
               <span className="font-medium">{addedItemName} {t(language, 'addedToCart')}</span>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <header className="bg-white shadow-sm sticky top-0 z-50 px-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center py-3 sm:py-4">
-          <div className="flex items-center space-x-3">
-            <div className="h-12 w-12 rounded-full border-4 border-black overflow-hidden">
+      <header className="bg-white shadow-sm sticky top-0 z-50 px-3 sm:px-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center py-2 sm:py-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-4 border-black overflow-hidden">
               <img 
                 src={logo} 
                 alt="Pizza Nostra" 
@@ -2596,41 +3007,41 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
               />
             </div>       
             <h1 
-              className="text-xl sm:text-2xl font-bold text-black tracking-tight italic"
+              className="text-lg sm:text-xl md:text-2xl font-bold text-black tracking-tight italic"
               style={{ fontFamily: "'Times New Roman', Times, serif" }}
             >
               <span>Pizza</span>
-              <span className="ml-2 sm:ml-3">Nostra</span>
+              <span className="ml-1 sm:ml-2">Nostra</span>
             </h1>
           </div>
 
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
             <LanguageSelector />
             
             {user ? (
               <button 
                 onClick={() => navigate('/fidelidade')}
-                className="relative flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors"
+                className="relative flex items-center gap-1 px-1 sm:px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors"
               >
-                <FaUser className="text-gray-600 text-sm sm:text-base" />
+                <FaUser className="text-gray-600 text-xs sm:text-sm" />
               </button>
             ) : (
               <button
                 onClick={() => navigate('/fidelidade')}
-                className="flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-1 px-1 sm:px-2 py-1 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
               >
-                <FaUser className="text-gray-600 text-sm sm:text-base" />
+                <FaUser className="text-gray-600 text-xs sm:text-sm" />
               </button>
             )}
             
             <button 
               onClick={() => setShowCheckout(true)}
-              className="relative p-1 sm:p-2 rounded-xl hover:bg-gray-50 transition-colors"
+              className="relative p-1 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="relative">
-                <FaShoppingCart className="text-gray-700 text-sm sm:text-base" />
+                <FaShoppingCart className="text-gray-700 text-xs sm:text-sm" />
                 {cart.length > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full shadow-md">
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xxs font-bold w-3 h-3 sm:w-4 sm:h-4 flex items-center justify-center rounded-full shadow-md">
                     {cart.reduce((total, item) => total + item.quantity, 0)}
                   </span>
                 )}
@@ -2641,9 +3052,9 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6 sm:py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div 
-          className="relative rounded-2xl p-6 sm:p-8 md:p-12 mb-8 sm:mb-12 text-white overflow-hidden shadow-2xl"
+          className="relative rounded-lg sm:rounded-xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 text-white overflow-hidden shadow-xl"
           ref={ref}
         >
           <img 
@@ -2654,33 +3065,33 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30"></div>
           <div className="relative z-10 max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 leading-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 leading-tight">
               {t(language, 'title')}
             </h1>
             
-            <p className="text-sm sm:text-base lg:text-xl opacity-90 mb-6 sm:mb-8 max-w-lg">
+            <p className="text-xs sm:text-sm lg:text-base opacity-90 mb-4 sm:mb-6 max-w-lg">
               A autêntica pizza italiana... com um abraço caloroso do Brasil!
             </p>
           </div>
           
-          <div className="absolute right-4 sm:right-8 bottom-4 sm:bottom-8 opacity-20 md:opacity-100">
-            <Pizza size={120} weight="fill" className="text-white" />
+          <div className="absolute right-3 sm:right-6 bottom-3 sm:bottom-6 opacity-20 md:opacity-100">
+            <Pizza size={80} weight="fill" className="text-white" />
           </div>
         </div>
 
-        <div className="mb-8 sm:mb-12">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">
             {t(language, 'ourMenu')} 
           </h2>
           
-          <div className="flex overflow-x-auto pb-4 sm:pb-6 gap-2 sm:gap-3 scrollbar-hide px-1 -mx-1">
+          <div className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-1 -mx-1">
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
-                className={`flex items-center px-4 py-3 rounded-xl whitespace-nowrap transition-all text-sm sm:text-base bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md`}
+                className={`flex items-center px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs sm:text-sm bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md`}
               >
-                <span className="mr-2">{category.icon}</span>
+                <span className="mr-1 sm:mr-2">{category.icon}</span>
                 <span className="font-medium">{category.name}</span>
               </button>
             ))}

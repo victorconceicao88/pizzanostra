@@ -1,250 +1,200 @@
 import React, { useState } from 'react';
-import { X, Storefront, Pizza, Bicycle, Gift } from 'phosphor-react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { X, Storefront, Pizza, Bicycle, Gift, Flame } from 'phosphor-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-const AnimatedPizza = () => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  
-  const rotateX = useTransform(y, [-100, 100], [10, -10]);
-  const rotateY = useTransform(x, [-100, 100], [-10, 10]);
-  const scale = useTransform(x, [-100, 100], [0.95, 1.05]);
+const PizzaHeroSection = () => {
+  return (
+    <div className="relative w-full h-64 bg-gradient-to-br from-red-900 to-red-700 rounded-t-xl overflow-hidden">
+      {/* Efeito de profundidade */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMwMDAiIG9wYWNpdHk9IjAuMDMiPjwvcmVjdD48L3N2Zz4=')]"></div>
+      
+      {/* Pizza em destaque */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="relative w-48 h-48 sm:w-56 sm:h-56">
+          {/* Base da pizza */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 shadow-2xl border-8 border-amber-200">
+            {/* Queijo derretido */}
+            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 opacity-90"></div>
+            
+            {/* Catupiry premium */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-white bg-opacity-90 flex items-center justify-center shadow-inner">
+              <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center">
+                <span className="text-xs font-bold text-amber-700 tracking-widest">CATUPIRY</span>
+              </div>
+            </div>
+            
+            {/* Fatias de calabresa premium */}
+            {[...Array(12)].map((_, i) => {
+              const angle = (i * 30) * (Math.PI / 180);
+              const distance = 38;
+              const size = 16;
+              
+              return (
+                <div
+                  key={i}
+                  className="absolute rounded-lg shadow-md"
+                  style={{
+                    width: `${size}px`,
+                    height: `${size}px`,
+                    top: `${50 + distance * Math.sin(angle)}%`,
+                    left: `${50 + distance * Math.cos(angle)}%`,
+                    transform: 'translate(-50%, -50%) rotate(45deg)',
+                    background: 'linear-gradient(135deg, #7f1d1d, #991b1b)'
+                  }}
+                >
+                  <div className="absolute inset-0.5 rounded-sm bg-gradient-to-br from-red-800 to-red-700"></div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Efeito de brilho */}
+          <div className="absolute inset-0 rounded-full pointer-events-none overflow-hidden">
+            <div className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full bg-amber-200 opacity-20 blur-xl"></div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Destaque inferior */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent flex items-end justify-center pb-2">
+        <div className="flex items-center bg-red-600 text-white px-4 py-1 rounded-full shadow-lg">
+          <Flame size={20} className="mr-2 text-amber-300" />
+          <span className="font-bold text-sm tracking-wide">A MAIS PEDIDA DA CASA</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    
-    x.set(e.clientX - centerX);
-    y.set(e.clientY - centerY);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
+const OptionCard = ({ icon, title, description, color }) => {
   return (
     <motion.div
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        width: '120px',
-        height: '120px',
-        position: 'relative',
-        margin: '0 auto',
-        rotateX,
-        rotateY,
-        scale
-      }}
+      whileHover={{ y: -5 }}
+      className={`p-4 rounded-xl ${color} border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer`}
     >
-      {/* Base da pizza */}
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-300 to-amber-400 shadow-lg border-8 border-amber-200"></div>
-      
-      {/* Queijo derretido */}
-      <div className="absolute inset-2 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 opacity-90"></div>
-      
-      {/* Calabresa - fatias animadas */}
-      {[...Array(8)].map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ scale: 0, rotate: -45 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.5 + i * 0.1, type: 'spring' }}
-          className="absolute rounded-full bg-gradient-to-br from-red-700 to-red-800 shadow-sm"
-          style={{
-            width: '20px',
-            height: '20px',
-            top: `${50 + 35 * Math.sin((i * 45) * (Math.PI / 180))}%`,
-            left: `${50 + 35 * Math.cos((i * 45) * (Math.PI / 180))}%`,
-            transform: 'translate(-50%, -50%)'
-          }}
-        />
-      ))}
-      
-      {/* Catupiry central com efeito 3D */}
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 1.2, type: 'spring' }}
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white bg-opacity-90 flex items-center justify-center shadow-inner"
-      >
-        <div className="w-14 h-14 rounded-full bg-amber-50 bg-opacity-80 flex items-center justify-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-            className="text-amber-600 text-xs font-bold absolute"
-            style={{ width: '100%', textAlign: 'center' }}
-          >
-            Catupiry
-          </motion.div>
+      <div className="flex items-center space-x-4">
+        <div className="p-2 rounded-lg bg-white bg-opacity-80">
+          {icon}
         </div>
-      </motion.div>
+        <div>
+          <h3 className="font-semibold text-gray-800">{title}</h3>
+          <p className="text-sm text-gray-600 mt-1">{description}</p>
+        </div>
+      </div>
     </motion.div>
   );
 };
 
-const PremiumLoyaltyModal = ({ onClose }) => {
+const WelcomeModal = ({ onClose }) => {
   const navigate = useNavigate();
-  const [hoveredOption, setHoveredOption] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   const handleJoin = () => {
     onClose();
     navigate('/fidelidade');
   };
 
-  const consumptionOptions = [
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(onClose, 300);
+  };
+
+  const options = [
     {
-      id: 1,
+      icon: <Storefront size={24} className="text-amber-500" />,
       title: "Comer no Restaurante",
-      description: "Viva a experiência completa em nosso ambiente",
-      icon: <Storefront size={36} className="text-amber-500" />,
-      color: "bg-amber-50",
-      highlight: "from-amber-100 to-amber-50"
+      description: "Ambiente climatizado e atendimento premium",
+      color: "bg-amber-50"
     },
     {
-      id: 2,
-      title: "Take Away",
-      description: "Leve nosso sabor autêntico para qualquer lugar",
-      icon: <Pizza size={36} className="text-red-500" />,
-      color: "bg-red-50",
-      highlight: "from-red-100 to-red-50"
+      icon: <Pizza size={24} className="text-red-500" />,
+      title: "Para Viagem",
+      description: "Embalagem especial para manter o sabor",
+      color: "bg-red-50"
     },
     {
-      id: 3,
-      title: "Delivery",
-      description: "Entregamos quentinha na sua casa",
-      icon: <Bicycle size={36} className="text-green-500" />,
-      color: "bg-green-50",
-      highlight: "from-green-100 to-green-50"
+      icon: <Bicycle size={24} className="text-green-500" />,
+      title: "Delivery Express",
+      description: "Entrega rápida e pizza sempre quentinha",
+      color: "bg-green-50"
     }
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        animate={isClosing ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className="relative w-full max-w-md mx-4 bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-100"
+        className="relative w-full max-w-md bg-white rounded-xl overflow-hidden shadow-2xl"
       >
-        {/* Botão Fechar */}
-        <motion.button
-          whileHover={{ rotate: 90, scale: 1.1 }}
-          onClick={onClose}
-          className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white hover:bg-gray-100 transition-all shadow-md border border-gray-200"
-          aria-label="Fechar modal"
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white hover:bg-gray-100 transition-all shadow-md border border-gray-200"
         >
-          <X size={16} weight="bold" className="text-gray-600" />
-        </motion.button>
+          <X size={18} className="text-gray-600" />
+        </button>
 
-        {/* Cabeçalho Elegante */}
-        <div className="relative pt-10 pb-4 px-5 sm:px-6 text-center">
+        <PizzaHeroSection />
+
+        <div className="p-6">
           <motion.h1
-            initial={{ y: -10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 leading-tight"
+            className="text-2xl font-bold text-center text-gray-900 mb-2"
           >
-            Prove a <span className="text-red-600">#1 da Casa</span>
+            <span className="text-red-600">CALABRESA</span> <span className="text-amber-600">COM CATUPIRY</span>
           </motion.h1>
 
-          <motion.p 
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-xs sm:text-sm text-gray-600 max-w-xs mx-auto mb-3 leading-snug"
+            className="text-center text-gray-600 mb-6"
           >
-            Calabresa com Catupiry. Simplesmente a mais pedida.
+            A combinação perfeita de sabores tradicionais
           </motion.p>
 
-          <div className="relative h-28 -mt-2 mb-0 flex justify-center">
-            <AnimatedPizza />
-          </div>
-        </div>
-
-        {/* Opções de Consumo */}
-        <div className="px-5 sm:px-6 pb-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="grid grid-cols-1 gap-3 mb-6"
+            transition={{ delay: 0.4 }}
+            className="space-y-3 mb-6"
           >
-            {consumptionOptions.map((option) => (
-              <motion.div
-                key={option.id}
-                whileHover={{ y: -3 }}
-                onHoverStart={() => setHoveredOption(option.id)}
-                onHoverEnd={() => setHoveredOption(null)}
-                className={`relative p-4 ${option.color} rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden group`}
-              >
-                <AnimatePresence>
-                  {hoveredOption === option.id && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className={`absolute inset-0 bg-gradient-to-br ${option.highlight}`}
-                    />
-                  )}
-                </AnimatePresence>
-                
-                <div className="relative flex flex-col items-center text-center h-full">
-                  <motion.div 
-                    animate={{ 
-                      y: hoveredOption === option.id ? -3 : 0,
-                      scale: hoveredOption === option.id ? 1.1 : 1
-                    }}
-                    className="mb-3 transition-all"
-                  >
-                    {option.icon}
-                  </motion.div>
-                  <h3 className="text-base font-semibold text-gray-800 mb-1 leading-tight">{option.title}</h3>
-                  <p className="text-xs text-gray-500 flex-grow leading-snug">{option.description}</p>
-                </div>
-              </motion.div>
+            {options.map((option, index) => (
+              <OptionCard key={index} {...option} />
             ))}
           </motion.div>
 
-          {/* Botões de Ação */}
-          <div className="space-y-3">
-            <motion.button
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.98 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="space-y-3"
+          >
+            <button
               onClick={handleJoin}
-              className="w-full py-3 sm:py-4 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl text-white font-bold flex items-center justify-center shadow-lg hover:shadow-xl transition-all group"
+              className="w-full py-3 bg-gradient-to-r from-red-600 to-amber-600 rounded-lg text-white font-bold shadow-lg hover:shadow-xl transition-all"
             >
-              <Gift size={18} weight="fill" className="mr-2 text-amber-100 group-hover:text-white transition-colors" />
-              <span className="text-sm sm:text-base group-hover:scale-105 transition-transform">Quero experimentar</span>
-            </motion.button>
+              <div className="flex items-center justify-center">
+                <Gift size={20} className="mr-2" />
+                EXPERIMENTE AGORA
+              </div>
+            </button>
 
-            <motion.button
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onClose}
-              className="w-full py-2.5 sm:py-3 bg-white border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-all text-sm sm:text-base"
+            <button
+              onClick={handleClose}
+              className="w-full py-2.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
             >
               Continuar sem cadastro
-            </motion.button>
-          </div>
-
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="text-[10px] sm:text-xs text-center text-gray-400 mt-4 leading-tight"
-          >
-            Ao continuar, você concorda com nossos{' '}
-            <a href="/termos" className="text-amber-600 hover:underline font-medium">Termos</a> e{' '}
-            <a href="/politica" className="text-amber-600 hover:underline font-medium">Política</a>
-          </motion.p>
+            </button>
+          </motion.div>
         </div>
       </motion.div>
     </div>
   );
 };
 
-export default PremiumLoyaltyModal;
+export default WelcomeModal;
