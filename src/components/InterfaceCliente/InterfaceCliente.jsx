@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react';
-import { FaPizzaSlice, FaChevronLeft, FaChevronRight, FaClipboardList,FaCopy,FaAddressBook,FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight, FaShieldAlt, FaPlus, FaUserPlus } from 'react-icons/fa';
-import { Pizza, Leaf, IceCream, Hamburger, Wine, X, Check, Plus, Minus, MapPin, CreditCard, CurrencyEur, DeviceMobile, Money} from '@phosphor-icons/react';
+import { FaPizzaSlice,FaGlassWhiskey, FaChevronLeft, FaChevronRight, FaClipboardList,FaCopy,FaAddressBook,FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight, FaShieldAlt, FaPlus, FaUserPlus } from 'react-icons/fa';
+import { Pizza, Leaf, IceCream, Hamburger,CupTogo, Wine, X, Check, Plus, Minus, MapPin, CreditCard, CurrencyEur, DeviceMobile, Money} from '@phosphor-icons/react';
 import { motion, AnimatePresence, useAnimation, useInView, PanInfo, useMotionValue } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
@@ -8,6 +8,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { collection, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion, serverTimestamp, Timestamp, arrayRemove, increment, onSnapshot, query, orderBy, limit, addDoc, writeBatch } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { LanguageProvider, useLanguage } from './LanguageContext';
+import { GiFruitBowl, GiWineGlass, GiFullPizza, GiBroccoli, GiBreadSlice, GiChickenOven, GiDonut, GiCheeseWedge, GiNoodles,  GiCakeSlice , GiSodaCan, GiChampagneCork, GiHamburger } from 'react-icons/gi';
 import { menuData, deliveryAreas } from './menuData';
 import logo from './logo.jpg';
 import { t } from './translations';
@@ -27,6 +28,7 @@ const categoryImages = {
   massas: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
   sobremesas: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
   bebidas: 'https://images.unsplash.com/photo-1536935338788-846bb9981813?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  Sucos: 'https://images.unsplash.com/photo-1536935338788-846bb9981813?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
   vinhos: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
   hamburgueres: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
 };
@@ -1039,8 +1041,10 @@ const ProductCard = ({ product, language, onAddToCart }) => {
 
   const handleAddClick = (e) => {
     e.stopPropagation();
-    
-    if (product.sizes || product.category === 'hamburgueres') {
+
+    if (product.category === 'sucos') {
+      setIsModalOpen(true);
+    } else if (product.sizes || product.category === 'hamburgueres') {
       setIsModalOpen(true);
     } else {
       onAddToCart(product, {
@@ -1073,30 +1077,36 @@ const ProductCard = ({ product, language, onAddToCart }) => {
               </h3>
               {product.description && (
                 <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 mb-2">
-                  {typeof product.description === 'object' ? product.description[language] : product.description}
+                  {typeof product.description === 'object'
+                    ? product.description[language]
+                    : product.description}
                 </p>
               )}
             </div>
-            
+
             <div className="text-right ml-2">
               <span className="text-base sm:text-lg font-bold text-red-600">
                 {getDisplayPrice()}€
               </span>
             </div>
           </div>
-          
+
           <div className="flex justify-between items-center mt-2 sm:mt-3">
             {product.rating && (
               <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  i < Math.floor(product.rating) ? 
-                    <FaStar key={i} className="text-amber-400 text-xs sm:text-sm" /> : 
+                {[...Array(5)].map((_, i) =>
+                  i < Math.floor(product.rating) ? (
+                    <FaStar key={i} className="text-amber-400 text-xs sm:text-sm" />
+                  ) : (
                     <FaRegStar key={i} className="text-amber-400 text-xs sm:text-sm" />
-                ))}
-                <span className="ml-1 text-xs text-gray-500">({product.ratingCount || 0})</span>
+                  )
+                )}
+                <span className="ml-1 text-xs text-gray-500">
+                  ({product.ratingCount || 0})
+                </span>
               </div>
             )}
-            
+
             <button
               onClick={handleAddClick}
               className="px-2 sm:px-3 py-1 bg-white border border-[#016730] text-gray-800 rounded-lg font-medium flex items-center justify-center gap-1 shadow-sm hover:shadow-md transition-all text-xs sm:text-sm"
@@ -1107,8 +1117,15 @@ const ProductCard = ({ product, language, onAddToCart }) => {
           </div>
         </div>
       </div>
-      
-      {isModalOpen && product.category === 'hamburgueres' ? (
+
+      {isModalOpen && product.category === 'sucos' ? (
+        <JuiceSelectionModal
+          product={product}
+          onClose={() => setIsModalOpen(false)}
+          onAddToCart={onAddToCart}
+          language={language}
+        />
+      ) : isModalOpen && product.category === 'hamburgueres' ? (
         <BurgerCustomizationModal
           product={product}
           onClose={() => setIsModalOpen(false)}
@@ -1126,7 +1143,6 @@ const ProductCard = ({ product, language, onAddToCart }) => {
     </>
   );
 };
-
 const StampRewardPreview = ({ cartTotal, language }) => {
   const stampsEarned = Math.floor(cartTotal / 15);
 
@@ -2472,6 +2488,150 @@ const CheckoutFlow = ({
   );
 };
 
+const JuiceSelectionModal = ({ 
+  product, 
+  onClose, 
+  onAddToCart,
+  language,
+  initialSelection = {
+    juiceType: 'suco-laranja',
+    quantity: 1
+  }
+}) => {
+  const [selection, setSelection] = useState(initialSelection);
+  
+  const juiceOptions = [
+    {
+      id: 'suco-laranja',
+      name: { 
+        pt: 'Suco de Laranja Natural', 
+        en: 'Natural Orange Juice', 
+        es: 'Zumo de Naranja Natural' 
+      },
+      price: product.price
+    },
+    {
+      id: 'suco-laranja-acerola',
+      name: { 
+        pt: 'Suco de Laranja com Acerola', 
+        en: 'Orange and Acerola Juice', 
+        es: 'Zumo de Naranja con Acerola' 
+      },
+      price: product.price + 0.50 // Exemplo de preço diferenciado
+    },
+    {
+      id: 'suco-laranja-morango',
+      name: { 
+        pt: 'Suco de Laranja com Morango', 
+        en: 'Orange and Strawberry Juice', 
+        es: 'Zumo de Naranja con Fresa' 
+      },
+      price: product.price + 0.50 // Exemplo de preço diferenciado
+    }
+  ];
+
+  const handleJuiceChange = (juiceType) => {
+    setSelection(prev => ({ ...prev, juiceType }));
+  };
+
+  const handleQuantityChange = (newQuantity) => {
+    setSelection(prev => ({ ...prev, quantity: Math.max(1, newQuantity) }));
+  };
+  
+  const handleAddToCart = () => {
+    const selectedJuice = juiceOptions.find(j => j.id === selection.juiceType);
+    onAddToCart({
+      ...product,
+      name: selectedJuice.name,
+      price: selectedJuice.price,
+      juiceType: selection.juiceType
+    }, {
+      quantity: selection.quantity
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-800">
+              {t(language, 'selectJuice')}
+            </h3>
+            <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="space-y-4 mb-6">
+            <h4 className="font-medium text-gray-700">{t(language, 'juiceType')}</h4>
+            <div className="grid grid-cols-1 gap-3">
+              {juiceOptions.map(juice => (
+                <button
+                  key={juice.id}
+                  onClick={() => handleJuiceChange(juice.id)}
+                  className={`p-4 rounded-lg border-2 flex flex-col items-start transition-all ${
+                    selection.juiceType === juice.id
+                      ? 'border-[#016730] bg-green-50 text-[#016730]'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="font-bold">
+                    {typeof juice.name === 'object' ? juice.name[language] : juice.name}
+                  </span>
+                  <span className="text-sm text-gray-500 mt-1">
+                    {juice.price.toFixed(2)}€
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">{t(language, 'quantity')}</h4>
+              <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => handleQuantityChange(selection.quantity - 1)}
+                  disabled={selection.quantity <= 1}
+                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="w-8 h-8 flex items-center justify-center border-l border-r border-gray-200">
+                  {selection.quantity}
+                </span>
+                <button
+                  onClick={() => handleQuantityChange(selection.quantity + 1)}
+                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="text-right">
+              <div className="text-sm text-gray-500">{t(language, 'total')}</div>
+              <div className="text-2xl font-bold text-[#016730]">
+                {(juiceOptions.find(j => j.id === selection.juiceType)).price * selection.quantity.toFixed(2)}€
+              </div>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleAddToCart}
+            className="w-full py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center"
+          >
+            <FaShoppingCart className="mr-2" size={16} />
+            {t(language, 'addToCart')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const InterfaceClienteInner = () => {
   const [activeCategory, setActiveCategory] = useState('todos');
   const [showCheckout, setShowCheckout] = useState(false);
@@ -2517,20 +2677,21 @@ const InterfaceClienteInner = () => {
   const [codigoPostal, setCodigoPostal] = useState('');
   const [valorPago, setValorPago] = useState('');
 
-  const categories = [
-    { id: 'todos', name: t(language, 'todos'), icon: <Wine size={20} />, color: 'bg-purple-500' },
-    { id: 'tradicionais', name: t(language, 'tradicionais'), icon: <Pizza size={20} />, color: 'bg-red-500' },
-    { id: 'vegetarianas', name: t(language, 'vegetarianas'), icon: <Leaf size={20} />, color: 'bg-green-500' },
-    { id: 'entradas', name: t(language, 'entradas'), icon: <FaBreadSlice />, color: 'bg-amber-500' },
-    { id: 'petiscos', name: t(language, 'petiscos'), icon: <Hamburger size={20} />, color: 'bg-orange-500' },
-    { id: 'doces', name: t(language, 'doces'), icon: <IceCream size={20} />, color: 'bg-pink-500' },
-    { id: 'bordas', name: t(language, 'bordas'), icon: <FaPizzaSlice />, color: 'bg-yellow-500' },
-    { id: 'massas', name: t(language, 'massas'), icon: <FaPizzaSlice />, color: 'bg-blue-500' },
-    { id: 'sobremesas', name: t(language, 'sobremesas'), icon: <FaIceCream />, color: 'bg-indigo-500' },
-    { id: 'bebidas', name: t(language, 'bebidas'), icon: <FaWineGlassAlt />, color: 'bg-blue-500' },
-    { id: 'vinhos', name: t(language, 'vinhos'), icon: <FaWineGlassAlt />, color: 'bg-rose-500' },
-    { id: 'hamburgueres', name: t(language, 'hamburgueres'), icon: <Hamburger size={20} />, color: 'bg-amber-600' }
-  ];
+const categories = [
+  { id: 'todos', name: t(language, 'todos'), icon: <GiFullPizza size={20} color="#9C27B0" /> },       // Roxo
+  { id: 'tradicionais', name: t(language, 'tradicionais'), icon: <GiFullPizza size={20} color="#F44336" /> }, // Vermelho
+  { id: 'vegetarianas', name: t(language, 'vegetarianas'), icon: <GiBroccoli size={20} color="#4CAF50" /> }, // Verde
+  { id: 'entradas', name: t(language, 'entradas'), icon: <GiBreadSlice size={20} color="#FF9800" /> },       // Laranja
+  { id: 'petiscos', name: t(language, 'petiscos'), icon: <GiChickenOven size={20} color="#FF5722" /> },      // Laranja queimado
+  { id: 'doces', name: t(language, 'doces'), icon: <GiFullPizza size={20} color="#E91E63" /> },              // Rosa
+  { id: 'bordas', name: t(language, 'bordas'), icon: <GiCheeseWedge size={20} color="#FFC107" /> },          // Amarelo
+  { id: 'massas', name: t(language, 'massas'), icon: <GiNoodles size={20} color="#2196F3" /> },              // Azul
+  { id: 'sobremesas', name: t(language, 'sobremesas'), icon: <GiCakeSlice size={20} color="#673AB7" /> },    // Roxo escuro
+  { id: 'bebidas', name: t(language, 'bebidas'), icon: <GiSodaCan size={20} color="#00BCD4" /> },            // Ciano
+  { id: 'vinhos', name: t(language, 'vinhos'), icon: <GiChampagneCork size={20} color="#C2185B" /> },        // Vinho
+  { id: 'hamburgueres', name: t(language, 'hamburgueres'), icon: <GiHamburger size={20} color="#FF7043" /> },// Laranja claro
+  { id: 'sucos', name: t(language, 'sucos'), icon: <GiFruitBowl size={20} color="#FFB300" /> },              // Amarelo/laranja
+];
 
   // Persistir carrinho no localStorage
   const [cart, setCart] = useState(() => {
@@ -3150,48 +3311,59 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
           </div>
         </div>
 
-        <div className="mb-6 sm:mb-8">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">
-              {t(language, 'ourMenu')} 
-            </h2>
-            
-            <div className="relative">
-              <div 
-                className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-1 -mx-1"
-                id="categories-scroll"
-              >
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setActiveCategory(category.id)}
-                    className={`flex items-center px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs sm:text-sm bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md`}
-                  >
-                    <span className="mr-1 sm:mr-2">{category.icon}</span>
-                    <span className="font-medium">{category.name}</span>
-                  </button>
-                ))}
-              </div>
-              
-              {/* Indicador de mais itens à direita */}
-              <div 
-                className="absolute right-0 top-0 h-full w-12 sm:w-16 bg-gradient-to-l from-gray-100 to-transparent flex items-center justify-center pointer-events-none"
-                style={{ display: 'none' }} // Será mostrado via JavaScript
-                id="scroll-indicator-right"
-              >
-                <FaChevronRight className="text-gray-500" size={14} />
-              </div>
-              
-              {/* Indicador de mais itens à esquerda */}
-              <div 
-                className="absolute left-0 top-0 h-full w-12 sm:w-16 bg-gradient-to-r from-gray-100 to-transparent flex items-center justify-center pointer-events-none"
-                style={{ display: 'none' }} // Será mostrado via JavaScript
-                id="scroll-indicator-left"
-              >
-                <FaChevronLeft className="text-gray-500" size={14} />
-              </div>
-            </div>
-          </div>
+<div className="mb-6 sm:mb-8">
+  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">
+    {t(language, 'ourMenu')}
+  </h2>
 
+  <div className="relative">
+    {/* Seta esquerda */}
+    <button
+      onClick={() => {
+        const container = document.getElementById('categories-scroll');
+        if (container) {
+          container.scrollBy({ left: -400, behavior: 'smooth' });
+        }
+      }}
+      className="absolute left-0 top-[45%] -translate-y-1/2 z-20 w-11 h-11 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 hover:bg-gray-100 transition-all border border-gray-300"
+      aria-label="Scroll categories left"
+    >
+      <FaChevronLeft size={20} />
+    </button>
+
+    {/* Lista de categorias */}
+    <div
+      className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-8"
+      id="categories-scroll"
+      ref={ref}
+    >
+      {categories.map((category) => (
+        <button
+          key={category.id}
+          onClick={() => setActiveCategory(category.id)}
+          className="flex items-center px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs sm:text-sm bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md"
+        >
+          <span className="mr-1 sm:mr-2">{category.icon}</span>
+          <span className="font-medium">{category.name}</span>
+        </button>
+      ))}
+    </div>
+
+    {/* Seta direita */}
+    <button
+      onClick={() => {
+        const container = document.getElementById('categories-scroll');
+        if (container) {
+          container.scrollBy({ left: 400, behavior: 'smooth' });
+        }
+      }}
+      className="absolute right-0 top-[45%] -translate-y-1/2 z-20 w-11 h-11 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 hover:bg-gray-100 transition-all border border-gray-300"
+      aria-label="Scroll categories right"
+    >
+      <FaChevronRight size={20} />
+    </button>
+  </div>
+</div>
         <div>
           {renderProducts()}
         </div>

@@ -1296,7 +1296,38 @@ export const menuData = {
       image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1964&q=80'
     }
   ],
-  
+  sucos: [
+    {
+      id: 'suco-laranja',
+      name: {
+        pt: 'Suco de Laranja Natural',
+        en: 'Natural Orange Juice',
+        es: 'Zumo de Naranja Natural'
+      },
+      price: 3.50,
+      image: 'https://images.unsplash.com/photo-1603569283847-aa295f0d016a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
+    },
+    {
+      id: 'suco-laranja-acerola',
+      name: {
+        pt: 'Suco de Laranja com Acerola',
+        en: 'Orange and Acerola Juice',
+        es: 'Zumo de Naranja con Acerola'
+      },
+      price: 3.50,
+      image: 'https://images.unsplash.com/photo-1603569283847-aa295f0d016a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
+    },
+    {
+      id: 'suco-laranja-morango',
+      name: {
+        pt: 'Suco de Laranja com Morango',
+        en: 'Orange and Strawberry Juice',
+        es: 'Zumo de Naranja con Fresa'
+      },
+      price: 3.50,
+      image: 'https://images.unsplash.com/photo-1603569283847-aa295f0d016a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
+    }
+], 
   vinhos: [
     {
       id: 'vinho-tinto-monte-velho',
