@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react';
-import { FaPizzaSlice, FaClipboardList,FaCopy,FaAddressBook,FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight, FaShieldAlt, FaPlus, FaUserPlus } from 'react-icons/fa';
+import { FaPizzaSlice, FaChevronLeft, FaChevronRight, FaClipboardList,FaCopy,FaAddressBook,FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight, FaShieldAlt, FaPlus, FaUserPlus } from 'react-icons/fa';
 import { Pizza, Leaf, IceCream, Hamburger, Wine, X, Check, Plus, Minus, MapPin, CreditCard, CurrencyEur, DeviceMobile, Money} from '@phosphor-icons/react';
-import { motion, AnimatePresence, useAnimation, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation, useInView, PanInfo, useMotionValue } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -78,6 +78,8 @@ const STAMP_REWARDS = {
     pao_alho: { selos: 5, label: { pt: "Pão de Alho", en: "Garlic Bread", es: "Pan de Ajo" } }
   }
 };
+
+
 
 const BurgerCustomizationModal = ({ 
   product, 
@@ -308,7 +310,7 @@ const BurgerCustomizationModal = ({
                 >
                   <Minus size={14} />
                 </button>
-                <span className="w-8 h-8 flex items-center justify-center text-sm font-medium border-l border-r border-gray-200">
+                <span className="w-8 h-8 flex items-center justify-center border-l border-r border-gray-200">
                   {selection.quantity}
                 </span>
                 <button
@@ -782,27 +784,60 @@ const CustomizationModal = ({
           )}
           
           {/* Tab Navigation */}
-          <div className="flex border-b border-gray-200 mb-3 sm:mb-4">
-            <button
-              onClick={() => setActiveTab('size')}
-              className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm ${activeTab === 'size' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              {t(language, 'Size')}
-            </button>
-            {product.sizes && menuData.bordas.length > 0 && (
-              <button
-                onClick={() => setActiveTab('border')}
-                className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm ${activeTab === 'border' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
+         <div className="mb-4 sm:mb-6">
+            <div className="relative flex items-center w-full">
+              <button 
+                onClick={() => {
+                  const tabs = ['size', 'border', 'extras'];
+                  const currentIndex = tabs.indexOf(activeTab);
+                  const newIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
+                  setActiveTab(tabs[newIndex]);
+                }}
+                className="p-1 sm:p-2 rounded-full hover:bg-gray-100 mr-1 transition-colors"
               >
-                {t(language, 'Stuffed')}
+                <FaChevronLeft className="text-gray-600 text-xs sm:text-sm" />
               </button>
-            )}
-            <button
-              onClick={() => setActiveTab('extras')}
-              className={`py-2 px-3 sm:px-4 font-medium text-xs sm:text-sm ${activeTab === 'extras' ? 'text-[#016730] border-b-2 border-[#016730]' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              {t(language, 'extras')} ({selection.extras.length})
-            </button>
+
+              <div className="flex-1 overflow-hidden">
+                <div className="flex">
+                  {['size', 'border', 'extras'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`flex-1 py-2 px-1 mx-1 text-center relative text-xs sm:text-sm font-medium ${
+                        activeTab === tab 
+                          ? 'text-[#016730]' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      {tab === 'size' && t(language, 'Size')}
+                      {tab === 'border' && t(language, 'Stuffed')}
+                      {tab === 'extras' && `${t(language, 'extras')} (${selection.extras.length})`}
+                      
+                      {activeTab === tab && (
+                        <motion.div
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#016730]"
+                          layoutId="underline"
+                          transition={{ duration: 0.3 }}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button 
+                onClick={() => {
+                  const tabs = ['size', 'border', 'extras'];
+                  const currentIndex = tabs.indexOf(activeTab);
+                  const newIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
+                  setActiveTab(tabs[newIndex]);
+                }}
+                className="p-1 sm:p-2 rounded-full hover:bg-gray-100 ml-1 transition-colors"
+              >
+                <FaChevronRight className="text-gray-600 text-xs sm:text-sm" />
+              </button>
+            </div>
           </div>
         
           {/* Tab Content */}
