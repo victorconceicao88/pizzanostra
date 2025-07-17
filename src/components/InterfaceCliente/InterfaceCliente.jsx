@@ -77,11 +77,9 @@ const STAMP_REWARDS = {
     familia: { selos: 12, label: { pt: "Pizza Família", en: "Family Pizza", es: "Pizza Familiar" } }
   },
   entradas: {
-    pao_alho: { selos: 5, label: { pt: "Pão de Alho", en: "Garlic Bread", es: "Pan de Ajo" } }
+    pao_alho: { selos: 5, label: { pt: 'Pão de Alho', en: 'Garlic Bread', es: 'Pan de Ajo' } }
   }
 };
-
-
 
 const BurgerCustomizationModal = ({ 
   product, 
@@ -699,9 +697,7 @@ const CustomizationModal = ({
               <p className="text-xs sm:text-sm font-medium text-gray-700">
                 {t(language, 'firstHalf')}: 
                 <span className="ml-1 sm:ml-2 font-bold">
-                  {typeof firstHalfPizza.name === 'object' 
-                    ? firstHalfPizza.name[language] 
-                    : firstHalfPizza.name} ({(firstHalfPrice / 2).toFixed(2)}€)
+                  {typeof firstHalfPizza.name === 'object' ? firstHalfPizza.name[language] : firstHalfPizza.name} ({(firstHalfPrice / 2).toFixed(2)}€)
                 </span>
               </p>
             </div>
@@ -1735,16 +1731,12 @@ const CheckoutFlow = ({
     const value = e.target.value.replace(/\D/g, '').slice(0, 7);
     setCodigoPostal(value);
     
-    if (value.length > 4) {
+    // Atualiza o código postal formatado no customerInfo apenas quando estiver completo
+    if (value.length === 7) {
       const formatted = `${value.slice(0, 4)}-${value.slice(4)}`;
       setCustomerInfo({
         ...customerInfo,
         codigoPostal: formatted
-      });
-    } else {
-      setCustomerInfo({
-        ...customerInfo,
-        codigoPostal: value
       });
     }
   };
@@ -1752,6 +1744,10 @@ const CheckoutFlow = ({
   const handleNifChange = (e) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 9);
     setNifNumber(value);
+    setCustomerInfo({
+      ...customerInfo,
+      nif: value
+    });
   };
 
   const canProceedToPayment = () => {
@@ -2026,6 +2022,9 @@ const CheckoutFlow = ({
                       placeholder="Ex: 1234-567"
                       required
                     />
+                    {codigoPostal.length > 0 && codigoPostal.length !== 7 && (
+                      <p className="text-red-500 text-xxs sm:text-xs mt-1">O código postal deve ter 7 dígitos</p>
+                    )}
                   </div>
 
                   <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Zona de Entrega*</label>
@@ -2101,11 +2100,8 @@ const CheckoutFlow = ({
                 <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">NIF (Opcional)</label>
                 <input
                   type="text"
-                  value={customerInfo.nif}
-                  onChange={(e) => setCustomerInfo({
-                    ...customerInfo,
-                    nif: e.target.value
-                  })}
+                  value={customerInfo.nif || ''}
+                  onChange={handleNifChange}
                   className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
                   placeholder="Digite o NIF"
                 />
@@ -3292,7 +3288,7 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
             </h1>
             
             <p className="text-xs sm:text-sm lg:text-base opacity-90 mb-4 sm:mb-6 max-w-lg">
-              A autêntica pizza italiana... com um abraço caloroso do Brasil!
+              Do Brasil para Portimão — a pizza que traz memória e sabor em cada mordida.
             </p>
           </div>
           
