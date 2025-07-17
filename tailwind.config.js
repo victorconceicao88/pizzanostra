@@ -46,6 +46,10 @@ module.exports = {
         'fade-in': 'fade-in 100ms ease-out',
         'fade-out': 'fade-out 100ms ease-out',
       },
+      plugins: [
+        require('tailwind-scrollbar-hide')
+      ]
+
     },
   },
 }

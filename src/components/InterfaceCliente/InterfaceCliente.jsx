@@ -2658,7 +2658,7 @@ const categories = [
   { id: 'hamburgueres', name: t(language, 'hamburgueres'), icon: <GiHamburger size={20} color="#FF7043" /> },// Laranja claro
   { id: 'sucos', name: t(language, 'sucos'), icon: <GiFruitBowl size={20} color="#FFB300" /> },              // Amarelo/laranja
 ];
-  const updateScrollButtons = () => {
+const updateScrollButtons = () => {
   const container = ref.current;
   if (container) {
     setCanScrollLeft(container.scrollLeft > 0);
@@ -2668,22 +2668,20 @@ const categories = [
 };
 
 useEffect(() => {
-  const container = ref.current;
-  if (!container) return;
-
-  const handleScroll = () => updateScrollButtons();
-  const handleResize = () => updateScrollButtons();
-
   updateScrollButtons();
-  container.addEventListener('scroll', handleScroll);
-  window.addEventListener('resize', handleResize);
+  const container = ref.current;
+  if (container) {
+    container.addEventListener('scroll', updateScrollButtons);
+    window.addEventListener('resize', updateScrollButtons);
+  }
 
   return () => {
-    container.removeEventListener('scroll', handleScroll);
-    window.removeEventListener('resize', handleResize);
+    if (container) {
+      container.removeEventListener('scroll', updateScrollButtons);
+      window.removeEventListener('resize', updateScrollButtons);
+    }
   };
 }, []);
-
 
   // Persistir carrinho no localStorage
   const [cart, setCart] = useState(() => {
@@ -3314,33 +3312,30 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       onClick={() => {
         const container = ref.current;
         if (container && canScrollLeft) {
-          container.scrollBy({ left: -400, behavior: 'smooth' });
+          const scrollAmount = Math.min(300, container.scrollLeft);
+          container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
         }
       }}
-      className={`absolute left-0 z-20 w-10 h-10 sm:w-11 sm:h-11 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all 
-        ${canScrollLeft ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'}`}
-      style={{ top: '40%', transform: 'translateY(-50%)' }}
+      className={`absolute left-0 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all ${
+        canScrollLeft ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'
+      }`}
+      style={{ top: '10%' }}
       aria-label="Scroll categories left"
     >
-      <FaChevronLeft size={18} />
+      <FaChevronLeft size={16} className="relative" />
     </button>
 
-    {/* Lista de categorias */}
+    {/* Lista de categorias com snapping e bloqueio de overscroll */}
     <div
       id="categories-scroll"
       ref={ref}
-      className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-12 scroll-smooth"
-      style={{
-        scrollSnapType: 'x mandatory',
-        touchAction: 'pan-y',
-        overscrollBehaviorX: 'contain', // importante
-      }}
+      className="flex overflow-x-auto snap-x snap-mandatory pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-10 touch-pan-x overscroll-x-contain"
     >
       {categories.map((category) => (
         <button
           key={category.id}
           onClick={() => setActiveCategory(category.id)}
-          className="flex items-center px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs sm:text-sm bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md scroll-snap-align-start"
+          className="snap-start flex items-center px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs sm:text-sm bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md"
         >
           <span className="mr-1 sm:mr-2">{category.icon}</span>
           <span className="font-medium">{category.name}</span>
@@ -3352,21 +3347,24 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     <button
       onClick={() => {
         const container = ref.current;
-        const maxScrollLeft = container?.scrollWidth - container?.clientWidth;
-
         if (container && canScrollRight) {
-          container.scrollBy({ left: 400, behavior: 'smooth' });
+          const maxScrollLeft = container.scrollWidth - container.clientWidth;
+          const remaining = maxScrollLeft - container.scrollLeft;
+          const scrollAmount = Math.min(300, remaining);
+          container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
         }
       }}
-      className={`absolute right-0 z-20 w-10 h-10 sm:w-11 sm:h-11 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all 
-        ${canScrollRight ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'}`}
-      style={{ top: '40%', transform: 'translateY(-50%)' }}
+      className={`absolute right-0 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all ${
+        canScrollRight ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'
+      }`}
+      style={{ top: '10%' }}
       aria-label="Scroll categories right"
     >
-      <FaChevronRight size={18} />
+      <FaChevronRight size={16} className="relative" />
     </button>
   </div>
 </div>
+
         <div>
           {renderProducts()}
         </div>
