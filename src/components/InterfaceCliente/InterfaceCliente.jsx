@@ -630,6 +630,42 @@ const CustomizationModal = ({
       }
     });
   };
+
+  useEffect(() => {
+  const checkScroll = () => {
+    const container = document.getElementById('categories-scroll');
+    const rightIndicator = document.getElementById('scroll-indicator-right');
+    const leftIndicator = document.getElementById('scroll-indicator-left');
+    
+    if (container && rightIndicator && leftIndicator) {
+      // Mostrar indicador direito se houver conteúdo à direita
+      const showRight = container.scrollWidth > container.clientWidth && 
+                       container.scrollLeft < (container.scrollWidth - container.clientWidth - 1);
+      
+      // Mostrar indicador esquerdo se houver conteúdo à esquerda
+      const showLeft = container.scrollLeft > 0;
+      
+      rightIndicator.style.display = showRight ? 'flex' : 'none';
+      leftIndicator.style.display = showLeft ? 'flex' : 'none';
+    }
+  };
+
+  // Verificar ao carregar e redimensionar
+  checkScroll();
+  window.addEventListener('resize', checkScroll);
+  
+  const container = document.getElementById('categories-scroll');
+  if (container) {
+    container.addEventListener('scroll', checkScroll);
+  }
+
+  return () => {
+    window.removeEventListener('resize', checkScroll);
+    if (container) {
+      container.removeEventListener('scroll', checkScroll);
+    }
+  };
+}, []);
   
   const toggleHalfAndHalf = () => {
     setSelection(prev => ({
@@ -3115,23 +3151,46 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">
-            {t(language, 'ourMenu')} 
-          </h2>
-          
-          <div className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-1 -mx-1">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setActiveCategory(category.id)}
-                className={`flex items-center px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs sm:text-sm bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md`}
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">
+              {t(language, 'ourMenu')} 
+            </h2>
+            
+            <div className="relative">
+              <div 
+                className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-1 -mx-1"
+                id="categories-scroll"
               >
-                <span className="mr-1 sm:mr-2">{category.icon}</span>
-                <span className="font-medium">{category.name}</span>
-              </button>
-            ))}
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setActiveCategory(category.id)}
+                    className={`flex items-center px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs sm:text-sm bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md`}
+                  >
+                    <span className="mr-1 sm:mr-2">{category.icon}</span>
+                    <span className="font-medium">{category.name}</span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* Indicador de mais itens à direita */}
+              <div 
+                className="absolute right-0 top-0 h-full w-12 sm:w-16 bg-gradient-to-l from-gray-100 to-transparent flex items-center justify-center pointer-events-none"
+                style={{ display: 'none' }} // Será mostrado via JavaScript
+                id="scroll-indicator-right"
+              >
+                <FaChevronRight className="text-gray-500" size={14} />
+              </div>
+              
+              {/* Indicador de mais itens à esquerda */}
+              <div 
+                className="absolute left-0 top-0 h-full w-12 sm:w-16 bg-gradient-to-r from-gray-100 to-transparent flex items-center justify-center pointer-events-none"
+                style={{ display: 'none' }} // Será mostrado via JavaScript
+                id="scroll-indicator-left"
+              >
+                <FaChevronLeft className="text-gray-500" size={14} />
+              </div>
+            </div>
           </div>
-        </div>
 
         <div>
           {renderProducts()}
