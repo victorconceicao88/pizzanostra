@@ -5,6 +5,7 @@ export const translations = {
     restaurantName: "Pizza Nostra Restaurante & Pizzaria",
     cart: "Carrinho",
     
+
     // Hero section
     since: "Desde 1985",
     title: "Autêntica Pizza Brasileira em Portimão",
@@ -14,7 +15,7 @@ export const translations = {
     useStamps:"Utilizar selos",
     usingStamps:"Selos aplicados",
     fullMenu: "Cardápio Completo",
-    halfAndHalf: "Meio a Meio",
+    halfAndHalf: "Montar com dois sabores (meia a meia)?",
     firstHalf: "Primeira metade",
           secondHalf: "Segunda metade",
           selectHalf: "Selecione o sabor",
@@ -57,7 +58,7 @@ export const translations = {
           // Outros
           extras: "Extras",
           addToCart: "Adicionar ao Carrinho",
-          quantity: "Quantidade",
+          Quantity: "Quantidade",
           total: "Total",
           extrasTotal: "Total de extras",
     
@@ -191,6 +192,11 @@ export const translations = {
     stampsAvailable:"Stamps Balance",
     useStamps:"Redeem Stamps",
     usingStamps:"Stamps Applied",
+    halfAndHalf:"Would you like to make it Half and Half?",
+    thinBorder: "Thin Crust (Traditional)",
+    thickBorder: "Thick Crust (Stuffed)",
+    borderType:"Crust Type",
+
     
     // Categories
     entradas: "Starters",
@@ -223,6 +229,9 @@ export const translations = {
     stamps: "Stamps available",
     estimatedTotal: "Estimated total",
     proceedToCheckout: "Proceed to Checkout",
+    firstHalf:"First half selected",
+    secondHalf :"Now select the second half:",
+    selectHalf :"----------",
     
     // Checkout steps
     deliveryInfo: "Delivery Information",
@@ -278,7 +287,14 @@ export const translations = {
     
     // Product descriptions
     margheritaDesc: "Tomato sauce, mozzarella, fresh basil",
-    pepperoniDesc: "Tomato sauce, mozzarella and pepperoni"
+    pepperoniDesc: "Tomato sauce, mozzarella and pepperoni",
+    chooseMeatType:"Choose your meat",
+    selectMeatTypeRequired:"Please select a meat to continue",
+    meatType:"Meat",
+    includeMenu:"Would you like to upgrade to a combo?",
+    menuIncludes:"Combo includes:",
+    withMenu:"Meal Deal",
+    withoutMenu:"No Meal"
   },
   
   es: {
@@ -291,26 +307,84 @@ export const translations = {
     title: "Auténtica Pizza Brasileña en Portimão",
     subtitle: "Hecha con ingredientes importados de Italia y horno de leña tradicional. ¡Entregamos en toda la región!",
     viewCart: "Ver Carrito",
+    stampsAvailable: "Sellos disponibles",
+    useStamps: "Usar sellos",
+    usingStamps: "Sellos aplicados",
     fullMenu: "Menú Completo",
+    halfAndHalf: "Mitad y Mitad",
+    firstHalf: "Primera mitad",
+    secondHalf: "Segunda mitad",
+    selectHalf: "Seleccione el sabor",
+    halfPizzaNotice: "Elija dos sabores para su pizza (solo para tamaño familiar)",
+    chooseMeatType: "¿Qué tipo de carne desea?",
+    selectMeatTypeRequired: "Debe elegir la carne para continuar",
+    meatType: "Tipo de Carne",
+    includeMenu: "¿Desea incluir el menú?",
+    menuIncludes: "Este menú incluye:",
+    withMenu: "Con menú",
+    withoutMenu: "Versión simple (sin menú)",
+
+    // Bordes
+    borderType: "Tipo de Borde",
+    thinBorder: "Fina (tradicional)",
+    thickBorder: "Gruesa (rellena)",
+    stuffedCrust: "Borde Relleno",
+    noBorder: "Sin borde relleno",
+    cheeseCrust: "Borde de Queso",
+    pepperoniCrust: "Borde de Pepperoni",
+    catupiryCrust: "Borde de Catupiry",
     
-    // Categories
+    // Pastas
+    pasta: "Pastas",
+    pastaOptions: "Opciones de Pasta",
+    penne: "Penne",
+    spaghetti: "Espagueti",
+    fettuccine: "Fettuccine",
+    gnocchi: "Ñoquis",
+    choosePasta: "Elija su tipo de pasta",
+    pastaWith: "Pasta con",
+    
+    // Tamaños
+    individual: "Individual (25cm)",
+    media: "Mediana (32cm)",
+    familia: "Familiar (41cm)",
+    size: "Tamaño",
+    
+    // Otros
+    extras: "Extras",
+    addToCart: "Añadir al Carrito",
+    Quantity: "Cantidad",
+    total: "Total",
+    extrasTotal: "Total de extras",
+    
+    // Categorías
     entradas: "Entrantes",
     petiscos: "Aperitivos",
     tradicionais: "Tradicionales",
     vegetarianas: "Vegetarianas",
     doces: "Dulces",
     massas: "Pastas",
-    todos: "Platos Diarios",
+    todos: "Todos los Días",
     sobremesas: "Postres",
     bebidas: "Bebidas",
     vinhos: "Vinos",
     
-    // Product actions
-    addToCart: "Añadir al Carrito",
+    // Acciones de producto
+    continueToPayment: "Ir al Pago >>",
+    stampsEarned: "Sellos Ganados",
+    add: "Añadir",
+    addToCart: "Añadir",
     popular: "Popular",
     new: "Nuevo",
-    
-    // Cart
+    useStampsForItem: "Pagar con Sellos",
+    paidWithStamps: "Pagado con Sellos",
+    stampsUsed: "Sellos Utilizados",
+    Size: "Elegir Tamaño",
+    Stuffed: "Seleccionar Borde",
+  
+    // Carrito
+    close: "Cerrar",
+    orderSentSuccess: "Pedido enviado con éxito",
     yourCart: "Tu Carrito",
     items: "artículos",
     emptyCart: "Tu carrito está vacío",
@@ -322,30 +396,32 @@ export const translations = {
     stamps: "Sellos disponibles",
     estimatedTotal: "Total estimado",
     proceedToCheckout: "Proceder al Pago",
-    
-    // Checkout steps
+  
+    // Pasos del pago
     deliveryInfo: "Información de Entrega",
     paymentMethod: "Método de Pago",
     orderConfirmed: "¡Pedido Confirmado!",
     
-    // Delivery options
-    pickup: "Recogida",
+    // Opciones de entrega
+    pickup: "Recogida en Local",
     pickupAddress: "Calle de la Pizza, 123 - Portimão",
     delivery: "Entrega a Domicilio",
     deliveryArea: "Entregamos en tu zona",
+    openingHours: "Horario de Apertura",
+    quantity: "Cantidad",
     
-    // Form fields
+    // Campos del formulario
     fullName: "Nombre Completo *",
     phone: "Teléfono *",
     address: "Dirección Completa *",
     addressPlaceholder: "Calle, número, apartamento",
-    neighborhood: "Barrio *",
-    selectNeighborhood: "Selecciona tu barrio",
+    neighborhood: "Localidad *",
+    selectNeighborhood: "Seleccione su localidad",
     deliveryZones: "Ver zonas de entrega",
-    notes: "Notas",
+    notes: "Observaciones",
     notesPlaceholder: "¿Alguna instrucción especial para la entrega?",
     
-    // Payment methods
+    // Métodos de pago
     mbway: "MB Way",
     mbwayDescription: "Pago instantáneo",
     cash: "Efectivo",
@@ -355,26 +431,40 @@ export const translations = {
     mbwayNumber: "Número de Teléfono MB Way *",
     changeFor: "¿Cambio para cuánto? *",
     changeExample: "Ej: 20.00",
+    size: "Tamaño",
     
-    // Order summary
+    // Resumen del pedido
     orderSummary: "Resumen del Pedido",
     discount: "Descuento",
     total: "Total",
     estimatedTime: "Tiempo estimado",
     
-    // Confirmation
+    // Confirmación
     confirmationMessagePickup: "Tu pizza estará lista para recoger en aproximadamente 30 minutos.",
-    confirmationMessageDelivery: "Nuestro repartidor está en camino y llegará en aproximadamente 45 minutos.",
+    confirmationMessageDelivery: "Nuestro repartidor salió para la entrega y llegará en aproximadamente 45 minutos.",
     orderNumber: "Número de Pedido:",
     paymentMethodLabel: "Método de Pago:",
     whatsappMessage: "Sigue tu pedido por WhatsApp",
     newOrder: "Hacer Nuevo Pedido",
     
-    // Product descriptions
+    // Descripciones de producto
+    extrasTotal: "Total de Extras",
+    quantity: "Cantidad",
+    addExtras: "Añadir Extras",
+    noBorder: "Sin Borde",
+    border: "Borde",
+    StuffedCrust: "Seleccionar Borde",
     margheritaDesc: "Salsa de tomate, mozzarella, albahaca fresca",
-    pepperoniDesc: "Salsa de tomate, mozzarella y pepperoni"
+    pepperoniDesc: "Salsa de tomate, mozzarella y pepperoni",
+    onlyChargeDelivery: "Solo pagas el envío.",
+    registerToEarn: "Regístrate para ganar",
+    registerToEarnDescription: "Regístrate gratuitamente y comienza a ganar recompensas.",
+    registerNow: "Regístrate ahora",
+    orderPreparingTitle: "¡Tu pedido está siendo preparado con todo el cuidado!",
+    orderPreparingDescription: "Si necesitas alguna información, contáctanos a través de:",
   }
 };
+
 
 // Configuração de zonas de entrega com tradução
 export const deliveryAreas = {

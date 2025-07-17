@@ -77,9 +77,11 @@ const STAMP_REWARDS = {
     familia: { selos: 12, label: { pt: "Pizza Família", en: "Family Pizza", es: "Pizza Familiar" } }
   },
   entradas: {
-    pao_alho: { selos: 5, label: { pt: 'Pão de Alho', en: 'Garlic Bread', es: 'Pan de Ajo' } }
+    pao_alho: { selos: 5, label: { pt: "Pão de Alho", en: "Garlic Bread", es: "Pan de Ajo" } }
   }
 };
+
+
 
 const BurgerCustomizationModal = ({ 
   product, 
@@ -697,7 +699,9 @@ const CustomizationModal = ({
               <p className="text-xs sm:text-sm font-medium text-gray-700">
                 {t(language, 'firstHalf')}: 
                 <span className="ml-1 sm:ml-2 font-bold">
-                  {typeof firstHalfPizza.name === 'object' ? firstHalfPizza.name[language] : firstHalfPizza.name} ({(firstHalfPrice / 2).toFixed(2)}€)
+                  {typeof firstHalfPizza.name === 'object' 
+                    ? firstHalfPizza.name[language] 
+                    : firstHalfPizza.name} ({(firstHalfPrice / 2).toFixed(2)}€)
                 </span>
               </p>
             </div>
@@ -996,6 +1000,7 @@ const CustomizationModal = ({
   );
 };
 
+
 const ProductCard = ({ product, language, onAddToCart }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -1011,7 +1016,7 @@ const ProductCard = ({ product, language, onAddToCart }) => {
         size: null,
         border: null,
         quantity: 1,
-        extras: []
+        extras: [],
       });
     }
   };
@@ -1028,53 +1033,58 @@ const ProductCard = ({ product, language, onAddToCart }) => {
 
   return (
     <>
-      <div className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow border-2 border-[#016730]">
-        <div className="p-3 sm:p-4">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-1">
-                {typeof product.name === 'object' ? product.name[language] : product.name}
+      <div className="flex flex-col bg-white rounded-xl overflow-hidden shadow-sm border-2 border-[#016730] hover:shadow-md transition-all duration-200 h-full">
+        <div className="flex flex-col flex-grow justify-between p-4">
+          <div>
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="text-base font-bold text-black leading-tight">
+                {typeof product.name === 'object'
+                  ? product.name[language]
+                  : product.name}
               </h3>
-              {product.description && (
-                <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 mb-2">
-                  {typeof product.description === 'object'
-                    ? product.description[language]
-                    : product.description}
-                </p>
-              )}
-            </div>
 
-            <div className="text-right ml-2">
-              <span className="text-base sm:text-lg font-bold text-red-600">
-                {getDisplayPrice()}€
+              <span className="text-sm font-semibold text-red-600">
+                €{getDisplayPrice()}
               </span>
             </div>
-          </div>
 
-          <div className="flex justify-between items-center mt-2 sm:mt-3">
+            {product.description && (
+              <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+                {typeof product.description === 'object'
+                  ? product.description[language]
+                  : product.description}
+              </p>
+            )}
+
             {product.rating && (
-              <div className="flex items-center">
+              <div className="flex items-center mb-3">
                 {[...Array(5)].map((_, i) =>
                   i < Math.floor(product.rating) ? (
-                    <FaStar key={i} className="text-amber-400 text-xs sm:text-sm" />
+                    <FaStar
+                      key={i}
+                      className="text-amber-400 text-sm"
+                    />
                   ) : (
-                    <FaRegStar key={i} className="text-amber-400 text-xs sm:text-sm" />
+                    <FaRegStar
+                      key={i}
+                      className="text-amber-400 text-sm"
+                    />
                   )
                 )}
-                <span className="ml-1 text-xs text-gray-500">
+                <span className="ml-2 text-xs text-gray-500">
                   ({product.ratingCount || 0})
                 </span>
               </div>
             )}
-
-            <button
-              onClick={handleAddClick}
-              className="px-2 sm:px-3 py-1 bg-white border border-[#016730] text-gray-800 rounded-lg font-medium flex items-center justify-center gap-1 shadow-sm hover:shadow-md transition-all text-xs sm:text-sm"
-            >
-              <Plus size={12} weight="bold" className="text-[#016730]" />
-              {t(language, 'add')}
-            </button>
           </div>
+
+          <button
+            onClick={handleAddClick}
+            className="mt-auto w-full py-1.5 rounded-md border border-[#016730] text-[#016730] font-medium text-sm hover:bg-[#016730] hover:text-white transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            <Plus size={14} weight="bold" />
+            {t(language, 'add')}
+          </button>
         </div>
       </div>
 
@@ -1092,13 +1102,15 @@ const ProductCard = ({ product, language, onAddToCart }) => {
           onAddToCart={onAddToCart}
           language={language}
         />
-      ) : isModalOpen && (
-        <CustomizationModal
-          product={product}
-          onClose={() => setIsModalOpen(false)}
-          onAddToCart={onAddToCart}
-          language={language}
-        />
+      ) : (
+        isModalOpen && (
+          <CustomizationModal
+            product={product}
+            onClose={() => setIsModalOpen(false)}
+            onAddToCart={onAddToCart}
+            language={language}
+          />
+        )
       )}
     </>
   );
@@ -1546,7 +1558,9 @@ const ExpandableCategorySection = ({ title, products, language, onAddToCart }) =
             }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-3 sm:mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-3 sm:mt-4 px-4">
+
+
               {products.map(product => (
                 <ProductCard 
                   key={product.id} 
@@ -1731,12 +1745,16 @@ const CheckoutFlow = ({
     const value = e.target.value.replace(/\D/g, '').slice(0, 7);
     setCodigoPostal(value);
     
-    // Atualiza o código postal formatado no customerInfo apenas quando estiver completo
-    if (value.length === 7) {
+    if (value.length > 4) {
       const formatted = `${value.slice(0, 4)}-${value.slice(4)}`;
       setCustomerInfo({
         ...customerInfo,
         codigoPostal: formatted
+      });
+    } else {
+      setCustomerInfo({
+        ...customerInfo,
+        codigoPostal: value
       });
     }
   };
@@ -1744,10 +1762,6 @@ const CheckoutFlow = ({
   const handleNifChange = (e) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 9);
     setNifNumber(value);
-    setCustomerInfo({
-      ...customerInfo,
-      nif: value
-    });
   };
 
   const canProceedToPayment = () => {
@@ -2022,9 +2036,6 @@ const CheckoutFlow = ({
                       placeholder="Ex: 1234-567"
                       required
                     />
-                    {codigoPostal.length > 0 && codigoPostal.length !== 7 && (
-                      <p className="text-red-500 text-xxs sm:text-xs mt-1">O código postal deve ter 7 dígitos</p>
-                    )}
                   </div>
 
                   <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Zona de Entrega*</label>
@@ -2100,8 +2111,11 @@ const CheckoutFlow = ({
                 <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">NIF (Opcional)</label>
                 <input
                   type="text"
-                  value={customerInfo.nif || ''}
-                  onChange={handleNifChange}
+                  value={customerInfo.nif}
+                  onChange={(e) => setCustomerInfo({
+                    ...customerInfo,
+                    nif: e.target.value
+                  })}
                   className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
                   placeholder="Digite o NIF"
                 />
@@ -3257,7 +3271,7 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
               className="relative p-1 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="relative">
-                <FaShoppingCart className="text-gray-700 text-xs sm:text-sm" />
+                <FaShoppingCart className="text-gray-700 text-lg sm:text-base md:text-sm" />
                 {cart.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xxs font-bold w-3 h-3 sm:w-4 sm:h-4 flex items-center justify-center rounded-full shadow-md">
                     {cart.reduce((total, item) => total + item.quantity, 0)}

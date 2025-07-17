@@ -65,7 +65,7 @@ export const LanguageProvider = ({ children }) => {
         fullName: 'Nome Completo',
         phone: 'Telefone',
         pickup: 'Retirada',
-        pickupAddress: 'Av. São Paulo, 123 - Portimão',
+        pickupAddress: 'Rua das Ondas, V3, edifício Solmonte, loja 4, Praia da Rocha Portimão',
         delivery: 'Entrega',
         deliveryArea: 'Entregamos na sua região',
         viewDeliveryZones: 'Ver zonas de entrega',
@@ -183,7 +183,7 @@ export const LanguageProvider = ({ children }) => {
         guestStampNotice: "Only logged-in customers collect stamps. Sign in so you don’t miss out!",
         restaurantName: 'Italian Pizzeria',
         since: 'Since 1995',
-        title: 'Autêntica pizza brasileira, feita em Portimão — com amor, sabor e alma.',
+        title: 'The Authentic Taste of Brazilian Pizza.',
         subtitle: 'Made with ingredients imported directly from Italy',
         yourCart: 'Your Cart',
         cart: 'Cart',
@@ -256,6 +256,9 @@ export const LanguageProvider = ({ children }) => {
         invalidRedeemProduct: 'Invalid redeem product',
         invalidStampsAmount: 'Invalid stamps amount',
         stampsRedeemError: 'Error redeeming stamps',
+        addedToCart:"Added to basket",
+       
+
     
         
         // Menu categories
@@ -282,7 +285,10 @@ export const LanguageProvider = ({ children }) => {
 
         // Menu items translations
         // Entradas
-        'azeitonas': 'Olives',
+        'azeitonas'
+        
+        
+        : 'Olives',
         'pao-alho-simples': 'Simple Garlic Bread',
         'pao-alho-queijo': 'Garlic Bread with Cheese',
         'pao-alho-queijo-bacon': 'Garlic Bread with Cheese and Bacon',
@@ -401,7 +407,7 @@ export const LanguageProvider = ({ children }) => {
         // Header and general info
         restaurantName: 'Pizzería Italiana',
         since: 'Desde 1995',
-        title: 'Auténtica Pizza Italiana',
+        title: 'El auténtico sabor de la pizza brasileña.',
         subtitle: 'Hecha con ingredientes importados directamente de Italia',
         yourCart: 'Tu Carrito',
         cart: 'Carrito',
