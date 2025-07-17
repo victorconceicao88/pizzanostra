@@ -633,42 +633,6 @@ const CustomizationModal = ({
     });
   };
 
-  useEffect(() => {
-  const checkScroll = () => {
-    const container = document.getElementById('categories-scroll');
-    const rightIndicator = document.getElementById('scroll-indicator-right');
-    const leftIndicator = document.getElementById('scroll-indicator-left');
-    
-    if (container && rightIndicator && leftIndicator) {
-      // Mostrar indicador direito se houver conteúdo à direita
-      const showRight = container.scrollWidth > container.clientWidth && 
-                       container.scrollLeft < (container.scrollWidth - container.clientWidth - 1);
-      
-      // Mostrar indicador esquerdo se houver conteúdo à esquerda
-      const showLeft = container.scrollLeft > 0;
-      
-      rightIndicator.style.display = showRight ? 'flex' : 'none';
-      leftIndicator.style.display = showLeft ? 'flex' : 'none';
-    }
-  };
-
-  // Verificar ao carregar e redimensionar
-  checkScroll();
-  window.addEventListener('resize', checkScroll);
-  
-  const container = document.getElementById('categories-scroll');
-  if (container) {
-    container.addEventListener('scroll', checkScroll);
-  }
-
-  return () => {
-    window.removeEventListener('resize', checkScroll);
-    if (container) {
-      container.removeEventListener('scroll', checkScroll);
-    }
-  };
-}, []);
-  
   const toggleHalfAndHalf = () => {
     setSelection(prev => ({
       ...prev,
@@ -2704,20 +2668,22 @@ const categories = [
 };
 
 useEffect(() => {
-  updateScrollButtons();
   const container = ref.current;
-  if (container) {
-    container.addEventListener('scroll', updateScrollButtons);
-    window.addEventListener('resize', updateScrollButtons);
-  }
+  if (!container) return;
+
+  const handleScroll = () => updateScrollButtons();
+  const handleResize = () => updateScrollButtons();
+
+  updateScrollButtons();
+  container.addEventListener('scroll', handleScroll);
+  window.addEventListener('resize', handleResize);
 
   return () => {
-    if (container) {
-      container.removeEventListener('scroll', updateScrollButtons);
-      window.removeEventListener('resize', updateScrollButtons);
-    }
+    container.removeEventListener('scroll', handleScroll);
+    window.removeEventListener('resize', handleResize);
   };
 }, []);
+
 
   // Persistir carrinho no localStorage
   const [cart, setCart] = useState(() => {
@@ -3351,26 +3317,30 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
           container.scrollBy({ left: -400, behavior: 'smooth' });
         }
       }}
-      className={`absolute left-0 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all ${
-        canScrollLeft ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'
-      }`}
-      style={{ top: '40%' }}
+      className={`absolute left-0 z-20 w-10 h-10 sm:w-11 sm:h-11 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all 
+        ${canScrollLeft ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'}`}
+      style={{ top: '40%', transform: 'translateY(-50%)' }}
       aria-label="Scroll categories left"
     >
-      <FaChevronLeft size={16} className="relative" />
+      <FaChevronLeft size={18} />
     </button>
 
     {/* Lista de categorias */}
     <div
       id="categories-scroll"
       ref={ref}
-      className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-10"
+      className="flex overflow-x-auto pb-3 sm:pb-4 gap-1 sm:gap-2 scrollbar-hide px-12 scroll-smooth"
+      style={{
+        scrollSnapType: 'x mandatory',
+        touchAction: 'pan-y',
+        overscrollBehaviorX: 'contain', // importante
+      }}
     >
       {categories.map((category) => (
         <button
           key={category.id}
           onClick={() => setActiveCategory(category.id)}
-          className="flex items-center px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs sm:text-sm bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md"
+          className="flex items-center px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs sm:text-sm bg-white border-2 border-[#016730] text-gray-800 hover:bg-gray-50 shadow-md scroll-snap-align-start"
         >
           <span className="mr-1 sm:mr-2">{category.icon}</span>
           <span className="font-medium">{category.name}</span>
@@ -3385,20 +3355,18 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         const maxScrollLeft = container?.scrollWidth - container?.clientWidth;
 
         if (container && canScrollRight) {
-          container.scrollBy({ left: 300, behavior: 'smooth' });
+          container.scrollBy({ left: 400, behavior: 'smooth' });
         }
       }}
-      className={`absolute right-0 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all ${
-        canScrollRight ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'
-      }`}
-      style={{ top: '40%' }}
+      className={`absolute right-0 z-20 w-10 h-10 sm:w-11 sm:h-11 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 transition-all 
+        ${canScrollRight ? 'text-gray-800 hover:bg-gray-100' : 'opacity-40 cursor-not-allowed'}`}
+      style={{ top: '40%', transform: 'translateY(-50%)' }}
       aria-label="Scroll categories right"
     >
-      <FaChevronRight size={16} className="relative" />
+      <FaChevronRight size={18} />
     </button>
   </div>
 </div>
-
         <div>
           {renderProducts()}
         </div>
