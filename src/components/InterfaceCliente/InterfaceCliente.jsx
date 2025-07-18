@@ -3,6 +3,7 @@ import { FaPizzaSlice,FaGlassWhiskey, FaChevronLeft, FaChevronRight, FaClipboard
 import { Pizza, Leaf, IceCream, Hamburger,CupTogo, Wine, X, Check, Plus, Minus, MapPin, CreditCard, CurrencyEur, DeviceMobile, Money} from '@phosphor-icons/react';
 import { motion, AnimatePresence, useAnimation, useInView, PanInfo, useMotionValue } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { Trash, ToggleRight  } from 'phosphor-react';
 import { db, auth } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion, serverTimestamp, Timestamp, arrayRemove, increment, onSnapshot, query, orderBy, limit, addDoc, writeBatch } from 'firebase/firestore';
@@ -15,7 +16,7 @@ import { t } from './translations';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
 import WelcomeModal from './WelcomeModal';
-import { Combobox, Transition } from '@headlessui/react';
+import { Combobox, Transition,Switch } from '@headlessui/react';
 
 // Imagens de categoria
 const categoryImages = {
@@ -1156,31 +1157,41 @@ const CartItem = ({
   onToggleUseStamps,
   itemsWithStamps,
 }) => {
-  const isEligibleForStamps = () => {
-    const category = item.category?.toLowerCase();
-    const categoriasValidas = ['tradicionais', 'vegetarianas', 'entradas'];
-    return categoriasValidas.includes(category) && !item.isBorder;
-  };
 
-  const calculateStampsNeeded = () => {
-    if (item.category === 'entradas') return 5 * item.quantity;
-    
-    const size = item.selectedSize || 'media';
-    if (size === 'individual') return 10 * item.quantity;
-    if (size === 'media') return 11 * item.quantity;
-    if (size === 'familia') return 12 * item.quantity;
-    
-    return 0;
-  };
 
-  const handleToggleUseStamps = () => {
-    const needed = calculateStampsNeeded();
-    if (!itemsWithStamps[item.id] && needed > selosDisponiveis) {
-      toast.error(t(language, 'notEnoughStamps'));
-      return;
-    }
-    onToggleUseStamps(item.id, !itemsWithStamps[item.id], needed);
-  };
+const canUseStamps = (item) => {
+  const validCategories = ['tradicionais', 'vegetarianas', 'entradas', 'doces'];
+  const isHalfAndHalfPizza = item.halfAndHalf && item.selectedSize === 'familia';
+  return (validCategories.includes(item.category) || isHalfAndHalfPizza) && !item.isBorder;
+};
+
+const calculateStampsNeeded = () => {
+  if (item.category === 'entradas') return 5 * item.quantity;
+  if (item.halfAndHalf && item.selectedSize === 'familia') return 12 * item.quantity;
+  
+  const size = item.selectedSize || 'media';
+  if (size === 'individual') return 10 * item.quantity;
+  if (size === 'media') return 11 * item.quantity;
+  if (size === 'familia') return 12 * item.quantity;
+  
+  return 0;
+};
+
+
+const handleToggleUseStamps = () => {
+  if (!canUseStamps(item)) return;
+  
+  const needed = calculateStampsNeeded();
+  const totalUsed = Object.values(itemsWithStamps).reduce((sum, val) => sum + val, 0);
+  
+  // Se tentando ativar e ultrapassar o limite
+  if (!itemsWithStamps[item.id] && (totalUsed + needed) > selosDisponiveis) {
+    toast.error(t(language, 'notEnoughStamps'));
+    return;
+  }
+  
+  onToggleUseStamps(item.id, !itemsWithStamps[item.id], needed);
+};
 
   const useStamps = itemsWithStamps[item.id] || false;
 
@@ -1290,7 +1301,7 @@ const CartItem = ({
             </div>
           )}
           
-          {isEligibleForStamps() && (
+          {canUseStamps(item) && (
             <div className="mt-2 sm:mt-3 flex items-center justify-between bg-amber-50 p-2 sm:p-3 rounded-lg">
               <div className="flex items-center">
                 <FaCoins className="text-amber-500 mr-1 sm:mr-2" size={12} />
@@ -1306,6 +1317,7 @@ const CartItem = ({
                     ? 'bg-green-100 text-green-800'
                     : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                 } transition-colors`}
+                disabled={!canUseStamps(item)}
               >
                 {useStamps ? (
                   <>
@@ -1505,7 +1517,7 @@ const CartItem = ({
           </div>
         )}
         
-        {isEligibleForStamps() && (
+       {canUseStamps(item) && (
           <button 
             onClick={handleToggleUseStamps}
             className={`mt-1 sm:mt-2 text-xs px-2 sm:px-3 py-1 rounded-full ${
@@ -1513,6 +1525,7 @@ const CartItem = ({
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
             } transition-colors`}
+            disabled={!canUseStamps(item)}
           >
             {useStamps 
               ? `Usando ${calculateStampsNeeded()} selos` 
@@ -1625,6 +1638,12 @@ const CheckoutFlow = ({
     }
   }, [customerInfo.localidade, deliveryOption]);
 
+const canUseStamps = (item) => {
+  const validCategories = ['tradicionais', 'vegetarianas', 'entradas', 'doces'];
+  const isHalfAndHalfPizza = item.halfAndHalf && item.selectedSize === 'familia';
+  return (validCategories.includes(item.category) || isHalfAndHalfPizza) && !item.isBorder;
+};
+
   const cartTotal = useMemo(() => {
     return cart.reduce((total, item) => {
       if (itemsWithStamps[item.id]) {
@@ -1643,7 +1662,7 @@ const CheckoutFlow = ({
   const finalTotal = cartTotal + deliveryFee;
   
   const troco = paymentMethod === 'dinheiro' && valorPago ? 
-    (parseFloat(valorPago) - finalTotal ): 0;
+    (parseFloat(valorPago) - finalTotal) : 0;
 
   const selosUsados = useMemo(() => {
     return Object.keys(itemsWithStamps).reduce((total, itemId) => {
@@ -1781,94 +1800,256 @@ const CheckoutFlow = ({
     switch (step) {
       case 1:
         return (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">
+          <div className="space-y-5">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-base font-medium text-gray-700">
                 {cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')}
               </span>
             </div>
             
             {cart.length === 0 ? (
-              <div className="text-center py-6 sm:py-8">
+              <div className="text-center py-10">
                 <div className="animate-bounce">
-                  <Pizza size={40} className="mx-auto text-gray-300 mb-2 sm:mb-3" />
+                  <Pizza size={48} className="mx-auto text-gray-300 mb-4" />
                 </div>
-                <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-1">{t(language, 'emptyCart')}</h3>
-                <p className="text-gray-500 mb-3 sm:mb-4 text-xs sm:text-sm">{t(language, 'emptyCartMessage')}</p>
+                <h3 className="text-xl font-medium text-gray-800 mb-2">{t(language, 'emptyCart')}</h3>
+                <p className="text-gray-500 mb-5 text-base">{t(language, 'emptyCartMessage')}</p>
                 <button
                   onClick={onClose}
-                  className="px-4 sm:px-6 py-2 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors text-sm sm:text-base"
+                  className="px-8 py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors text-lg"
                 >
                   {t(language, 'exploreMenu')}
                 </button>
               </div>
             ) : (
               <>
-                <div className="divide-y divide-gray-200 max-h-80 sm:max-h-96 overflow-y-auto pr-1 -mr-1">
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
                   {cart.map(item => (
-                    <CartItem
+                    <div 
                       key={`${item.id}-${item.selectedSize}-${item.selectedBorder}-${item.extras?.map(e => e.id).join('-')}`}
-                      item={item}
-                      language={language}
-                      onRemove={removeFromCart}
-                      onQuantityChange={adjustQuantity}
-                      selosDisponiveis={selosDisponiveis}
-                      onToggleUseStamps={toggleUseStamps}
-                      itemsWithStamps={itemsWithStamps}
-                    />
+                      className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-gray-900">
+                              {typeof item.name === 'object' ? item.name[language] : item.name}
+                            </h3>
+                            <span className="text-lg font-bold text-[#016730] ml-2">
+                              {((item.price || item.sizes?.[item.selectedSize] || 0) * item.quantity).toFixed(2)}€
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center mt-1">
+                            <button 
+                              onClick={() => adjustQuantity(item.id, item.quantity - 1)}
+                              className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200"
+                            >
+                              -
+                            </button>
+                            <span className="mx-3 text-base font-medium">
+                              {item.quantity}
+                            </span>
+                            <button 
+                              onClick={() => adjustQuantity(item.id, item.quantity + 1)}
+                              className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <button 
+                          onClick={() => removeFromCart(item.id)}
+                          className="ml-3 text-gray-400 hover:text-red-500"
+                        >
+                          <Trash size={18} />
+                        </button>
+                      </div>
+
+                      {/* Detalhes do item */}
+                      <div className="space-y-2 mt-3 text-sm text-gray-700">
+                        {item.selectedSize && (
+                          <div className="flex">
+                            <span className="font-medium w-24">Tamanho:</span>
+                            <span className="capitalize">{item.selectedSize}</span>
+                          </div>
+                        )}
+                        
+                        {item.halves && (
+                          <div className="mt-2 space-y-2">
+                            <div className="flex items-start">
+                              <div className="flex-shrink-0 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center mr-2">
+                                <span className="text-xs font-bold text-gray-600">½</span>
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-800">Primeira Metade</p>
+                                <p className="text-sm text-gray-600">
+                                  {item.halves[0].split('+').map((ingrediente, idx) => (
+                                    <span key={idx} className="block">
+                                      • {ingrediente.trim()}
+                                    </span>
+                                  ))}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-start">
+                              <div className="flex-shrink-0 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center mr-2">
+                                <span className="text-xs font-bold text-gray-600">½</span>
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-800">Segunda Metade</p>
+                                <p className="text-sm text-gray-600">
+                                  {item.halves[1].split('+').map((ingrediente, idx) => (
+                                    <span key={idx} className="block">
+                                      • {ingrediente.trim()}
+                                    </span>
+                                  ))}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {item.selectedBorder && (
+                          <div className="flex">
+                            <span className="font-medium w-24">Borda:</span>
+                            <span className="capitalize">{item.selectedBorder}</span>
+                          </div>
+                        )}
+                        
+                        {item.extras && item.extras.length > 0 && (
+                          <div className="flex">
+                            <span className="font-medium w-24">Extras:</span>
+                            <div className="flex flex-wrap gap-1">
+                              {item.extras.map(extra => (
+                                <span key={extra.id} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                  {typeof extra.name === 'object' ? extra.name[language] : extra.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Selos */}
+                      {canUseStamps(item) && (
+                        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                          <div className="flex items-center">
+                            <FaCoins className="text-amber-500 mr-2" />
+                            <span className="text-sm font-medium">
+                              {item.category === 'entradas' ? 
+                                `Usar ${5 * item.quantity} selos` : 
+                                item.selectedSize === 'individual' ? 
+                                  `Usar ${10 * item.quantity} selos` :
+                                  item.selectedSize === 'media' ? 
+                                    `Usar ${11 * item.quantity} selos` :
+                                    `Usar ${12 * item.quantity} selos`}
+                            </span>
+                          </div>
+                           <Switch
+                            checked={!!itemsWithStamps[item.id]}
+                            onChange={(checked) => {
+                              const needed = item.category === 'entradas'
+                                ? 5 * item.quantity
+                                : item.halfAndHalf && item.selectedSize === 'familia'
+                                  ? 12 * item.quantity
+                                  : item.selectedSize === 'individual'
+                                    ? 10 * item.quantity
+                                    : item.selectedSize === 'media'
+                                      ? 11 * item.quantity
+                                      : 12 * item.quantity;
+                              
+                              const totalUsed = Object.values(itemsWithStamps).reduce((sum, val) => sum + val, 0);
+                              
+                              if (checked && (totalUsed + needed) > selosDisponiveis) {
+                                toast.error(t(language, 'notEnoughStamps'));
+                                return;
+                              }
+                              
+                              toggleUseStamps(item.id, checked, needed);
+                            }}
+                            disabled={!canUseStamps(item) || 
+                                      (!itemsWithStamps[item.id] && 
+                                      (Object.values(itemsWithStamps).reduce((sum, val) => sum + val, 0) + 
+                                      (item.category === 'entradas'
+                                        ? 5 * item.quantity
+                                        : item.halfAndHalf && item.selectedSize === 'familia'
+                                          ? 12 * item.quantity
+                                          : item.selectedSize === 'individual'
+                                            ? 10 * item.quantity
+                                            : item.selectedSize === 'media'
+                                              ? 11 * item.quantity
+                                              : 12 * item.quantity) > selosDisponiveis))}
+                            className={`${
+                              itemsWithStamps[item.id] ? 'bg-[#016730]' : 'bg-gray-200'
+                            } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#016730]`}
+                          >
+                            <span
+                              className={`${
+                                itemsWithStamps[item.id] ? 'translate-x-6' : 'translate-x-1'
+                              } inline-block h-4 w-4 transform rounded-full bg-white transition`}
+                            />
+                          </Switch>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
                 
-                <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 mt-3 sm:mt-4 border border-gray-200">
-                  <div className="flex justify-between py-1 text-xs sm:text-sm">
-                    <span className="text-gray-700">{t(language, 'subtotal')}:</span>
-                    <span className="font-medium">{cartTotal.toFixed(2)}€</span>
+                <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-700">{t(language, 'subtotal')}:</span>
+                      <span className="font-medium">{cartTotal.toFixed(2)}€</span>
+                    </div>
+                    
+                    {deliveryOption === 'entrega' && (
+                      <div className="flex justify-between text-gray-500">
+                        <span>{t(language, 'deliveryFee')}:</span>
+                        <span>{deliveryFee.toFixed(2)}€</span>
+                      </div>
+                    )}
+                    
+                    {selosUsados > 0 && (
+                      <div className="flex justify-between text-[#016730]">
+                        <span className="flex items-center">
+                          {t(language, 'stampsUsed')} ({selosUsados} {t(language, 'stamps')})
+                          <FaCoins className="ml-2" />
+                        </span>
+                        <span className="font-bold">-{(cartTotal + deliveryFee - finalTotal).toFixed(2)}€</span>
+                      </div>
+                    )}
                   </div>
                   
-                  {deliveryOption === 'entrega' && (
-                    <div className="flex justify-between py-1 text-xs text-gray-500">
-                      <span>{t(language, 'deliveryFee')}:</span>
-                      <span>{deliveryFee.toFixed(2)}€</span>
-                    </div>
-                  )}
-                  
-                  {selosUsados > 0 && (
-                    <div className="flex justify-between py-1 text-[#016730] text-xs sm:text-sm">
-                      <span className="flex items-center">
-                        {t(language, 'stampsUsed')} ({selosUsados} {t(language, 'stamps')})
-                        <FaCoins className="ml-1" size={12} />
-                      </span>
-                      <span className="font-bold">-{(cartTotal + deliveryFee - finalTotal).toFixed(2)}€</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between py-2 border-t border-gray-200 mt-1">
-                    <span className="font-bold text-xs sm:text-sm">{t(language, 'estimatedTotal')}:</span>
-                    <span className="font-bold text-lg sm:text-xl text-[#016730]">
+                  <div className="flex justify-between py-3 border-t border-gray-200 mt-3">
+                    <span className="font-bold">{t(language, 'estimatedTotal')}:</span>
+                    <span className="font-bold text-xl text-[#016730]">
                       {finalTotal.toFixed(2)}€
                     </span>
                   </div>
                 
                   {selosUsados > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
-                      <div className="flex items-center justify-between mb-1 sm:mb-2">
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
-                          <FaCoins className="text-amber-600 mr-1 sm:mr-2" size={12} />
-                          <span className="font-medium text-amber-800 text-xs sm:text-sm">
+                          <FaCoins className="text-amber-600 mr-2" />
+                          <span className="font-medium text-amber-800">
                             {t(language, 'stampsUsed')}: {selosUsados}
                           </span>
                         </div>
-                        <span className="bg-amber-200 text-amber-800 px-2 py-1 rounded-full text-xs font-bold">
+                        <span className="bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-xs font-bold">
                           {t(language, 'paidWithStamps')}
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 gap-1 sm:gap-2 mt-2 sm:mt-3">
+                      <div className="grid grid-cols-2 gap-2 mt-3">
                         {cart.filter(item => itemsWithStamps[item.id]).map(item => (
-                          <div key={item.id} className="bg-amber-100 p-1 sm:p-2 rounded-lg">
-                            <p className="text-xs font-medium text-amber-800 truncate">
+                          <div key={item.id} className="bg-amber-100 p-2 rounded-lg">
+                            <p className="font-medium text-amber-800 truncate">
                               {typeof item.name === 'object' ? item.name[language] : item.name}
                             </p>
-                            <p className="text-xxs sm:text-xs text-amber-600">
+                            <p className="text-xs text-amber-600">
                               {itemsWithStamps[item.id]} {t(language, 'stamps')}
                             </p>
                           </div>
@@ -1880,8 +2061,8 @@ const CheckoutFlow = ({
                     <StampRewardPreview cartTotal={cartTotal} language={language} />
                   )}
                   {!user && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs sm:text-sm text-blue-700">
-                      <FaInfoCircle className="inline mr-1 sm:mr-2" size={12} />
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-700">
+                      <FaInfoCircle className="inline mr-2" />
                       {t(language, 'guestStampNotice')}
                     </div>
                   )}
@@ -1889,9 +2070,9 @@ const CheckoutFlow = ({
                 
                 <button
                   onClick={() => setStep(2)}
-                  className="w-full mt-3 sm:mt-4 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg sm:rounded-xl text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center text-sm sm:text-base"
+                  className="w-full mt-4 py-4 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center text-lg"
                 >
-                  <FaShoppingCart className="mr-1 sm:mr-2" size={14} />
+                  <FaShoppingCart className="mr-2" />
                   {t(language, 'proceedToCheckout')}
                 </button>
               </>
@@ -1918,13 +2099,13 @@ const CheckoutFlow = ({
         };
 
         return (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="mb-4 sm:mb-6">
-              <div className="flex items-center justify-between mb-1 sm:mb-2">
+          <div className="space-y-5">
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-2">
                 {[1, 2, 3, 4].map((stepNum) => (
                   <div key={stepNum} className="flex flex-col items-center relative">
                     <div
-                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         stepNum < 2
                           ? 'bg-green-600 text-white'
                           : stepNum === 2
@@ -1935,7 +2116,7 @@ const CheckoutFlow = ({
                       {stepNum}
                     </div>
                     {stepNum < 4 && (
-                      <div className="absolute top-3 left-8 sm:left-14 w-8 sm:w-16 h-0.5 bg-gray-200">
+                      <div className="absolute top-4 left-10 w-12 h-0.5 bg-gray-200">
                         <div
                           className={`h-full ${
                             stepNum < 2 ? 'bg-green-600' : 'bg-gray-200'
@@ -1946,7 +2127,7 @@ const CheckoutFlow = ({
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between text-xxs sm:text-xs text-gray-500 px-1 sm:px-2">
+              <div className="flex justify-between text-xs text-gray-500 px-2">
                 <span>Carrinho</span>
                 <span className="text-green-600 font-medium">Informações</span>
                 <span>Pagamento</span>
@@ -1954,91 +2135,91 @@ const CheckoutFlow = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <div className="grid grid-cols-2 gap-3 mb-5">
               <button
                 onClick={() => setDeliveryOption('retirada')}
-                className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-4 rounded-lg border-2 flex flex-col items-center transition-all ${
                   deliveryOption === 'retirada'
                     ? 'border-green-600 bg-green-50 text-green-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <FaStore className="text-lg sm:text-xl mb-1 sm:mb-2" />
-                <span className="font-bold text-xs sm:text-sm">Retirada</span>
-                <span className="text-xxs sm:text-xs text-gray-500 mt-1">Sem taxa</span>
+                <FaStore className="text-xl mb-2" />
+                <span className="font-bold text-sm">Retirada</span>
+                <span className="text-xs text-gray-500 mt-1">Sem taxa</span>
               </button>
 
               <button
                 onClick={() => setDeliveryOption('entrega')}
-                className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 flex flex-col items-center transition-all ${
+                className={`p-4 rounded-lg border-2 flex flex-col items-center transition-all ${
                   deliveryOption === 'entrega'
                     ? 'border-green-600 bg-green-50 text-green-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <FaMotorcycle className="text-lg sm:text-xl mb-1 sm:mb-2" />
-                <span className="font-bold text-xs sm:text-sm">Entrega</span>
-                <span className="text-xxs sm:text-xs text-gray-500 mt-1">Taxa: {selectedZone ? deliveryAreas[selectedZone]?.taxa.toFixed(2) + '€' : '--'}</span>
+                <FaMotorcycle className="text-xl mb-2" />
+                <span className="font-bold text-sm">Entrega</span>
+                <span className="text-xs text-gray-500 mt-1">Taxa: {selectedZone ? deliveryAreas[selectedZone]?.taxa.toFixed(2) + '€' : '--'}</span>
               </button>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Nome Completo*</label>
+                <label className="block text-gray-700 mb-2 font-medium text-sm">Nome Completo*</label>
                 <input
                   type="text"
                   value={customerInfo.nome}
                   onChange={(e) => setCustomerInfo({...customerInfo, nome: e.target.value})}
-                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
+                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                   placeholder="Seu nome completo"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Telefone*</label>
+                <label className="block text-gray-700 mb-2 font-medium text-sm">Telefone*</label>
                 <input
                   type="tel"
                   value={customerInfo.telefone}
                   onChange={handleTelefoneChange}
-                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
+                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                   placeholder="912345678"
                   required
                 />
                 {customerInfo.telefone && customerInfo.telefone.length !== 9 && (
-                  <p className="text-red-500 text-xxs sm:text-xs mt-1">O telefone deve ter 9 dígitos</p>
+                  <p className="text-red-500 text-xs mt-1">O telefone deve ter 9 dígitos</p>
                 )}
               </div>
 
               {deliveryOption === 'entrega' && (
                 <>
                   <div>
-                    <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Endereço Completo*</label>
+                    <label className="block text-gray-700 mb-2 font-medium text-sm">Endereço Completo*</label>
                     <input
                       type="text"
                       value={customerInfo.endereco}
                       onChange={(e) =>
                         setCustomerInfo({ ...customerInfo, endereco: e.target.value })
                       }
-                      className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
+                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                       placeholder="Rua, número, complemento, apartamento..."
                       required
                     />
                   </div>
 
-                  <div className="mb-3 sm:mb-4">
-                    <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Código Postal*</label>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-2 font-medium text-sm">Código Postal*</label>
                     <input
                       type="text"
                       value={codigoPostal}
                       onChange={handleCodigoPostalChange}
-                      className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
+                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                       placeholder="Ex: 1234-567"
                       required
                     />
                   </div>
 
-                  <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Zona de Entrega*</label>
+                  <label className="block text-gray-700 mb-2 font-medium text-sm">Zona de Entrega*</label>
                   <div className="relative">
                     <Combobox
                       value={customerInfo.localidade}
@@ -2052,13 +2233,13 @@ const CheckoutFlow = ({
                     >
                       <div className="relative">
                         <Combobox.Input
-                          className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
+                          className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                           placeholder="Busque sua zona ou bairro"
                           displayValue={(bairro) => bairro}
                           onChange={(event) => setQuery(event.target.value)}
                         />
-                        <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4">
-                          <FaChevronDown className="text-gray-400 text-xs sm:text-sm" />
+                        <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-4">
+                          <FaChevronDown className="text-gray-400 text-sm" />
                         </Combobox.Button>
                       </div>
                       <Transition
@@ -2068,10 +2249,10 @@ const CheckoutFlow = ({
                         leaveTo="opacity-0"
                         afterLeave={() => setQuery('')}
                       >
-                        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none text-xs sm:text-sm">
+                        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none text-sm">
                           {Object.entries(deliveryAreas).map(([zona, dados]) => (
                             <div key={zona}>
-                              <div className="px-3 sm:px-4 py-1 sm:py-2 text-xs text-gray-500 bg-gray-50">
+                              <div className="px-4 py-2 text-xs text-gray-500 bg-gray-50">
                                 {zona}
                               </div>
                               {dados.bairros[language]
@@ -2085,12 +2266,12 @@ const CheckoutFlow = ({
                                     key={bairro}
                                     value={bairro}
                                     className={({ active }) =>
-                                      `px-3 sm:px-4 py-1 sm:py-2 cursor-pointer ${active ? 'bg-green-100' : 'bg-white'}`
+                                      `px-4 py-2 cursor-pointer ${active ? 'bg-green-100' : 'bg-white'}`
                                     }
                                   >
                                     {({ selected }) => (
                                       <div className="flex items-center">
-                                        {selected && <FaCheck className="text-green-500 mr-1 sm:mr-2" size={10} />}
+                                        {selected && <FaCheck className="text-green-500 mr-2" size={12} />}
                                         <span className={`${selected ? 'font-medium' : 'font-normal'}`}>
                                           {bairro}
                                         </span>
@@ -2107,8 +2288,8 @@ const CheckoutFlow = ({
                 </>
               )}
 
-              <div className="mb-3 sm:mb-4">
-                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">NIF (Opcional)</label>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2 font-medium text-sm">NIF (Opcional)</label>
                 <input
                   type="text"
                   value={customerInfo.nif}
@@ -2116,34 +2297,34 @@ const CheckoutFlow = ({
                     ...customerInfo,
                     nif: e.target.value
                   })}
-                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
+                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                   placeholder="Digite o NIF"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">Observações</label>
+                <label className="block text-gray-700 mb-2 font-medium text-sm">Observações</label>
                 <textarea
                   value={customerInfo.observacoes}
                   onChange={(e) => setCustomerInfo({...customerInfo, observacoes: e.target.value})}
-                  className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-xs sm:text-sm"
+                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                   placeholder="Pontos de referência, instruções especiais..."
                   rows={3}
                 />
               </div>
             </div>
 
-            <div className="flex justify-between gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+            <div className="flex justify-between gap-3 pt-5 border-t border-gray-200">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 py-2 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 hover:bg-gray-50 transition-colors text-xs sm:text-sm"
+                className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm"
               >
                 Voltar
               </button>
               <button
                 onClick={() => setStep(3)}
                 disabled={!validarDados()}
-                className={`flex-1 py-2 sm:py-3 rounded-lg sm:rounded-xl text-white font-bold transition-colors text-xs sm:text-sm ${
+                className={`flex-1 py-3 rounded-lg text-white font-bold transition-colors text-sm ${
                   validarDados()
                     ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-gray-400 cursor-not-allowed'
@@ -2157,13 +2338,13 @@ const CheckoutFlow = ({
       }
       case 3:
         return (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="mb-4 sm:mb-6">
-              <div className="flex items-center justify-between mb-1 sm:mb-2">
+          <div className="space-y-5">
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-2">
                 {[1, 2, 3, 4].map((stepNum) => (
                   <div key={stepNum} className="flex flex-col items-center relative">
                     <div
-                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         stepNum < 3
                           ? 'bg-green-600 text-white'
                           : stepNum === 3
@@ -2174,7 +2355,7 @@ const CheckoutFlow = ({
                       {stepNum}
                     </div>
                     {stepNum < 4 && (
-                      <div className="absolute top-3 left-8 sm:left-14 w-8 sm:w-16 h-0.5 bg-gray-200">
+                      <div className="absolute top-4 left-10 w-12 h-0.5 bg-gray-200">
                         <div
                           className={`h-full ${
                             stepNum < 3 ? 'bg-green-600' : 'bg-gray-200'
@@ -2185,7 +2366,7 @@ const CheckoutFlow = ({
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between text-xxs sm:text-xs text-gray-500 px-1 sm:px-2">
+              <div className="flex justify-between text-xs text-gray-500 px-2">
                 <span>Carrinho</span>
                 <span>Informações</span>
                 <span className="text-green-600 font-medium">Pagamento</span>
@@ -2194,16 +2375,16 @@ const CheckoutFlow = ({
             </div>
 
             {user && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <FaCoins className="text-amber-600 mr-1 sm:mr-2" size={12} />
-                    <span className="font-medium text-amber-800 text-xs sm:text-sm">
+                    <FaCoins className="text-amber-600 mr-2" size={14} />
+                    <span className="font-medium text-amber-800 text-sm">
                       {selosDisponiveis} {t(language, 'stampsAvailable')}
                     </span>
                   </div>
                   {selosUsados > 0 && (
-                    <span className="text-xxs sm:text-xs bg-amber-200 text-amber-800 px-1 sm:px-2 py-1 rounded-full">
+                    <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full">
                       {t(language, 'stampsUsed')}: {selosUsados}
                     </span>
                   )}
@@ -2211,93 +2392,93 @@ const CheckoutFlow = ({
               </div>
             )}
             
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
+            <div className="grid grid-cols-2 gap-3 mb-5">
               <button
                 onClick={() => setPaymentMethod('mbway')}
-                className={`p-2 sm:p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
+                className={`p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'mbway' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
-                  <DeviceMobile size={16} weight={paymentMethod === 'mbway' ? 'fill' : 'regular'} />
+                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                  <DeviceMobile size={18} weight={paymentMethod === 'mbway' ? 'fill' : 'regular'} />
                 </div>
-                <span className="font-bold text-xxs sm:text-xs">{t(language, 'mbway')}</span>
-                <span className="text-xxs text-gray-500 mt-1">{t(language, 'mbwayDescription')}</span>
+                <span className="font-bold text-xs">{t(language, 'mbway')}</span>
+                <span className="text-xs text-gray-500 mt-1">{t(language, 'mbwayDescription')}</span>
               </button>
               
               <button
                 onClick={() => setPaymentMethod('dinheiro')}
-                className={`p-2 sm:p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
+                className={`p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'dinheiro' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
-                  <Money size={16} weight={paymentMethod === 'dinheiro' ? 'fill' : 'regular'} />
+                <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-2">
+                  <Money size={18} weight={paymentMethod === 'dinheiro' ? 'fill' : 'regular'} />
                 </div>
-                <span className="font-bold text-xxs sm:text-xs">{t(language, 'cash')}</span>
-                <span className="text-xxs text-gray-500 mt-1">{t(language, 'cashDescription')}</span>
+                <span className="font-bold text-xs">{t(language, 'cash')}</span>
+                <span className="text-xs text-gray-500 mt-1">{t(language, 'cashDescription')}</span>
               </button>
               
               <button
                 onClick={() => setPaymentMethod('cartao')}
-                className={`p-2 sm:p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
+                className={`p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'cartao' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
-                  <CreditCard size={16} weight={paymentMethod === 'cartao' ? 'fill' : 'regular'} />
+                <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2">
+                  <CreditCard size={18} weight={paymentMethod === 'cartao' ? 'fill' : 'regular'} />
                 </div>
-                <span className="font-bold text-xxs sm:text-xs">{t(language, 'card')}</span>
-                <span className="text-xxs text-gray-500 mt-1">{t(language, 'cardDescription')}</span>
+                <span className="font-bold text-xs">{t(language, 'card')}</span>
+                <span className="text-xs text-gray-500 mt-1">{t(language, 'cardDescription')}</span>
               </button>
 
               <button
                 onClick={() => setPaymentMethod('multibanco')}
-                className={`p-2 sm:p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
+                className={`p-3 rounded-lg border-2 flex flex-col items-center transition-all ${
                   paymentMethod === 'multibanco' ? 'border-[#016730] bg-green-100 text-[#016730]' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 rounded-full flex items-center justify-center mb-1 sm:mb-2">
-                  <FaMoneyBillWave size={16} />
+                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                  <FaMoneyBillWave size={18} />
                 </div>
-                <span className="font-bold text-xxs sm:text-xs">Multibanco</span>
-                <span className="text-xxs text-gray-500 mt-1">Pague na entrega</span>
+                <span className="font-bold text-xs">Multibanco</span>
+                <span className="text-xs text-gray-500 mt-1">Pague na entrega</span>
               </button>
             </div>
 
             {paymentMethod === 'mbway' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
-                <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">{t(language, 'mbwayNumber')}</label>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <label className="block text-gray-700 mb-2 font-medium text-sm">{t(language, 'mbwayNumber')}</label>
                 <div className="flex items-center border border-blue-300 bg-white rounded-lg overflow-hidden">
-                  <span className="px-2 sm:px-3 py-1 sm:py-2 bg-blue-100 text-blue-800 text-xxs sm:text-xs">+351</span>
+                  <span className="px-3 py-2 bg-blue-100 text-blue-800 text-xs">+351</span>
                   <input
                     type="tel"
                     value={mbwayNumber}
                     onChange={(e) => setMbwayNumber(e.target.value)}
-                    className="flex-1 p-2 sm:p-3 focus:outline-none text-xs sm:text-sm"
+                    className="flex-1 p-3 focus:outline-none text-sm"
                     placeholder="912 345 678"
                     required
                   />
                 </div>
-                <p className="text-xxs sm:text-xs text-blue-700 mt-1 sm:mt-2 flex items-center">
-                  <FaQrcode className="mr-1" size={10} /> {t(language, 'mbwayDescription')}
+                <p className="text-xs text-blue-700 mt-2 flex items-center">
+                  <FaQrcode className="mr-1" size={12} /> {t(language, 'mbwayDescription')}
                 </p>
               </div>
             )}
             
             {paymentMethod === 'dinheiro' && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
                 <div>
-                  <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-xs sm:text-sm">{t(language, 'changeFor')}</label>
+                  <label className="block text-gray-700 mb-2 font-medium text-sm">{t(language, 'changeFor')}</label>
                   <div className="flex items-center border border-green-300 bg-white rounded-lg overflow-hidden">
-                    <span className="px-2 sm:px-3 py-1 sm:py-2 bg-green-100 text-green-800">
-                      <CurrencyEur size={14} />
+                    <span className="px-3 py-2 bg-green-100 text-green-800">
+                      <CurrencyEur size={16} />
                     </span>
                     <input
-                       type="number"
-                        value={valorPago}
-                        onChange={(e) => setValorPago(e.target.value)}
-                      className="flex-1 p-2 sm:p-3 focus:outline-none text-xs sm:text-sm"
+                      type="number"
+                      value={valorPago}
+                      onChange={(e) => setValorPago(e.target.value)}
+                      className="flex-1 p-3 focus:outline-none text-sm"
                       placeholder={t(language, 'changeExample')}
                       required
                     />
@@ -2305,29 +2486,29 @@ const CheckoutFlow = ({
                 </div>
                 
                 {valorPago && (
-                  <div className="bg-white p-2 sm:p-3 rounded-lg border border-green-200">
+                  <div className="bg-white p-3 rounded-lg border border-green-200">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-700 text-xs sm:text-sm">Valor pago:</span>
-                      <span className="font-bold text-xs sm:text-sm">{parseFloat(valorPago).toFixed(2)}€</span>
+                      <span className="font-medium text-gray-700 text-sm">Valor pago:</span>
+                      <span className="font-bold text-sm">{parseFloat(valorPago).toFixed(2)}€</span>
                     </div>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="font-medium text-gray-700 text-xs sm:text-sm">Total do pedido:</span>
-                      <span className="font-medium text-xs sm:text-sm">{finalTotal.toFixed(2)}€</span>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="font-medium text-gray-700 text-sm">Total do pedido:</span>
+                      <span className="font-medium text-sm">{finalTotal.toFixed(2)}€</span>
                     </div>
-                    <div className="flex justify-between items-center mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-green-100">
-                      <span className="font-bold text-green-700 text-xs sm:text-sm">Troco:</span>
-                      <span className="font-bold text-green-700 text-xs sm:text-sm">
+                    <div className="flex justify-between items-center mt-3 pt-2 border-t border-green-100">
+                      <span className="font-bold text-green-700 text-sm">Troco:</span>
+                      <span className="font-bold text-green-700 text-sm">
                         {troco >= 0 ? troco.toFixed(2) + '€' : 'Valor insuficiente'}
                       </span>
                     </div>
                     {troco >= 0 ? (
-                      <p className="text-xxs sm:text-xs text-green-600 mt-1 sm:mt-2 flex items-center">
-                        <FaInfoCircle className="mr-1" size={10} />
+                      <p className="text-xs text-green-600 mt-2 flex items-center">
+                        <FaInfoCircle className="mr-1" size={12} />
                         O entregador estará preparado com o troco de {troco.toFixed(2)}€
                       </p>
                     ) : (
-                      <p className="text-xxs sm:text-xs text-red-500 mt-1 sm:mt-2 flex items-center">
-                        <FaExclamationTriangle className="mr-1" size={10} />
+                      <p className="text-xs text-red-500 mt-2 flex items-center">
+                        <FaExclamationTriangle className="mr-1" size={12} />
                         O valor pago deve ser maior ou igual ao total do pedido
                       </p>
                     )}
@@ -2337,32 +2518,32 @@ const CheckoutFlow = ({
             )}
 
             {paymentMethod === 'multibanco' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center">
-                  <FaInfoCircle className="text-blue-600 mr-1 sm:mr-2" size={12} />
-                  <p className="text-xxs sm:text-xs text-blue-700">
+                  <FaInfoCircle className="text-blue-600 mr-2" size={14} />
+                  <p className="text-xs text-blue-700">
                     Você pode pagar com Multibanco quando o entregador chegar. O valor total será {finalTotal.toFixed(2)}€.
                   </p>
                 </div>
               </div>
             )}
 
-            <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200">
-              <h3 className="font-bold text-gray-800 mb-2 sm:mb-3 text-xs sm:text-sm">{t(language, 'orderSummary')}</h3>
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <h3 className="font-bold text-gray-800 mb-3 text-sm">{t(language, 'orderSummary')}</h3>
               
-              <div className="space-y-1 sm:space-y-2">
+              <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 text-xxs sm:text-xs">{t(language, 'subtotal')} ({cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')})</span>
-                  <span className="font-medium text-xxs sm:text-xs">{cartTotal.toFixed(2)}€</span>
+                  <span className="text-gray-600 text-sm">{t(language, 'subtotal')} ({cart.reduce((total, item) => total + item.quantity, 0)} {t(language, 'items')})</span>
+                  <span className="font-medium text-sm">{cartTotal.toFixed(2)}€</span>
                 </div>
                 
                 {deliveryOption === 'entrega' && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600 text-xxs sm:text-xs">{t(language, 'deliveryFee')}</span>
-                    <span className="font-medium text-xxs sm:text-xs">
+                    <span className="text-gray-600 text-sm">{t(language, 'deliveryFee')}</span>
+                    <span className="font-medium text-sm">
                       {deliveryFee.toFixed(2)}€
                       {customerInfo.localidade && (
-                        <span className="text-xxs text-gray-500 ml-1">({customerInfo.localidade})</span>
+                        <span className="text-xs text-gray-500 ml-1">({customerInfo.localidade})</span>
                       )}
                     </span>
                   </div>
@@ -2370,34 +2551,34 @@ const CheckoutFlow = ({
                 
                 {selosUsados > 0 && (
                   <div className="flex justify-between text-[#016730]">
-                    <span className="text-xxs sm:text-xs">{t(language, 'stampsUsed')}</span>
-                    <span className="font-medium text-xxs sm:text-xs">
+                    <span className="text-sm">{t(language, 'stampsUsed')}</span>
+                    <span className="font-medium text-sm">
                       -{(cartTotal + deliveryFee - finalTotal).toFixed(2)}€ ({selosUsados} {t(language, 'stamps')})
                     </span>
                   </div>
                 )}
               </div>
               
-              <div className="flex justify-between py-1 sm:py-2 border-t border-gray-200 mt-1 sm:mt-2">
+              <div className="flex justify-between py-3 border-t border-gray-200 mt-3">
                 <div>
-                  <span className="font-bold text-xxs sm:text-xs">{t(language, 'estimatedTotal')}:</span>
-                  <div className="flex items-center text-xxs sm:text-xs text-gray-500 mt-1">
-                    <FaRegClock className="mr-1" size={10} />
+                  <span className="font-bold text-sm">{t(language, 'estimatedTotal')}:</span>
+                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                    <FaRegClock className="mr-1" size={12} />
                     <span>{t(language, 'estimatedTime')}: {estimatedTime}</span>
                   </div>
                 </div>
-                <span className="font-bold text-lg sm:text-xl text-[#016730]">
+                <span className="font-bold text-xl text-[#016730]">
                   {finalTotal.toFixed(2)}€
                 </span>
               </div>
               
-              <div className="mt-2 sm:mt-3 bg-white p-2 sm:p-3 rounded-lg border border-gray-200 flex items-center">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-50 rounded-full flex items-center justify-center mr-2 sm:mr-3">
-                  <FaMotorcycle className="text-[#016730]" size={12} />
+              <div className="mt-3 bg-white p-3 rounded-lg border border-gray-200 flex items-center">
+                <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
+                  <FaMotorcycle className="text-[#016730]" size={14} />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-800 text-xs sm:text-sm">{t(language, deliveryOption === 'retirada' ? 'pickup' : 'delivery')}</p>
-                  <p className="text-xxs sm:text-xs text-gray-500">
+                  <p className="font-medium text-gray-800 text-sm">{t(language, deliveryOption === 'retirada' ? 'pickup' : 'delivery')}</p>
+                  <p className="text-xs text-gray-500">
                     {deliveryOption === 'retirada' ? 
                       t(language, 'pickupAddress') : 
                       customerInfo.endereco ? `${customerInfo.endereco}, ${customerInfo.localidade}` : t(language, 'addressPlaceholder')}
@@ -2406,31 +2587,31 @@ const CheckoutFlow = ({
               </div>
 
               {includeNif && nifNumber && (
-                <div className="mt-2 sm:mt-3 bg-white p-2 sm:p-3 rounded-lg border border-gray-200">
-                  <p className="font-medium text-gray-800 text-xs sm:text-sm">NIF na fatura</p>
-                  <p className="text-xxs sm:text-xs text-gray-500">{nifNumber}</p>
+                <div className="mt-3 bg-white p-3 rounded-lg border border-gray-200">
+                  <p className="font-medium text-gray-800 text-sm">NIF na fatura</p>
+                  <p className="text-xs text-gray-500">{nifNumber}</p>
                 </div>
               )}
             </div>
             
-            <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t border-gray-200">
               <button
                 onClick={() => setStep(2)}
-                className="px-4 sm:px-6 py-2 border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium flex-1 sm:flex-none text-xs sm:text-sm"
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium flex-1 text-sm"
               >
                 {t(language, 'back')}
               </button>
-             <button
-              className="bg-green-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded hover:bg-green-700 transition text-xs sm:text-sm"
-              onClick={() => {
-                console.log('🛵 DeliveryOption:', deliveryOption);
-                console.log('📍 SelectedZone:', selectedZone);
-                finalizarPedido(valorPago, deliveryOption, selectedZone);
-              }}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Enviando...' : 'Finalizar Pedido'}
-            </button>
+              <button
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition text-sm"
+                onClick={() => {
+                  console.log('🛵 DeliveryOption:', deliveryOption);
+                  console.log('📍 SelectedZone:', selectedZone);
+                  finalizarPedido(valorPago, deliveryOption, selectedZone);
+                }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Enviando...' : 'Finalizar Pedido'}
+              </button>
             </div>
           </div>
         );
@@ -2440,18 +2621,21 @@ const CheckoutFlow = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50">
-      <div className="bg-white rounded-lg sm:rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-4 sm:p-6">
-          <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+    return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="p-5">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-xl font-bold text-gray-900">
               {step === 1 ? t(language, 'yourCart') : 
                step === 2 ? t(language, 'deliveryInfo') : 
                step === 3 ? t(language, 'paymentMethod') : t(language, 'orderConfirmed')}
             </h3>
-            <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
-              <X size={18} />
+            <button 
+              onClick={onClose} 
+              className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
             </button>
           </div>
           
