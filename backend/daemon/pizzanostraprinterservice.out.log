@@ -5,3 +5,5 @@ Impressora conectada com sucesso!
 Servidor backend rodando na porta 3001
 Acesse: http://localhost:3001/api/health para verificar o status
 Impressora conectada com sucesso!
+Servidor backend rodando na porta 3001
+Acesse: http://localhost:3001/api/health para verificar o status
