@@ -394,24 +394,6 @@ const Fidelidade = () => {
     );
   };
 
-  const OrderStatusBadge = ({ status }) => {
-    const statusConfig = {
-      'preparing': { color: 'bg-blue-100 text-blue-800', icon: <GiPizzaCutter className="mr-1" />, text: 'Preparando' },
-      'on-the-way': { color: 'bg-purple-100 text-purple-800', icon: <FaTruck className="mr-1" />, text: 'A Caminho' },
-      'delivered': { color: 'bg-green-100 text-green-800', icon: <FaCheckCircle className="mr-1" />, text: 'Entregue' },
-      'cancelled': { color: 'bg-red-100 text-red-800', icon: <FaTimes className="mr-1" />, text: 'Cancelado' }
-    };
-
-    const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800', icon: <FaClock className="mr-1" />, text: 'Em Processo' };
-
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
-        {config.icon}
-        {config.text}
-      </span>
-    );
-  };
-
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-PT', {
       style: 'currency',
@@ -1315,9 +1297,6 @@ const Fidelidade = () => {
                               </div>
                             </div>
                             <div className="flex items-center space-x-3 sm:space-x-4">
-                              {order.status && order.status !== 'delivered' && (
-                                <OrderStatusBadge status={order.status} />
-                              )}
                               <div className="text-base sm:text-lg font-bold text-gray-900">
                                 {formatCurrency(order.total || 0)}
                               </div>
