@@ -2208,7 +2208,7 @@ const canUseStamps = (item) => {
                   </div>
 
                   <div className="mb-4">
-                    <label className="block text-gray-700 mb-2 font-medium text-sm">Código Postal*</label>
+                    <label className="block text-gray-700 mb-2 font-medium text-sm">Codigo Postal*</label>
                     <input
                       type="text"
                       value={codigoPostal}
@@ -3171,7 +3171,7 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       if (item.halfAndHalf && item.selectedSize !== 'familia') {
         throw new Error('Opção meio a meio disponível apenas para pizzas de 41cm');
       }
-      
+
       if (item.borderType && item.selectedSize !== 'familia') {
         throw new Error('Seleção de borda disponível apenas para pizzas de 41cm');
       }
@@ -3187,13 +3187,18 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       return pizza?.sizes?.[size] || pizza?.price || 0;
     };
 
+    // Função auxiliar para obter nome da pizza sempre em português
+    const getPizzaName = (id) => {
+      const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
+      return typeof pizza?.name === 'object' ? pizza.name.pt : pizza?.name || 'Desconhecido';
+    };
+
     // Cálculos do pedido
     const totalSemTaxa = cart.reduce((total, item) => {
       if (itemsWithStamps[item.id]) return total;
-      
+
       let precoBase;
       if (item.halfAndHalf && item.selectedSize === 'familia') {
-        // Calcula média de preço para pizza meio a meio
         const price1 = getPizzaPrice(item.halfPizza1 || item.id, item.selectedSize);
         const price2 = getPizzaPrice(item.halfPizza2, item.selectedSize);
         precoBase = (price1 + price2) / 2;
@@ -3230,25 +3235,16 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
 
     const selosGanhos = user ? Math.floor(totalSemTaxa / 15) : 0;
 
-    // Gerando número do pedido
     const timestamp = Date.now();
     const numeroPedido = String(timestamp).slice(-5).padStart(5, '0');
     setOrderNumber(numeroPedido);
 
-    // Criando referência do documento
     const pedidoRef = doc(collection(db, 'pedidos'));
 
-    // Preparando itens para o Firestore
     const itensFirestore = cart.map(item => {
-      // Obter nomes das pizzas para meia a meia
-      const getPizzaName = (id) => {
-        const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
-        return typeof pizza?.name === 'object' ? pizza.name[language] : pizza?.name || 'Desconhecido';
-      };
-
       const itemData = {
         id: item.id,
-        nome: typeof item.name === 'object' ? item.name[language] : item.name,
+        nome: typeof item.name === 'object' ? item.name.pt : item.name,
         quantidade: item.quantity,
         preco: itemsWithStamps[item.id] ? 0 : (item.price || item.sizes?.[item.selectedSize] || 0),
         tamanho: item.selectedSize || null,
@@ -3257,10 +3253,10 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         pagoComSelos: !!itemsWithStamps[item.id],
         selosUsados: itemsWithStamps[item.id]
           ? (item.category === 'entradas' ? 5 * item.quantity
-             : item.selectedSize === 'individual' ? 10 * item.quantity
-             : item.selectedSize === 'media' ? 11 * item.quantity
-             : item.selectedSize === 'familia' ? 12 * item.quantity
-             : 0)
+            : item.selectedSize === 'individual' ? 10 * item.quantity
+            : item.selectedSize === 'media' ? 11 * item.quantity
+            : item.selectedSize === 'familia' ? 12 * item.quantity
+            : 0)
           : 0,
         halfAndHalf: item.halfAndHalf || false,
         halfPizza1: item.halfAndHalf ? item.halfPizza1 : null,
@@ -3273,11 +3269,10 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         withMenu: item.withMenu || false
       };
 
-      // Adiciona extras se existirem
       if (item.extras?.length > 0) {
         itemData.extras = item.extras.map(extra => ({
           id: extra.id,
-          nome: typeof extra.name === 'object' ? extra.name[language] : extra.name,
+          nome: typeof extra.name === 'object' ? extra.name.pt : extra.name,
           preco: itemsWithStamps[item.id] ? 0 : extra.price
         }));
       }
@@ -3297,7 +3292,7 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       },
       tipoEntrega: entregaSelecionada,
       enderecoCompleto: entregaSelecionada === 'entrega' 
-        ? `${customerInfo.endereco}, ${customerInfo.localidade}, ${customerInfo.codigoPostal}`
+        ? `${customerInfo.endereco}, ${customerInfo.localidade}`
         : null,
       zonaEntrega: entregaSelecionada === 'entrega' ? zonaSelecionada : null,
       itens: itensFirestore,
@@ -3322,10 +3317,8 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       observacoes: customerInfo.observacoes || '',
     };
 
-    // Salvando o pedido
     await setDoc(pedidoRef, pedidoData);
 
-    // Atualizando selos do usuário
     if (user) {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
@@ -3334,7 +3327,6 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       });
     }
 
-    // Limpando o carrinho e mostrando confirmação
     setCart([]);
     setItemsWithStamps({});
     setShowOrderConfirmation(true);
@@ -3353,6 +3345,7 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     setIsSubmitting(false);
   }
 };
+
 
   const renderProducts = () => {
     if (activeCategory === 'todos') {

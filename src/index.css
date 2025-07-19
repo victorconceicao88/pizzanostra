@@ -358,3 +358,28 @@ input:invalid {
   background-color: #fee2e2;
 }
 
+/* Adicione transições suaves */
+.order-history-item {
+  transition: all 0.3s ease;
+}
+
+.order-history-item:hover {
+  transform: translateY(-2px);
+}
+
+/* Status colors */
+.status-completed {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+

@@ -187,7 +187,7 @@ class ThermalPrinter {
               .text('ENDEREÇO:')
               .style('NORMAL')
               .text(this.sanitizeText(order.enderecoCompleto || 'NAO INFORMADO'))
-              .text(cliente.codigoPostal ? `CÓDIGO POSTAL: ${cliente.codigoPostal}` : '')
+              .text(cliente.codigoPostal ? `CODIGO POSTAL: ${cliente.codigoPostal}` : '')
               .text('-------------------------------------------');
           }
 
