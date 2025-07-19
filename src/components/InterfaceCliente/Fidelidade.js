@@ -396,14 +396,13 @@ const Fidelidade = () => {
 
   const OrderStatusBadge = ({ status }) => {
     const statusConfig = {
-      'pending': { color: 'bg-amber-100 text-amber-800', icon: <FaClock className="mr-1" />, text: 'Em Preparação' },
       'preparing': { color: 'bg-blue-100 text-blue-800', icon: <GiPizzaCutter className="mr-1" />, text: 'Preparando' },
       'on-the-way': { color: 'bg-purple-100 text-purple-800', icon: <FaTruck className="mr-1" />, text: 'A Caminho' },
       'delivered': { color: 'bg-green-100 text-green-800', icon: <FaCheckCircle className="mr-1" />, text: 'Entregue' },
       'cancelled': { color: 'bg-red-100 text-red-800', icon: <FaTimes className="mr-1" />, text: 'Cancelado' }
     };
 
-    const config = statusConfig[status] || statusConfig['pending'];
+    const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800', icon: <FaClock className="mr-1" />, text: 'Em Processo' };
 
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
@@ -1343,15 +1342,25 @@ const Fidelidade = () => {
                                   </h4>
                                   <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                                     <div className="flex">
-                                      <div className="min-w-[60px] sm:min-w-[80px] text-gray-500">Endereço:</div>
-                                      <div className="text-gray-800 break-words">
-                                        {order.enderecoCompleto || 'Não informado'}
+                                      <div className="min-w-[60px] sm:min-w-[80px] text-gray-500">Tipo:</div>
+                                      <div className="text-gray-800">
+                                        {order.tipoEntrega === 'retirada' ? 'Retirada no balcão' : 'Entrega em domicílio'}
                                       </div>
                                     </div>
-                                    <div className="flex">
-                                      <div className="min-w-[60px] sm:min-w-[80px] text-gray-500">Zona:</div>
-                                      <div className="text-gray-800">{order.zonaEntrega || '--'}</div>
-                                    </div>
+                                    {order.tipoEntrega !== 'retirada' && (
+                                      <>
+                                        <div className="flex">
+                                          <div className="min-w-[60px] sm:min-w-[80px] text-gray-500">Endereço:</div>
+                                          <div className="text-gray-800 break-words">
+                                            {order.enderecoCompleto || 'Não informado'}
+                                          </div>
+                                        </div>
+                                        <div className="flex">
+                                          <div className="min-w-[60px] sm:min-w-[80px] text-gray-500">Zona:</div>
+                                          <div className="text-gray-800">{order.zonaEntrega || '--'}</div>
+                                        </div>
+                                      </>
+                                    )}
                                     {order.cliente?.nome && (
                                       <div className="flex">
                                         <div className="min-w-[60px] sm:min-w-[80px] text-gray-500">Cliente:</div>
@@ -1467,7 +1476,12 @@ const Fidelidade = () => {
                                           <h5 className="font-medium text-gray-900 text-sm sm:text-base truncate">{item.nome || 'Item sem nome'}</h5>
                                           <div className="text-xs text-gray-500 space-y-0.5 sm:space-y-1 mt-1">
                                             {item.tamanho && <div>Tamanho: {item.tamanho}</div>}
-                                            {item.borderType && <div>Borda: {item.borderType}</div>}
+                                            {item.borderType && (item.categoria === 'tradicionais' || 
+                                                               item.categoria === 'vegetarianas' || 
+                                                               item.categoria === 'doces' || 
+                                                               item.categoria === 'entradas') && (
+                                              <div>Borda: {item.borderType}</div>
+                                            )}
                                             {item.halfPizza1Name && item.halfPizza2Name && (
                                               <div>Meia pizza: {item.halfPizza1Name} + {item.halfPizza2Name}</div>
                                             )}
