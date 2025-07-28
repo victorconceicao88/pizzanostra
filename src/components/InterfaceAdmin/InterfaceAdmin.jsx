@@ -507,6 +507,7 @@ const InterfaceAdmin = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
   const listenerMounted = useRef(false);
+  const [printingQueue, setPrintingQueue] = useState(new Set());
 
   const thermalPrinter = {
     printOrder: async (order) => {
@@ -520,75 +521,80 @@ const InterfaceAdmin = () => {
     }
   };
 
-  useEffect(() => {
-    let isProcessing = false;
-    let isInitialLoad = true;
+useEffect(() => {
+  let isProcessing = false;
+  let isInitialLoad = true;
+  const processedOrders = new Set(); // <- Controle local
 
-    const q = query(
-      collection(db, "pedidos"),
-      orderBy("criadoEm", "desc"),
-      limit(50)
-    );
+  const q = query(
+    collection(db, "pedidos"),
+    orderBy("criadoEm", "desc"),
+    limit(50)
+  );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const updatedOrders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        criadoEm: doc.data().criadoEm?.toDate() || new Date()
-      }));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const updatedOrders = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      criadoEm: doc.data().criadoEm?.toDate() || new Date()
+    }));
 
-      setOrders(updatedOrders);
+    setOrders(updatedOrders);
 
-      if (loading && isInitialLoad) {
-        setLoading(false);
-        isInitialLoad = false;
-      }
+    if (loading && isInitialLoad) {
+      setLoading(false);
+      isInitialLoad = false;
+    }
 
-      snapshot.docChanges().forEach(async (change) => {
-        if (change.type === 'added' && !isProcessing && !isInitialLoad) {
-          const orderData = change.doc.data();
+    snapshot.docChanges().forEach(async (change) => {
+      if (change.type === 'added' && !isProcessing && !isInitialLoad) {
+        const orderData = change.doc.data();
+        const orderId = change.doc.id;
 
-          if (orderData.status === 'impresso') return;
+        if (orderData.status === 'impresso' || processedOrders.has(orderId)) return;
+        processedOrders.add(orderId); // <- Marcar como processado localmente
 
-          isProcessing = true;
+        isProcessing = true;
 
-          const pedidoRef = doc(db, "pedidos", change.doc.id);
-          const pedidoSnap = await getDoc(pedidoRef);
+        const pedidoRef = doc(db, "pedidos", orderId);
+        const pedidoSnap = await getDoc(pedidoRef);
 
-          try {
-            if (pedidoSnap.exists()) {
-              await updateDoc(pedidoRef, {
-                status: 'impresso',
-                impressoEm: serverTimestamp(),
-                impressoPor: auth.currentUser.uid
-              });
+        try {
+          if (pedidoSnap.exists()) {
+            await updateDoc(pedidoRef, {
+              status: 'impresso',
+              impressoEm: serverTimestamp(),
+              impressoPor: auth.currentUser.uid
+            });
 
-              const orderToPrint = {
-                id: change.doc.id,
-                ...orderData,
-                criadoEm: orderData.criadoEm?.toDate() || new Date()
-              };
+            const orderToPrint = {
+              id: orderId,
+              ...orderData,
+              criadoEm: orderData.criadoEm?.toDate() || new Date()
+            };
 
-              await thermalPrinter.printOrder(orderToPrint);
-            }
-          } catch (error) {
-            console.error("Erro ao processar pedido:", error);
-            const revertSnap = await getDoc(pedidoRef);
-            if (revertSnap.exists()) {
-              await updateDoc(pedidoRef, {
-                status: 'pendente',
-                impressoEm: null
-              });
-            }
-          } finally {
-            isProcessing = false;
+            await thermalPrinter.printOrder(orderToPrint);
           }
+        } catch (error) {
+          console.error("Erro ao processar pedido:", error);
+          const revertSnap = await getDoc(pedidoRef);
+          if (revertSnap.exists()) {
+            await updateDoc(pedidoRef, {
+              status: 'pendente',
+              impressoEm: null
+            });
+          }
+          processedOrders.delete(orderId); // <- Desfazer marcação em caso de erro
+        } finally {
+          isProcessing = false;
         }
-      });
+      }
     });
+  });
 
-    return () => unsubscribe();
-  }, []);
+  return () => unsubscribe();
+}, []);
+
 
   const refreshOrders = async () => {
     setLoading(true);
