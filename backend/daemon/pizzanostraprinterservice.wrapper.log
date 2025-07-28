@@ -1,0 +1,14 @@
+2025-07-28 13:46:48 - Stopping pizzanostraprinterservice.exe
+2025-07-28 13:46:48 - ProcessKill 8136
+2025-07-28 13:46:48 - Shutdown exception
+Message:Está em curso um encerramento de sistema.
+
+Stacktrace:   em System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   em System.Management.ManagementScope.InitializeGuts(Object o)
+   em System.Management.ManagementScope.Initialize()
+   em System.Management.ManagementObjectSearcher.Initialize()
+   em System.Management.ManagementObjectSearcher.Get()
+   em winsw.WrapperService.GetChildPids(Int32 pid)
+   em winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   em winsw.WrapperService.StopIt()
+   em winsw.WrapperService.OnShutdown()

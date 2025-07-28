@@ -35,5 +35,5 @@ const setAdminClaims = async (uid) => {
 };
 
 // Execute para seu usuário
-setAdminClaims('0zhMzM9tBeglNS3CGErayaSVc483')
+setAdminClaims('6BhRDWKuWuY6zViAzb0fLZc4M0i2')
   .then(result => process.exit(result.success ? 0 : 1));

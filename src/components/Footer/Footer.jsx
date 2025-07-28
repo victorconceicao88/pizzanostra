@@ -48,13 +48,13 @@ const Footer = () => {
 
         {/* Social Media Icons - Centered for both mobile and desktop */}
         <div className="flex justify-center mt-6 space-x-6">
-          <a href="#" className="text-white hover:text-gray-300">
+          <a href="https://www.facebook.com/share/19FHaGpuaT/?mibextid=wwXIfr" className="text-white hover:text-gray-300" target='blank'>
             <FaFacebook size={24} />
           </a>
-          <a href="#" className="text-white hover:text-gray-300">
+          <a href="https://www.instagram.com/pizzanostrapt?igsh=MWx2NHRrdzhiMnRwNA==" className="text-white hover:text-gray-300" target='blank'>
             <FaInstagram size={24} />
           </a>
-          <a href="#" className="text-white hover:text-gray-300">
+          <a href="https://www.tripadvisor.pt/Restaurant_Review-g189120-d16726589-Reviews-Pizza_Nostra_Portimao-Portimao_Faro_District_Algarve.html?m=69573" className="text-white hover:text-gray-300"target='blank'>
             <FaTripadvisor size={24} />
           </a>
         </div>

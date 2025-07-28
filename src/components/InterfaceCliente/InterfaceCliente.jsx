@@ -593,19 +593,20 @@ const CustomizationModal = ({
   const isFamilySize = product.sizes && selection.size === 'familia';
   const isPizza = ['tradicionais', 'vegetarianas'].includes(product.category);
   
-  const getBasePrice = () => {
-    if (selection.halfAndHalf && isFamilySize) {
-      const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas)
-        .find(p => p.id === (selection.halfPizza1 || product.id));
-      const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas)
-        .find(p => p.id === selection.halfPizza2);
-      
-      const price1 = pizza1?.sizes?.[selection.size] || 0;
-      const price2 = pizza2?.sizes?.[selection.size] || 0;
-      return (price1 + price2) / 2;
-    }
-    return product.sizes ? (product.sizes[selection.size] || product.sizes.media) : product.price;
-  };
+const getBasePrice = () => {
+  if (selection.halfAndHalf && isFamilySize) {
+    const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas)
+      .find(p => p.id === (selection.halfPizza1 || product.id));
+    const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas)
+      .find(p => p.id === selection.halfPizza2);
+    
+    // Pegar o preço da pizza mais cara
+    const price1 = pizza1?.sizes?.[selection.size] || 0;
+    const price2 = pizza2?.sizes?.[selection.size] || 0;
+    return Math.max(price1, price2); // Retorna o valor mais alto
+  }
+  return product.sizes ? (product.sizes[selection.size] || product.sizes.media) : product.price;
+};
 
   const basePrice = getBasePrice();
   const extrasTotal = selection.extras.reduce((sum, extra) => sum + extra.price, 0);
