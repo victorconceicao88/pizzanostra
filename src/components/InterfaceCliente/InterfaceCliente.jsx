@@ -2608,6 +2608,7 @@ const canUseStamps = (item) => {
                 {t(language, 'back')}
               </button>
               <button
+                type="button"
                 className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition text-sm"
                 onClick={(e) => {
                   e.preventDefault();
@@ -2844,6 +2845,8 @@ const InterfaceClienteInner = () => {
   const [valorPago, setValorPago] = useState('');
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const pedidoEmAndamentoRef = useRef(false);
+
 
 const categories = [
   { id: 'todos', name: t(language, 'todos'), icon: <GiFullPizza size={20} color="#9C27B0" /> },       // Roxo
@@ -3167,23 +3170,22 @@ const addToCart = (product, selection) => {
 
 const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSelecionada) => {
   // Proteção contra duplo clique (especialmente para mobile)
-  if (window.pedidoEmAndamento) return;
-  window.pedidoEmAndamento = true;
+  if (pedidoEmAndamentoRef.current) return;
+  pedidoEmAndamentoRef.current = true;
 
   if (isSubmitting) {
-    window.pedidoEmAndamento = false;
+    pedidoEmAndamentoRef.current = false;
     return;
   }
-  
+
   setIsSubmitting(true);
 
   try {
     if (cart.length === 0) {
-      window.pedidoEmAndamento = false;
+      pedidoEmAndamentoRef.current = false;
       throw new Error(t(language, 'emptyCart'));
     }
 
-    // Validações de meio a meio e borda
     cart.forEach(item => {
       if (item.halfAndHalf && item.selectedSize !== 'familia') {
         throw new Error('Opção meio a meio disponível apenas para pizzas de 41cm');
@@ -3198,19 +3200,16 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       }
     });
 
-    // Função auxiliar para obter preço da pizza
     const getPizzaPrice = (pizzaId, size) => {
       const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === pizzaId);
       return pizza?.sizes?.[size] || pizza?.price || 0;
     };
 
-    // Função auxiliar para obter nome da pizza sempre em português
     const getPizzaName = (id) => {
       const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
       return typeof pizza?.name === 'object' ? pizza.name.pt : pizza?.name || 'Desconhecido';
     };
 
-    // Cálculos do pedido
     const totalSemTaxa = cart.reduce((total, item) => {
       if (itemsWithStamps[item.id]) return total;
 
@@ -3351,9 +3350,10 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     toast.error(`${t(language, 'orderError')}: ${error.message}`);
   } finally {
     setIsSubmitting(false);
-    window.pedidoEmAndamento = false;
+    pedidoEmAndamentoRef.current = false;
   }
 };
+
 
 
   const renderProducts = () => {
