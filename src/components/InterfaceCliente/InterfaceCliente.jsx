@@ -2609,7 +2609,9 @@ const canUseStamps = (item) => {
               </button>
               <button
                 className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition text-sm"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   console.log('🛵 DeliveryOption:', deliveryOption);
                   console.log('📍 SelectedZone:', selectedZone);
                   finalizarPedido(valorPago, deliveryOption, selectedZone);
@@ -3164,11 +3166,20 @@ const addToCart = (product, selection) => {
 };
 
 const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSelecionada) => {
-  if (isSubmitting) return;
+  // Proteção contra duplo clique (especialmente para mobile)
+  if (window.pedidoEmAndamento) return;
+  window.pedidoEmAndamento = true;
+
+  if (isSubmitting) {
+    window.pedidoEmAndamento = false;
+    return;
+  }
+  
   setIsSubmitting(true);
 
   try {
     if (cart.length === 0) {
+      window.pedidoEmAndamento = false;
       throw new Error(t(language, 'emptyCart'));
     }
 
@@ -3245,9 +3256,9 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     const numeroPedido = String(timestamp).slice(-5).padStart(5, '0');
     setOrderNumber(numeroPedido);
 
-    // Criação do documento do pedido (única operação de escrita)
     const pedidoRef = doc(collection(db, 'pedidos'));
-    await setDoc(pedidoRef, {
+
+    const pedidoData = {
       cliente: {
         nome: customerInfo.nome,
         telefone: customerInfo.telefone,
@@ -3312,30 +3323,35 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         zonaEntrega: entregaSelecionada === 'entrega' ? zonaSelecionada : null
       },
       observacoes: customerInfo.observacoes || '',
-    });
+    };
 
-    // Atualização dos selos do usuário (se logado)
+    await setDoc(pedidoRef, pedidoData);
+
     if (user) {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
         selos: increment(selosGanhos - selosUsados),
         selosAtualizadoEm: serverTimestamp()
       });
+    }
+
+    setCart([]);
+    setItemsWithStamps({});
+    setShowOrderConfirmation(true);
+    setShowCheckout(false);
+
+    if (user) {
       setSelosDisponiveis(prev => prev + selosGanhos - selosUsados);
     }
 
-    // Limpeza do estado e feedback
-    setCart([]);
-    setItemsWithStamps({});
     localStorage.removeItem('pizzaNostraCart');
-    setShowOrderConfirmation(true);
-    setShowCheckout(false);
 
   } catch (error) {
     console.error("❌ Erro ao finalizar pedido:", error);
     toast.error(`${t(language, 'orderError')}: ${error.message}`);
   } finally {
     setIsSubmitting(false);
+    window.pedidoEmAndamento = false;
   }
 };
 
