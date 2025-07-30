@@ -2842,7 +2842,6 @@ const InterfaceClienteInner = () => {
   const [valorPago, setValorPago] = useState('');
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [submissionId, setSubmissionId] = useState(null);
 
 const categories = [
   { id: 'todos', name: t(language, 'todos'), icon: <GiFullPizza size={20} color="#9C27B0" /> },       // Roxo
@@ -3165,10 +3164,7 @@ const addToCart = (product, selection) => {
 };
 
 const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSelecionada) => {
- const currentSubmissionId = Date.now().toString();
-  setSubmissionId(currentSubmissionId);
-  
-  if (isSubmitting || submissionId === currentSubmissionId) return;
+  if (isSubmitting) return;
   setIsSubmitting(true);
 
   try {
