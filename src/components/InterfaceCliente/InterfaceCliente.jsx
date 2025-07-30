@@ -383,6 +383,7 @@ const OrderConfirmationModal = ({
     setTimeout(() => setIsPhoneSaved(false), 2000);
   };
 
+
  return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-xl w-full max-w-md mx-2 sm:mx-auto overflow-hidden shadow-xl border border-gray-100 max-h-[95vh] flex flex-col">
@@ -2841,6 +2842,7 @@ const InterfaceClienteInner = () => {
   const [valorPago, setValorPago] = useState('');
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [submissionId, setSubmissionId] = useState(null);
 
 const categories = [
   { id: 'todos', name: t(language, 'todos'), icon: <GiFullPizza size={20} color="#9C27B0" /> },       // Roxo
@@ -3163,7 +3165,10 @@ const addToCart = (product, selection) => {
 };
 
 const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSelecionada) => {
-  if (isSubmitting) return;
+ const currentSubmissionId = Date.now().toString();
+  setSubmissionId(currentSubmissionId);
+  
+  if (isSubmitting || submissionId === currentSubmissionId) return;
   setIsSubmitting(true);
 
   try {
