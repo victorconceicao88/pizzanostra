@@ -1,16 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaShieldAlt, FaLock, FaUserEdit, FaDatabase, FaChevronLeft ,FaCheckCircle } from 'react-icons/fa';
+import { FaShieldAlt, FaLock, FaUserEdit, FaDatabase, FaChevronLeft, FaCheckCircle } from 'react-icons/fa';
 import { GiPadlock } from 'react-icons/gi';
 
 const Politica = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-red-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 sm:p-8 text-white">
+        <div className="bg-gradient-to-r from-green-600 to-red-600 p-6 sm:p-8 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <GiPadlock className="text-3xl" />
@@ -29,69 +29,69 @@ const Politica = () => {
 
         {/* Content */}
         <div className="p-6 sm:p-8">
-          <div className="prose prose-blue max-w-none">
+          <div className="prose prose-green max-w-none">
             <section className="mb-10">
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <FaShieldAlt className="mr-2 text-blue-600" />
+                <FaShieldAlt className="mr-2 text-green-600" />
                 Introdução
               </h2>
               <p className="text-gray-600 mb-4">
-                Na Pizza Nostra, levamos a sua privacidade a sério. Esta política explica como coletamos, usamos e protegemos suas informações pessoais quando você utiliza nosso programa de fidelidade.
+                Na Pizza Nostra, valorizamos a sua privacidade. Esta política explica como recolhemos, utilizamos e protegemos os seus dados pessoais quando participa no nosso programa de fidelização.
               </p>
             </section>
 
             <section className="mb-10">
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <FaDatabase className="mr-2 text-blue-600" />
-                Dados que Coletamos
+                <FaDatabase className="mr-2 text-green-600" />
+                Dados Recolhidos
               </h2>
-              <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <div className="bg-green-50 rounded-lg p-4 mb-4">
                 <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li><strong>Informações de conta:</strong> Nome, e-mail, telefone e data de nascimento</li>
-                  <li><strong>Dados de transações:</strong> Histórico de pedidos e valor gasto</li>
-                  <li><strong>Dados de fidelidade:</strong> Selos acumulados e prêmios resgatados</li>
-                  <li><strong>Dados técnicos:</strong> Endereço IP, tipo de dispositivo e dados de cookies</li>
+                  <li><strong>Informações da conta:</strong> Nome, e-mail, telefone e data de nascimento</li>
+                  <li><strong>Dados de transacções:</strong> Histórico de pedidos e montante gasto</li>
+                  <li><strong>Dados de fidelização:</strong> Selos acumulados e prémios resgatados</li>
+                  <li><strong>Dados técnicos:</strong> Endereço IP, tipo de dispositivo e cookies</li>
                 </ul>
               </div>
             </section>
 
             <section className="mb-10">
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <FaLock className="mr-2 text-blue-600" />
-                Como Usamos Seus Dados
+                <FaLock className="mr-2 text-green-600" />
+                Finalidades da Utilização dos Dados
               </h2>
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white border border-blue-100 rounded-lg p-4 shadow-sm">
-                  <h3 className="font-medium text-blue-700 mb-2">Finalidades Principais</h3>
+                <div className="bg-white border border-green-100 rounded-lg p-4 shadow-sm">
+                  <h3 className="font-medium text-green-700 mb-2">Finalidades Principais</h3>
                   <ul className="space-y-2 text-gray-600">
                     <li className="flex items-start">
-                   <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
-                      Gerenciar sua conta e programa de fidelidade
+                      <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
+                      Gerir a sua conta e o programa de fidelização
                     </li>
                     <li className="flex items-start">
-                  <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
+                      <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
                       Processar pedidos e resgates
                     </li>
                     <li className="flex items-start">
-                     <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
+                      <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
                       Enviar comunicações relevantes
                     </li>
                   </ul>
                 </div>
-                <div className="bg-white border border-blue-100 rounded-lg p-4 shadow-sm">
-                  <h3 className="font-medium text-blue-700 mb-2">Finalidades Secundárias</h3>
+                <div className="bg-white border border-green-100 rounded-lg p-4 shadow-sm">
+                  <h3 className="font-medium text-green-700 mb-2">Finalidades Secundárias</h3>
                   <ul className="space-y-2 text-gray-600">
                     <li className="flex items-start">
                       <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
-                      Melhorar nossos serviços
+                      Melhorar os nossos serviços
                     </li>
                     <li className="flex items-start">
-                    <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
+                      <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
                       Prevenir fraudes e abusos
                     </li>
                     <li className="flex items-start">
-                   <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
-                      Análises estatísticas
+                      <FaCheckCircle className="text-green-500 mt-1 mr-2 flex-shrink-0" />
+                      Realizar análises estatísticas
                     </li>
                   </ul>
                 </div>
@@ -100,26 +100,28 @@ const Politica = () => {
 
             <section className="mb-10">
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <FaUserEdit className="mr-2 text-blue-600" />
-                Seus Direitos
+                <FaUserEdit className="mr-2 text-green-600" />
+                Os Seus Direitos
               </h2>
-              <div className="bg-blue-50 rounded-lg p-4">
+              <div className="bg-green-50 rounded-lg p-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <h3 className="font-medium text-blue-700 mb-2">Acesso e Correção</h3>
-                    <p className="text-gray-600">Você pode acessar e atualizar seus dados a qualquer momento através da sua conta.</p>
+                    <h3 className="font-medium text-green-700 mb-2">Acesso e Rectificação</h3>
+                    <p className="text-gray-600">Pode aceder e actualizar os seus dados a qualquer momento através da sua conta.</p>
                   </div>
                   <div>
-                    <h3 className="font-medium text-blue-700 mb-2">Exclusão</h3>
-                    <p className="text-gray-600">Pode solicitar a exclusão de seus dados, sujeito a restrições legais.</p>
+                    <h3 className="font-medium text-green-700 mb-2">Eliminação</h3>
+                    <p className="text-gray-600">
+                      Pode solicitar a eliminação dos seus dados enviando um e-mail para <strong>marcioferreira169@gmail.com</strong>. Note que poderão existir obrigações legais que nos impeçam de eliminar imediatamente determinados dados.
+                    </p>
                   </div>
                   <div>
-                    <h3 className="font-medium text-blue-700 mb-2">Portabilidade</h3>
-                    <p className="text-gray-600">Tem direito a receber seus dados em formato estruturado.</p>
+                    <h3 className="font-medium text-green-700 mb-2">Portabilidade</h3>
+                    <p className="text-gray-600">Tem direito a receber os seus dados num formato estruturado e de uso corrente.</p>
                   </div>
                   <div>
-                    <h3 className="font-medium text-blue-700 mb-2">Oposição</h3>
-                    <p className="text-gray-600">Pode opor-se ao tratamento para fins de marketing direto.</p>
+                    <h3 className="font-medium text-green-700 mb-2">Oposição</h3>
+                    <p className="text-gray-600">Pode opor-se ao tratamento dos seus dados para fins de marketing directo.</p>
                   </div>
                 </div>
               </div>
@@ -128,21 +130,21 @@ const Politica = () => {
             <section>
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Alterações à Política</h2>
               <p className="text-gray-600">
-                Reservamo-nos o direito de atualizar esta política periodicamente. Alterações significativas serão comunicadas através dos nossos canais oficiais.
+                Reservamo-nos o direito de actualizar esta política periodicamente. Alterações significativas serão comunicadas através dos nossos canais oficiais.
               </p>
             </section>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 sm:px-8 border-t border-gray-200">
+        <div className="bg-white px-6 py-4 sm:px-8 border-t border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm mb-2 sm:mb-0">
               © {new Date().getFullYear()} Pizza Nostra. Todos os direitos reservados.
             </p>
             <button
               onClick={() => navigate('/')}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center"
+              className="px-6 py-2 bg-green-600 hover:bg-red-600 text-white font-medium rounded-lg transition-colors flex items-center"
             >
               <FaChevronLeft className="mr-2" />
               Voltar ao Site

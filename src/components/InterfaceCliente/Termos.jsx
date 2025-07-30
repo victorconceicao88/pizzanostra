@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FaBalanceScale, 
-  FaGavel, 
-  FaExclamationTriangle, 
-  FaClipboardCheck, 
+import {
+  FaBalanceScale,
+  FaGavel,
+  FaExclamationTriangle,
+  FaClipboardCheck,
   FaChevronLeft,
-  FaTimes
+  FaTimes,
 } from 'react-icons/fa';
 import { GiScrollQuill } from 'react-icons/gi';
 
@@ -14,10 +14,10 @@ const Termos = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-red-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-red-600 to-red-800 p-6 sm:p-8 text-white">
+        <div className="bg-gradient-to-r from-green-600 to-red-600 p-6 sm:p-8 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <GiScrollQuill className="text-3xl" />
@@ -36,29 +36,29 @@ const Termos = () => {
 
         {/* Content */}
         <div className="p-6 sm:p-8">
-          <div className="prose prose-red max-w-none">
+          <div className="prose prose-green max-w-none">
             <section className="mb-10">
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <FaBalanceScale className="mr-2 text-red-600" />
+                <FaBalanceScale className="mr-2 text-green-600" />
                 Aceitação dos Termos
               </h2>
               <p className="text-gray-600 mb-4">
-                Ao aceder e utilizar o programa de fidelidade Pizza Nostra, você concorda em cumprir estes Termos de Utilização e nossa Política de Privacidade.
+                Ao aceder e utilizar o programa de fidelização Pizza Nostra, o utilizador declara aceitar e cumprir os presentes Termos de Utilização e a nossa Política de Privacidade.
               </p>
             </section>
 
             <section className="mb-10">
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <FaGavel className="mr-2 text-red-600" />
+                <FaGavel className="mr-2 text-green-600" />
                 Regras do Programa
               </h2>
-              <div className="bg-red-50 rounded-lg p-4 mb-4">
+              <div className="bg-green-50 rounded-lg p-4 mb-4">
                 <ul className="list-disc list-inside text-gray-700 space-y-2">
                   <li>O programa é pessoal e intransmissível</li>
-                  <li>Selos são atribuídos apenas a pedidos completos e pagos</li>
-                  <li>1 selo por cada €15 gastos (arredondado para baixo)</li>
-                  <li>Prêmios devem ser resgatados no ato da compra</li>
-                  <li>Não acumulável com outras promoções</li>
+                  <li>Selos são atribuídos apenas a pedidos concluídos e pagos</li>
+                  <li>1 selo por cada 15 € gastos (arredondado por defeito)</li>
+                  <li>Prémios devem ser resgatados no momento da compra</li>
+                  <li>Não acumulável com outras campanhas ou promoções</li>
                 </ul>
               </div>
             </section>
@@ -66,11 +66,11 @@ const Termos = () => {
             <section className="mb-10">
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
                 <FaExclamationTriangle className="mr-2 text-red-600" />
-                Conduta Proibida
+                Condutas Proibidas
               </h2>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-white border border-red-100 rounded-lg p-4 shadow-sm">
-                  <h3 className="font-medium text-red-700 mb-2">Fraudes</h3>
+                  <h3 className="font-medium text-red-700 mb-2">Fraude</h3>
                   <ul className="space-y-2 text-gray-600">
                     <li className="flex items-start">
                       <FaTimes className="text-red-500 mt-1 mr-2 flex-shrink-0" />
@@ -78,28 +78,28 @@ const Termos = () => {
                     </li>
                     <li className="flex items-start">
                       <FaTimes className="text-red-500 mt-1 mr-2 flex-shrink-0" />
-                      Manipulação de selos
+                      Manipulação de selos ou transacções
                     </li>
                     <li className="flex items-start">
                       <FaTimes className="text-red-500 mt-1 mr-2 flex-shrink-0" />
-                      Uso de contas de terceiros
+                      Utilização de contas de terceiros
                     </li>
                   </ul>
                 </div>
                 <div className="bg-white border border-red-100 rounded-lg p-4 shadow-sm">
-                  <h3 className="font-medium text-red-700 mb-2">Abusos</h3>
+                  <h3 className="font-medium text-red-700 mb-2">Abuso</h3>
                   <ul className="space-y-2 text-gray-600">
                     <li className="flex items-start">
                       <FaTimes className="text-red-500 mt-1 mr-2 flex-shrink-0" />
-                      Comportamento inadequado com funcionários
+                      Comportamento desrespeitoso com colaboradores
                     </li>
                     <li className="flex items-start">
                       <FaTimes className="text-red-500 mt-1 mr-2 flex-shrink-0" />
-                      Tentativas de burlar o sistema
+                      Tentativas de manipular o sistema
                     </li>
                     <li className="flex items-start">
                       <FaTimes className="text-red-500 mt-1 mr-2 flex-shrink-0" />
-                      Uso comercial não autorizado
+                      Uso comercial não autorizado do programa
                     </li>
                   </ul>
                 </div>
@@ -108,45 +108,51 @@ const Termos = () => {
 
             <section className="mb-10">
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <FaClipboardCheck className="mr-2 text-red-600" />
+                <FaClipboardCheck className="mr-2 text-green-600" />
                 Disposições Gerais
               </h2>
               <div className="bg-red-50 rounded-lg p-4">
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-medium text-red-700 mb-1">Alterações</h3>
-                    <p className="text-gray-600">Podemos alterar estes Termos a qualquer momento, com aviso prévio de 30 dias.</p>
+                    <p className="text-gray-600">
+                      A Pizza Nostra poderá modificar estes Termos a qualquer momento, mediante aviso prévio de 30 dias por meios adequados.
+                    </p>
                   </div>
                   <div>
                     <h3 className="font-medium text-red-700 mb-1">Rescisão</h3>
-                    <p className="text-gray-600">Reservamo-nos o direito de encerrar contas que violem estes Termos.</p>
+                    <p className="text-gray-600">
+                      Reservamo-nos o direito de suspender ou eliminar contas que violem estes Termos sem aviso prévio.
+                    </p>
                   </div>
                   <div>
                     <h3 className="font-medium text-red-700 mb-1">Jurisdição</h3>
-                    <p className="text-gray-600">Estes Termos são regidos pelas leis portuguesas.</p>
+                    <p className="text-gray-600">
+                      Estes Termos são regidos pela legislação portuguesa. Qualquer litígio será resolvido nos tribunais portugueses.
+                    </p>
                   </div>
                 </div>
               </div>
             </section>
 
             <section>
-              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Contato</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Contacto</h2>
               <p className="text-gray-600">
-                Para questões sobre estes Termos, contacte-nos através do email: <span className="font-medium">fidelidade@pizzanostra.pt</span>
+                Em caso de dúvidas ou questões relacionadas com estes Termos, contacte-nos através do e-mail: <span className="font-medium">marcioferreira169@gmail.com</span>
               </p>
             </section>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 sm:px-8 border-t border-gray-200">
+        <div className="bg-white px-6 py-4 sm:px-8 border-t border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm mb-2 sm:mb-0">
               © {new Date().getFullYear()} Pizza Nostra. Todos os direitos reservados.
             </p>
             <button
               onClick={() => navigate('/')}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors flex items-center"
+              className="px-6 py-2 bg-green-600 hover:bg-red-600 text-white font-medium rounded-lg transition-colors flex items-center"
             >
               <FaChevronLeft className="mr-2" />
               Voltar ao Site

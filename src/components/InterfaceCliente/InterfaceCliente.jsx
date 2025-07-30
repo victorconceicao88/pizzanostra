@@ -88,8 +88,6 @@ const STAMP_REWARDS = {
   }
 };
 
-
-
 const BurgerCustomizationModal = ({ 
   product, 
   onClose, 
@@ -278,7 +276,7 @@ const BurgerCustomizationModal = ({
                     <button
                       key={extra.id}
                       onClick={() => toggleExtra(extra)}
-                      className={`p-2 rounded-lg flex flex-col items-start transition-all border ${
+                      className={`p-2 rounded-lg border flex flex-col items-start transition-all ${
                         isSelected
                           ? 'bg-green-50 border-[#016730]'
                           : 'bg-white border-gray-200 hover:border-gray-300'
@@ -303,7 +301,7 @@ const BurgerCustomizationModal = ({
           </div>
           
           {selection.extras.length > 0 && activeTab !== 'extras' && (
-            <div className="mb-4 text-xs text-[#016730] font-medium">
+            <div className="mb-4 text-xs sm:text-sm text-[#016730] font-medium">
               {t(language, 'extrasTotal')}: +{selection.extras.reduce((sum, extra) => sum + extra.price, 0).toFixed(2)}€
             </div>
           )}

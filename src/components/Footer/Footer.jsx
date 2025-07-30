@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaMapMarkerAlt, FaPhone, FaRegClock, FaFacebook, FaInstagram, FaTripadvisor } from 'react-icons/fa';
 import pisaprojeto from '../../assets/pisaprojeto.jpg';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -54,8 +55,20 @@ const Footer = () => {
           <a href="https://www.instagram.com/pizzanostrapt?igsh=MWx2NHRrdzhiMnRwNA==" className="text-white hover:text-gray-300" target='blank'>
             <FaInstagram size={24} />
           </a>
-          <a href="https://www.tripadvisor.pt/Restaurant_Review-g189120-d16726589-Reviews-Pizza_Nostra_Portimao-Portimao_Faro_District_Algarve.html?m=69573" className="text-white hover:text-gray-300"target='blank'>
+          <a href="https://www.tripadvisor.pt/Restaurant_Review-g189120-d16726589-Reviews-Pizza_Nostra_Portimao-Portimao_Faro_District_Algarve.html?m=69573" className="text-white hover:text-gray-300" target='blank'>
             <FaTripadvisor size={24} />
+          </a>
+        </div>
+
+        {/* Links legais */}
+        <div className="flex justify-center mt-4 space-x-4 text-xs sm:text-sm">
+          <Link to="/politica" className="text-gray-400 hover:text-white">Política do Site</Link>
+          <Link to="/termos" className="text-gray-400 hover:text-white">Termos e Condições</Link>
+          <a href="https://www.livroreclamacoes.pt/Utilizador/AutenticacaoConsumidor" 
+             target="_blank" 
+             rel="noopener noreferrer" 
+             className="text-gray-400 hover:text-white">
+            Livro de Reclamações
           </a>
         </div>
 

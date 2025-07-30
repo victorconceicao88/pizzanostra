@@ -1047,7 +1047,7 @@ const Fidelidade = () => {
                   className="mt-14 text-center border-t border-gray-100 pt-6"
                 >
                   <p className="text-xs text-gray-400 tracking-wider font-medium">
-                    © {new Date().getFullYear()} PIZZA NOSTRA GROUP. ALL RIGHTS RESERVED.
+                    © {new Date().getFullYear()} Pizza Nostra Group. Todos os direitos reservados.
                   </p>
                 </motion.div>
               </div>
