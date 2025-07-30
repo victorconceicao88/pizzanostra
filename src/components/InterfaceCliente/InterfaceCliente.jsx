@@ -365,16 +365,6 @@ const OrderConfirmationModal = ({
   const [isPhoneSaved, setIsPhoneSaved] = useState(false);
   const phoneNumber = "+351282046810";
 
-  // ✅ Adicionado para evitar impressão duplicada
-  const hasPrintedRef = useRef(false);
-
-  useEffect(() => {
-    if (!hasPrintedRef.current) {
-      hasPrintedRef.current = true;
-      window.print(); // ✅ Será executado apenas uma vez
-    }
-  }, []);
-
   const copyOrderNumber = () => {
     navigator.clipboard.writeText(orderNumber);
     setIsCopied(true);
@@ -3255,10 +3245,24 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     const numeroPedido = String(timestamp).slice(-5).padStart(5, '0');
     setOrderNumber(numeroPedido);
 
+    // Criação do documento do pedido (única operação de escrita)
     const pedidoRef = doc(collection(db, 'pedidos'));
-
-    const itensFirestore = cart.map(item => {
-      const itemData = {
+    await setDoc(pedidoRef, {
+      cliente: {
+        nome: customerInfo.nome,
+        telefone: customerInfo.telefone,
+        endereco: customerInfo.endereco || null,
+        localidade: customerInfo.localidade || null,
+        codigoPostal: customerInfo.codigoPostal || null,
+        nif: customerInfo.nif || null,
+        userId: user?.uid || null,
+      },
+      tipoEntrega: entregaSelecionada,
+      enderecoCompleto: entregaSelecionada === 'entrega' 
+        ? `${customerInfo.endereco}, ${customerInfo.localidade}`
+        : null,
+      zonaEntrega: entregaSelecionada === 'entrega' ? zonaSelecionada : null,
+      itens: cart.map(item => ({
         id: item.id,
         nome: typeof item.name === 'object' ? item.name.pt : item.name,
         quantidade: item.quantity,
@@ -3282,36 +3286,13 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         borderType: item.borderType || 'fina',
         categoria: item.category || 'outros',
         meatType: item.meatType || null,
-        withMenu: item.withMenu || false
-      };
-
-      if (item.extras?.length > 0) {
-        itemData.extras = item.extras.map(extra => ({
+        withMenu: item.withMenu || false,
+        extras: item.extras?.map(extra => ({
           id: extra.id,
           nome: typeof extra.name === 'object' ? extra.name.pt : extra.name,
           preco: itemsWithStamps[item.id] ? 0 : extra.price
-        }));
-      }
-
-      return itemData;
-    });
-
-    const pedidoData = {
-      cliente: {
-        nome: customerInfo.nome,
-        telefone: customerInfo.telefone,
-        endereco: customerInfo.endereco || null,
-        localidade: customerInfo.localidade || null,
-        codigoPostal: customerInfo.codigoPostal || null,
-        nif: customerInfo.nif || null,
-        userId: user?.uid || null,
-      },
-      tipoEntrega: entregaSelecionada,
-      enderecoCompleto: entregaSelecionada === 'entrega' 
-        ? `${customerInfo.endereco}, ${customerInfo.localidade}`
-        : null,
-      zonaEntrega: entregaSelecionada === 'entrega' ? zonaSelecionada : null,
-      itens: itensFirestore,
+        })) || []
+      })),
       subtotal: totalSemTaxa,
       taxaEntrega,
       total: totalFinal,
@@ -3331,28 +3312,24 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         zonaEntrega: entregaSelecionada === 'entrega' ? zonaSelecionada : null
       },
       observacoes: customerInfo.observacoes || '',
-    };
+    });
 
-    await setDoc(pedidoRef, pedidoData);
-
+    // Atualização dos selos do usuário (se logado)
     if (user) {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
         selos: increment(selosGanhos - selosUsados),
         selosAtualizadoEm: serverTimestamp()
       });
-    }
-
-    setCart([]);
-    setItemsWithStamps({});
-    setShowOrderConfirmation(true);
-    setShowCheckout(false);
-
-    if (user) {
       setSelosDisponiveis(prev => prev + selosGanhos - selosUsados);
     }
 
+    // Limpeza do estado e feedback
+    setCart([]);
+    setItemsWithStamps({});
     localStorage.removeItem('pizzaNostraCart');
+    setShowOrderConfirmation(true);
+    setShowCheckout(false);
 
   } catch (error) {
     console.error("❌ Erro ao finalizar pedido:", error);
