@@ -365,6 +365,16 @@ const OrderConfirmationModal = ({
   const [isPhoneSaved, setIsPhoneSaved] = useState(false);
   const phoneNumber = "+351282046810";
 
+  // ✅ Adicionado para evitar impressão duplicada
+  const hasPrintedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasPrintedRef.current) {
+      hasPrintedRef.current = true;
+      window.print(); // ✅ Será executado apenas uma vez
+    }
+  }, []);
+
   const copyOrderNumber = () => {
     navigator.clipboard.writeText(orderNumber);
     setIsCopied(true);
