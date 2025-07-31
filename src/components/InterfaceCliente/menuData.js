@@ -7,7 +7,7 @@ export const deliveryAreas = {
       es: ["Portimão (Parroquia)", "Praia da Rocha", "Alto do Quintão", "Vale de França", "Fojo", "Bemposta", "Quinta do Amparo", "Chão das Donas", "Encosta da Marina", "Cabeço do Mocho"]
     },
     ceps: ["8500", "8501"], // Prefixos de CEP para Zona 1
-    taxa: 1.00,
+    taxa: 2.00,
     color: "bg-blue-100",
     borderColor: "border-blue-300",
     textColor: "text-blue-800"

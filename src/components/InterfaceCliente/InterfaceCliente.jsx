@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react';
-import { FaPizzaSlice,FaGlassWhiskey, FaChevronLeft, FaChevronRight, FaClipboardList,FaCopy,FaAddressBook,FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight, FaShieldAlt, FaPlus, FaUserPlus } from 'react-icons/fa';
+import { FaPizzaSlice,FaGlassWhiskey,FaArrowRight, FaChevronLeft, FaChevronRight, FaClipboardList,FaCopy,FaAddressBook,FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight, FaShieldAlt, FaPlus, FaUserPlus } from 'react-icons/fa';
 import { Pizza, Leaf, IceCream, Hamburger,CupTogo, Wine, X, Check, Plus, Minus, MapPin, CreditCard, CurrencyEur, DeviceMobile, Money} from '@phosphor-icons/react';
 import { motion, AnimatePresence, useAnimation, useInView, PanInfo, useMotionValue } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -145,6 +145,7 @@ const BurgerCustomizationModal = ({
     onAddToCart(product, selection);
     onClose();
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
@@ -372,7 +373,7 @@ const OrderConfirmationModal = ({
   };
 
   const savePhoneNumber = () => {
-    const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:Pizzaria Delícia\nTEL;TYPE=WORK,VOICE:${phoneNumber}\nEND:VCARD`;
+    const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:Pizza Nostra\nTEL;TYPE=WORK,VOICE:${phoneNumber}\nEND:VCARD`;
     const blob = new Blob([vCard], { type: 'text/vcard' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -584,28 +585,56 @@ const CustomizationModal = ({
     halfAndHalf: false,
     halfPizza1: null,
     halfPizza2: null,
-    borderType: 'fina'
+    borderType: 'fina',
+    freeDrink: null,
   }
 }) => {
   const [selection, setSelection] = useState(initialSelection);
-  const [activeTab, setActiveTab] = useState('size');
+  const [currentStep, setCurrentStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState([]);
   const isFamilySize = product.sizes && selection.size === 'familia';
   const isPizza = ['tradicionais', 'vegetarianas'].includes(product.category);
   
-const getBasePrice = () => {
-  if (selection.halfAndHalf && isFamilySize) {
-    const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas)
-      .find(p => p.id === (selection.halfPizza1 || product.id));
-    const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas)
-      .find(p => p.id === selection.halfPizza2);
-    
-    // Pegar o preço da pizza mais cara
-    const price1 = pizza1?.sizes?.[selection.size] || 0;
-    const price2 = pizza2?.sizes?.[selection.size] || 0;
-    return Math.max(price1, price2); // Retorna o valor mais alto
-  }
-  return product.sizes ? (product.sizes[selection.size] || product.sizes.media) : product.price;
-};
+  // Definição das etapas disponíveis
+  const steps = [
+    { id: 1, name: 'size', label: t(language, 'Size') },
+    { id: 2, name: 'border', label: t(language, 'Stuffed'), condition: isPizza && product.sizes && menuData.bordas.length > 0 },
+    { id: 3, name: 'extras', label: `${t(language, 'extras')} (${selection.extras.length})`, condition: pizzaExtras.length > 0 },
+    { id: 4, name: 'drink', label: t(language, 'freeDrink'), condition: isPizza },
+    { id: 5, name: 'review', label: t(language, 'review') }
+  ].filter(step => step.condition !== false);
+
+  const freeDrinkOptions = {
+    individual: [
+      { id: 'ice-tea-330ml', name: { pt: 'Ice Tea (330ml)', en: 'Ice Tea (330ml)', es: 'Ice Tea (330ml)' }, price: 0 },
+      { id: 'pepsi-330ml', name: { pt: 'Pepsi (330ml)', en: 'Pepsi (330ml)', es: 'Pepsi (330ml)' }, price: 0 },
+      { id: 'none', name: { pt: 'Sem bebida grátis', en: 'No free drink', es: 'Sin bebida gratis' }, price: 0 }
+    ],
+    media: [
+      { id: 'ice-tea-330ml', name: { pt: 'Ice Tea (330ml)', en: 'Ice Tea (330ml)', es: 'Ice Tea (330ml)' }, price: 0 },
+      { id: 'pepsi-330ml', name: { pt: 'Pepsi (330ml)', en: 'Pepsi (330ml)', es: 'Pepsi (330ml)' }, price: 0 },
+      { id: 'none', name: { pt: 'Sem bebida grátis', en: 'No free drink', es: 'Sin bebida gratis' }, price: 0 }
+    ],
+    familia: [
+      { id: 'ice-tea-1l', name: { pt: 'Ice Tea (1L)', en: 'Ice Tea (1L)', es: 'Ice Tea (1L)' }, price: 0 },
+      { id: 'pepsi-1l', name: { pt: 'Pepsi (1L)', en: 'Pepsi (1L)', es: 'Pepsi (1L)' }, price: 0 },
+      { id: 'none', name: { pt: 'Sem bebida grátis', en: 'No free drink', es: 'Sin bebida gratis' }, price: 0 }
+    ]
+  };
+
+  const getBasePrice = () => {
+    if (selection.halfAndHalf && isFamilySize) {
+      const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas)
+        .find(p => p.id === (selection.halfPizza1 || product.id));
+      const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas)
+        .find(p => p.id === selection.halfPizza2);
+      
+      const price1 = pizza1?.sizes?.[selection.size] || 0;
+      const price2 = pizza2?.sizes?.[selection.size] || 0;
+      return Math.max(price1, price2);
+    }
+    return product.sizes ? (product.sizes[selection.size] || product.sizes.media) : product.price;
+  };
 
   const basePrice = getBasePrice();
   const extrasTotal = selection.extras.reduce((sum, extra) => sum + extra.price, 0);
@@ -617,12 +646,15 @@ const getBasePrice = () => {
       size,
       halfAndHalf: size === 'familia' ? prev.halfAndHalf : false,
       halfPizza1: size === 'familia' ? (prev.halfPizza1 || product.id) : null,
-      halfPizza2: size === 'familia' ? prev.halfPizza2 : null
+      halfPizza2: size === 'familia' ? prev.halfPizza2 : null,
+      freeDrink: null
     }));
+    markStepAsCompleted(1);
   };
   
   const handleBorderChange = (border) => {
     setSelection(prev => ({ ...prev, border }));
+    markStepAsCompleted(2);
   };
   
   const toggleExtra = (extra) => {
@@ -663,10 +695,56 @@ const getBasePrice = () => {
   const handleQuantityChange = (newQuantity) => {
     setSelection(prev => ({ ...prev, quantity: Math.max(1, newQuantity) }));
   };
+
+  const handleFreeDrinkChange = (drinkId) => {
+    setSelection(prev => ({ ...prev, freeDrink: drinkId }));
+    markStepAsCompleted(4);
+  };
   
   const handleAddToCart = () => {
-    onAddToCart(product, selection);
+    if (selection.freeDrink && selection.freeDrink !== 'none') {
+      const selectedDrink = freeDrinkOptions[selection.size].find(d => d.id === selection.freeDrink);
+      const drinkItem = {
+        ...selectedDrink,
+        isFree: true,
+        price: 0, // Explicitly set price to 0 to prevent NaN issues
+        quantity: selection.quantity
+      };
+      onAddToCart(product, selection);
+      onAddToCart(drinkItem, { quantity: 1 }); // Ensure drink has proper quantity
+    } else {
+      onAddToCart(product, selection);
+    }
     onClose();
+  };
+
+  const markStepAsCompleted = (stepId) => {
+    if (!completedSteps.includes(stepId)) {
+      setCompletedSteps([...completedSteps, stepId]);
+    }
+  };
+
+  const goToNextStep = () => {
+    if (currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const goToPrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const goToStep = (stepId) => {
+    const stepIndex = steps.findIndex(step => step.id === stepId);
+    if (stepIndex !== -1 && (completedSteps.includes(stepId) || stepId === 1)) {
+      setCurrentStep(stepId);
+    }
+  };
+
+  const isStepCompleted = (stepId) => {
+    return completedSteps.includes(stepId);
   };
 
   const renderHalfAndHalfSection = () => {
@@ -681,31 +759,31 @@ const getBasePrice = () => {
     const secondHalfPrice = secondHalfPizza?.sizes?.[selection.size] || 0;
 
     return (
-      <div className="mb-3 sm:mb-4">
-        <div className="flex items-center justify-between mb-1 sm:mb-2">
-          <label className="font-medium text-gray-700 text-sm sm:text-base">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <label className="font-medium text-gray-700">
             {t(language, 'halfAndHalf')}
           </label>
           <button
             onClick={toggleHalfAndHalf}
-            className={`relative inline-flex h-5 sm:h-6 w-10 sm:w-11 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               selection.halfAndHalf ? 'bg-green-600' : 'bg-gray-200'
             }`}
           >
             <span
-              className={`inline-block h-3 sm:h-4 w-3 sm:w-4 transform rounded-full bg-white transition-transform ${
-                selection.halfAndHalf ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                selection.halfAndHalf ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
           </button>
         </div>
         
         {selection.halfAndHalf && (
-          <div className="space-y-2 sm:space-y-3">
-            <div className="bg-gray-50 p-2 sm:p-3 rounded-lg mb-1 sm:mb-2">
-              <p className="text-xs sm:text-sm font-medium text-gray-700">
+          <div className="space-y-3">
+            <div className="bg-gray-50 p-3 rounded-lg mb-2">
+              <p className="text-sm font-medium text-gray-700">
                 {t(language, 'firstHalf')}: 
-                <span className="ml-1 sm:ml-2 font-bold">
+                <span className="ml-2 font-bold">
                   {typeof firstHalfPizza.name === 'object' 
                     ? firstHalfPizza.name[language] 
                     : firstHalfPizza.name} ({(firstHalfPrice / 2).toFixed(2)}€)
@@ -714,13 +792,13 @@ const getBasePrice = () => {
             </div>
             
             <div>
-              <label className="block text-xs sm:text-sm text-gray-600 mb-1">
+              <label className="block text-sm text-gray-600 mb-1">
                 {t(language, 'secondHalf')}
               </label>
               <select
                 value={selection.halfPizza2 || ''}
                 onChange={(e) => selectHalfPizza(e.target.value)}
-                className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-xs sm:text-sm"
+                className="w-full p-3 border border-gray-300 rounded-lg text-sm"
               >
                 <option value="">{t(language, 'selectHalf')}</option>
                 {menuData.tradicionais.concat(menuData.vegetarianas)
@@ -739,274 +817,474 @@ const getBasePrice = () => {
   };
 
   const renderBorderTypeSection = () => (
-    <div className="mb-3 sm:mb-4">
-      <label className="block text-gray-700 mb-1 sm:mb-2 font-medium text-sm sm:text-base">
-        {t(language, 'borderType')}
+    <div className="mb-6">
+      <label className="block text-gray-700 mb-2 font-medium">
+        {t(language, 'doughType')}
       </label>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => handleBorderTypeChange('fina')}
-          className={`py-2 rounded-lg transition-all text-xs sm:text-sm ${
+          className={`py-3 rounded-lg transition-all ${
             selection.borderType === 'fina'
               ? 'bg-white border-2 border-[#016730] text-gray-800'
               : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
           }`}
         >
-          {t(language, 'thinBorder')}
+          {t(language, 'thinDough')}
         </button>
         <button
           onClick={() => handleBorderTypeChange('grossa')}
-          className={`py-2 rounded-lg transition-all text-xs sm:text-sm ${
+          className={`py-3 rounded-lg transition-all ${
             selection.borderType === 'grossa'
               ? 'bg-white border-2 border-[#016730] text-gray-800'
               : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
           }`}
         >
-          {t(language, 'thickBorder')}
+          {t(language, 'thickDough')}
         </button>
       </div>
     </div>
   );
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50">
-      <div className="bg-white rounded-xl sm:rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        {/* Italian flag lines at the top */}
-        <div className="h-1 sm:h-2 w-full bg-green-600"></div>
-        <div className="h-1 sm:h-2 w-full bg-white"></div>
-        <div className="h-1 sm:h-2 w-full bg-red-600"></div>
-        
-        <div className="p-4 sm:p-6">
-          <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-800">
-              {typeof product.name === 'object' ? product.name[language] : product.name}
-            </h3>
-            <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
-              <X size={18} />
+  const renderFreeDrinkSection = () => {
+    if (!isPizza) return null;
+    
+    return (
+      <div className="mb-6">
+        <label className="block text-gray-700 mb-2 font-medium">
+          {t(language, 'freeDrink')}
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {freeDrinkOptions[selection.size].map(drink => (
+            <button
+              key={drink.id}
+              onClick={() => handleFreeDrinkChange(drink.id)}
+              className={`p-3 rounded-lg border flex flex-col items-center transition-all ${
+                selection.freeDrink === drink.id
+                  ? 'bg-green-50 border-[#016730]'
+                  : 'bg-white border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <span className="font-medium text-center">
+                {typeof drink.name === 'object' ? drink.name[language] : drink.name}
+              </span>
+              <span className="text-xs text-gray-500 mt-1">
+                {drink.price.toFixed(2)}€
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderStepIndicator = () => {
+    return (
+      <div className="flex items-center justify-between mb-6 relative">
+        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -z-10"></div>
+        {steps.map((step, index) => (
+          <div key={step.id} className="flex flex-col items-center">
+            <button
+              onClick={() => goToStep(step.id)}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                currentStep === step.id
+                  ? 'bg-[#016730] text-white'
+                  : isStepCompleted(step.id)
+                    ? 'bg-green-100 text-[#016730]'
+                    : 'bg-gray-200 text-gray-600'
+              }`}
+              disabled={!isStepCompleted(step.id) && step.id !== 1}
+            >
+              {isStepCompleted(step.id) && currentStep !== step.id ? (
+                <FaCheck size={12} />
+              ) : (
+                step.id
+              )}
+            </button>
+            <span className={`text-xs mt-1 text-center ${
+              currentStep === step.id ? 'font-bold text-[#016730]' : 'text-gray-600'
+            }`}>
+              {step.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderCurrentStep = () => {
+    const currentStepData = steps.find(step => step.id === currentStep);
+    if (!currentStepData) return null;
+
+    switch (currentStepData.name) {
+      case 'size':
+        return (
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'chooseSize')}</h3>
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {['individual', 'media', 'familia'].map(size => (
+                <button
+                  key={size}
+                  onClick={() => handleSizeChange(size)}
+                  className={`py-4 rounded-lg transition-all flex flex-col items-center ${
+                    selection.size === size
+                      ? 'bg-white border-2 border-[#016730] text-gray-800 shadow-md'
+                      : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-sm font-medium">{t(language, size)}</div>
+                  <div className="font-bold">
+                    {product.sizes[size]?.toFixed(2) || '0.00'}€
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            {isPizza && isFamilySize && renderHalfAndHalfSection()}
+            {isPizza && renderBorderTypeSection()}
+            
+            <button
+              onClick={goToNextStep}
+              disabled={!selection.size}
+              className={`w-full py-3 bg-[#016730] rounded-lg text-white font-bold flex items-center justify-center ${
+                !selection.size ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {t(language, 'nextStep')} <FaArrowRight className="ml-2" />
             </button>
           </div>
-          
-          {product.description && (
-            <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
-              {typeof product.description === 'object' ? product.description[language] : product.description}
-            </p>
-          )}
-          
-          {/* Tab Navigation */}
-         <div className="mb-4 sm:mb-6">
-            <div className="relative flex items-center w-full">
-              <button 
-                onClick={() => {
-                  const tabs = ['size', 'border', 'extras'];
-                  const currentIndex = tabs.indexOf(activeTab);
-                  const newIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
-                  setActiveTab(tabs[newIndex]);
-                }}
-                className="p-1 sm:p-2 rounded-full hover:bg-gray-100 mr-1 transition-colors"
-              >
-                <FaChevronLeft className="text-gray-600 text-xs sm:text-sm" />
-              </button>
+        );
 
-              <div className="flex-1 overflow-hidden">
-                <div className="flex">
-                  {['size', 'border', 'extras'].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`flex-1 py-2 px-1 mx-1 text-center relative text-xs sm:text-sm font-medium ${
-                        activeTab === tab 
-                          ? 'text-[#016730]' 
-                          : 'text-gray-600 hover:text-gray-800'
-                      }`}
-                    >
-                      {tab === 'size' && t(language, 'Size')}
-                      {tab === 'border' && t(language, 'Stuffed')}
-                      {tab === 'extras' && `${t(language, 'extras')} (${selection.extras.length})`}
-                      
-                      {activeTab === tab && (
-                        <motion.div
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#016730]"
-                          layoutId="underline"
-                          transition={{ duration: 0.3 }}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button 
-                onClick={() => {
-                  const tabs = ['size', 'border', 'extras'];
-                  const currentIndex = tabs.indexOf(activeTab);
-                  const newIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
-                  setActiveTab(tabs[newIndex]);
-                }}
-                className="p-1 sm:p-2 rounded-full hover:bg-gray-100 ml-1 transition-colors"
+      case 'border':
+        return (
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'chooseBorder')}</h3>
+            <div className="space-y-3 mb-6">
+              <button
+                onClick={() => handleBorderChange(null)}
+                className={`w-full px-4 py-3 rounded-lg flex items-center justify-between transition-all ${
+                  selection.border === null
+                    ? 'bg-white border-2 border-[#016730] text-gray-800'
+                    : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+                }`}
               >
-                <FaChevronRight className="text-gray-600 text-xs sm:text-sm" />
+                <span>{t(language, 'noBorder')}</span>
+                <span className="text-gray-500">+0.00€</span>
               </button>
-            </div>
-          </div>
-        
-          {/* Tab Content */}
-          <div className="mb-4 sm:mb-6">
-            {activeTab === 'size' && product.sizes && (
-              <div>
-                <div className="grid grid-cols-3 gap-2">
-                  {['individual', 'media', 'familia'].map(size => (
-                    <button
-                      key={size}
-                      onClick={() => handleSizeChange(size)}
-                      className={`py-2 sm:py-3 rounded-lg transition-all flex flex-col items-center text-xs sm:text-sm ${
-                        selection.size === size
-                          ? 'bg-white border-2 border-[#016730] text-gray-800 shadow-md'
-                          : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="text-xs font-medium">{t(language, size)}</div>
-                      <div className="font-bold">
-                        {product.sizes[size]?.toFixed(2) || '0.00'}€
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                
-                {/* Seção Meio a Meio (apenas para pizzas de 41cm) */}
-                {isPizza && isFamilySize && renderHalfAndHalfSection()}
-                
-                {/* Seção Tipo de Borda (apenas para pizzas de 41cm) */}
-                {isPizza && isFamilySize && renderBorderTypeSection()}
-              </div>
-            )}
-            
-            {activeTab === 'border' && product.sizes && menuData.bordas.length > 0 && (
-              <div className="space-y-2">
+              {menuData.bordas.map(border => (
                 <button
-                  onClick={() => handleBorderChange(null)}
-                  className={`w-full px-3 py-2 rounded-lg flex items-center justify-between transition-all text-xs sm:text-sm ${
-                    selection.border === null
+                  key={border.id}
+                  onClick={() => handleBorderChange(border.id)}
+                  className={`w-full px-4 py-3 rounded-lg flex items-center justify-between transition-all ${
+                    selection.border === border.id
                       ? 'bg-white border-2 border-[#016730] text-gray-800'
                       : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
                   }`}
                 >
-                  <span>{t(language, 'noBorder')}</span>
-                  <span className="text-gray-500">+0.00€</span>
+                  <div className="flex flex-col items-start">
+                    <span>
+                      {typeof border.name === 'object' ? border.name[language] : border.name}
+                    </span>
+                  </div>
+                  <span className="text-gray-500">
+                    +{border.sizes[selection.size || 'media'].toFixed(2)}€
+                  </span>
                 </button>
-                {menuData.bordas.map(border => (
+              ))}
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={goToPrevStep}
+                className="w-1/3 py-3 bg-gray-200 rounded-lg text-gray-800 font-bold flex items-center justify-center"
+              >
+                <FaChevronLeft className="mr-2" /> {t(language, 'back')}
+              </button>
+              <button
+                onClick={goToNextStep}
+                className="w-2/3 py-3 bg-[#016730] rounded-lg text-white font-bold flex items-center justify-center"
+              >
+                {t(language, 'nextStep')} <FaArrowRight className="ml-2" />
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'extras':
+        return (
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'chooseExtras')}</h3>
+            <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1 mb-6">
+              {pizzaExtras.map(extra => {
+                const isSelected = selection.extras.some(e => e.id === extra.id);
+                return (
                   <button
-                    key={border.id}
-                    onClick={() => handleBorderChange(border.id)}
-                    className={`w-full px-3 py-2 rounded-lg flex items-center justify-between transition-all text-xs sm:text-sm ${
-                      selection.border === border.id
-                        ? 'bg-white border-2 border-[#016730] text-gray-800'
-                        : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+                    key={extra.id}
+                    onClick={() => toggleExtra(extra)}
+                    className={`p-3 rounded-lg flex flex-col items-start transition-all border ${
+                      isSelected
+                        ? 'bg-green-50 border-[#016730]'
+                        : 'bg-white border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex flex-col items-start">
-                      <span>
-                        {typeof border.name === 'object' ? border.name[language] : border.name}
+                    <div className="flex items-center w-full">
+                      {isSelected && (
+                        <FaCheck className="text-[#016730] mr-2" size={12} />
+                      )}
+                      <span className="font-medium text-left truncate">
+                        {typeof extra.name === 'object' ? extra.name[language] : extra.name}
                       </span>
                     </div>
-                    <span className="text-gray-500">
-                      +{border.sizes[selection.size || 'media'].toFixed(2)}€
+                    <span className="text-gray-500 mt-1">
+                      +{extra.price.toFixed(2)}€
                     </span>
                   </button>
-                ))}
-              </div>
-            )}
-            
-            {activeTab === 'extras' && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 sm:max-h-60 overflow-y-auto p-1">
-                {pizzaExtras.map(extra => {
-                  const isSelected = selection.extras.some(e => e.id === extra.id);
-                  return (
-                    <button
-                      key={extra.id}
-                      onClick={() => toggleExtra(extra)}
-                      className={`p-2 rounded-lg flex flex-col items-start transition-all border text-xs sm:text-sm ${
-                        isSelected
-                          ? 'bg-green-50 border-[#016730]'
-                          : 'bg-white border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center w-full">
-                        {isSelected && (
-                          <FaCheck className="text-[#016730] mr-1 flex-shrink-0" size={10} />
-                        )}
-                        <span className="font-medium text-left truncate">
-                          {typeof extra.name === 'object' ? extra.name[language] : extra.name}
-                        </span>
-                      </div>
-                      <span className="text-gray-500 mt-1">
-                        +{extra.price.toFixed(2)}€
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-          
-          {selection.extras.length > 0 && activeTab !== 'extras' && (
-            <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-[#016730] font-medium">
-              {t(language, 'extrasTotal')}: +{selection.extras.reduce((sum, extra) => sum + extra.price, 0).toFixed(2)}€
-            </div>
-          )}
-          
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <div>
-              <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1">{t(language, 'quantity')}</h4>
-              <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => handleQuantityChange(selection.quantity - 1)}
-                  disabled={selection.quantity <= 1}
-                  className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
-                >
-                  <Minus size={12} />
-                </button>
-                <span className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-medium border-l border-r border-gray-200">
-                  {selection.quantity}
-                </span>
-                <button
-                  onClick={() => handleQuantityChange(selection.quantity + 1)}
-                  className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                >
-                  <Plus size={12} />
-                </button>
-              </div>
+                );
+              })}
             </div>
             
-            <div className="text-right">
-              <div className="text-xs sm:text-sm text-gray-500">{t(language, 'total')}</div>
-              <div className="text-xl sm:text-2xl font-bold text-[#016730]">
-                {totalPrice.toFixed(2)}€
-              </div>
+            <div className="flex gap-3">
+              <button
+                onClick={goToPrevStep}
+                className="w-1/3 py-3 bg-gray-200 rounded-lg text-gray-800 font-bold flex items-center justify-center"
+              >
+                <FaChevronLeft className="mr-2" /> {t(language, 'back')}
+              </button>
+              <button
+                onClick={goToNextStep}
+                className="w-2/3 py-3 bg-[#016730] rounded-lg text-white font-bold flex items-center justify-center"
+              >
+                {t(language, 'nextStep')} <FaArrowRight className="ml-2" />
+              </button>
             </div>
           </div>
-          
-          <button
-            onClick={handleAddToCart}
-            disabled={isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2}
-            className={`w-full py-2 sm:py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center text-sm sm:text-base ${
-              isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <FaShoppingCart className="mr-2" size={14} />
-            {t(language, 'addToCart')}
-          </button>
+        );
 
-          {isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 && (
-            <p className="text-red-500 text-xs mt-1 sm:mt-2 text-center">
-              Por favor, selecione o sabor para a segunda metade
+      case 'drink':
+        return (
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'chooseFreeDrink')}</h3>
+            {renderFreeDrinkSection()}
+            
+            <div className="flex gap-3">
+              <button
+                onClick={goToPrevStep}
+                className="w-1/3 py-3 bg-gray-200 rounded-lg text-gray-800 font-bold flex items-center justify-center"
+              >
+                <FaChevronLeft className="mr-2" /> {t(language, 'back')}
+              </button>
+              <button
+                onClick={goToNextStep}
+                disabled={!selection.freeDrink}
+                className={`w-2/3 py-3 bg-[#016730] rounded-lg text-white font-bold flex items-center justify-center ${
+                  !selection.freeDrink ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {t(language, 'reviewOrder')} <FaArrowRight className="ml-2" />
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'review':
+        return (
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'reviewYourOrder')}</h3>
+            
+            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <h4 className="font-bold text-gray-800 mb-2">
+                {typeof product.name === 'object' ? product.name[language] : product.name}
+              </h4>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t(language, 'size')}:</span>
+                  <span className="font-medium">
+                    {t(language, selection.size)} - {product.sizes[selection.size].toFixed(2)}€
+                  </span>
+                </div>
+                
+                {isPizza && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{t(language, 'doughType')}:</span>
+                    <span className="font-medium">
+                      {t(language, selection.borderType === 'fina' ? 'thinDough' : 'thickDough')}
+                    </span>
+                  </div>
+                )}
+                
+                {isPizza && isFamilySize && selection.halfAndHalf && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">{t(language, 'firstHalf')}:</span>
+                      <span className="font-medium">
+                        {typeof menuData.tradicionais.concat(menuData.vegetarianas)
+                          .find(p => p.id === (selection.halfPizza1 || product.id)).name === 'object' 
+                          ? menuData.tradicionais.concat(menuData.vegetarianas)
+                              .find(p => p.id === (selection.halfPizza1 || product.id)).name[language] 
+                          : menuData.tradicionais.concat(menuData.vegetarianas)
+                              .find(p => p.id === (selection.halfPizza1 || product.id)).name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">{t(language, 'secondHalf')}:</span>
+                      <span className="font-medium">
+                        {selection.halfPizza2 
+                          ? (typeof menuData.tradicionais.concat(menuData.vegetarianas)
+                              .find(p => p.id === selection.halfPizza2).name === 'object' 
+                              ? menuData.tradicionais.concat(menuData.vegetarianas)
+                                  .find(p => p.id === selection.halfPizza2).name[language] 
+                              : menuData.tradicionais.concat(menuData.vegetarianas)
+                                  .find(p => p.id === selection.halfPizza2).name)
+                          : t(language, 'notSelected')}
+                      </span>
+                    </div>
+                  </>
+                )}
+                
+                {selection.border && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{t(language, 'border')}:</span>
+                    <span className="font-medium">
+                      {typeof menuData.bordas.find(b => b.id === selection.border).name === 'object' 
+                        ? menuData.bordas.find(b => b.id === selection.border).name[language] 
+                        : menuData.bordas.find(b => b.id === selection.border).name} - 
+                      +{menuData.bordas.find(b => b.id === selection.border).sizes[selection.size].toFixed(2)}€
+                    </span>
+                  </div>
+                )}
+                
+                {selection.extras.length > 0 && (
+                  <div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">{t(language, 'extras')}:</span>
+                      <span className="font-medium">+{extrasTotal.toFixed(2)}€</span>
+                    </div>
+                    <div className="pl-2 mt-1">
+                      {selection.extras.map(extra => (
+                        <div key={extra.id} className="flex justify-between">
+                          <span className="text-gray-600">
+                            • {typeof extra.name === 'object' ? extra.name[language] : extra.name}
+                          </span>
+                          <span className="font-medium">+{extra.price.toFixed(2)}€</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {selection.freeDrink && selection.freeDrink !== 'none' && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{t(language, 'freeDrink')}:</span>
+                    <span className="font-medium">
+                      {typeof freeDrinkOptions[selection.size].find(d => d.id === selection.freeDrink).name === 'object' 
+                        ? freeDrinkOptions[selection.size].find(d => d.id === selection.freeDrink).name[language] 
+                        : freeDrinkOptions[selection.size].find(d => d.id === selection.freeDrink).name}
+                    </span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between pt-2 border-t border-gray-200">
+                  <span className="text-gray-600">{t(language, 'quantity')}:</span>
+                  <span className="font-medium">{selection.quantity}</span>
+                </div>
+                
+                <div className="flex justify-between pt-2 border-t border-gray-200">
+                  <span className="text-gray-600 font-bold">{t(language, 'total')}:</span>
+                  <span className="font-bold text-[#016730]">{totalPrice.toFixed(2)}€</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-1">{t(language, 'quantity')}</h4>
+                <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => handleQuantityChange(selection.quantity - 1)}
+                    disabled={selection.quantity <= 1}
+                    className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                  >
+                    <Minus size={12} />
+                  </button>
+                  <span className="w-8 h-8 flex items-center justify-center text-sm font-medium border-l border-r border-gray-200">
+                    {selection.quantity}
+                  </span>
+                  <button
+                    onClick={() => handleQuantityChange(selection.quantity + 1)}
+                    className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  >
+                    <Plus size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={goToPrevStep}
+                className="w-1/3 py-3 bg-gray-200 rounded-lg text-gray-800 font-bold flex items-center justify-center"
+              >
+                <FaChevronLeft className="mr-2" /> {t(language, 'back')}
+              </button>
+              <button
+                onClick={handleAddToCart}
+                disabled={isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2}
+                className={`w-2/3 py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center ${
+                  isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                <FaShoppingCart className="mr-2" /> {t(language, 'addToCart')}
+              </button>
+            </div>
+            
+            {isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 && (
+              <p className="text-red-500 text-sm mt-2 text-center">
+                {t(language, 'selectSecondHalf')}
+              </p>
+            )}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        {/* Italian flag lines at the top */}
+        <div className="h-2 w-full bg-green-600"></div>
+        <div className="h-2 w-full bg-white"></div>
+        <div className="h-2 w-full bg-red-600"></div>
+        
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-800">
+              {typeof product.name === 'object' ? product.name[language] : product.name}
+            </h3>
+            <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
+              <X size={20} />
+            </button>
+          </div>
+          
+          {product.description && (
+            <p className="text-gray-600 text-sm mb-4">
+              {typeof product.description === 'object' ? product.description[language] : product.description}
             </p>
           )}
+          
+          {/* Step Indicator */}
+          {renderStepIndicator()}
+          
+          {/* Current Step Content */}
+          {renderCurrentStep()}
         </div>
       </div>
     </div>
   );
 };
-
 
 const ProductCard = ({ product, language, onAddToCart }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -1257,7 +1535,7 @@ const handleToggleUseStamps = () => {
 
               {item.borderType && (
                 <div className="flex items-start">
-                  <span className="w-12 sm:w-16 text-xs text-gray-500">Borda:</span>
+                  <span className="w-12 sm:w-16 text-xs text-gray-500">Massa:</span>
                   <span className="text-xs sm:text-sm font-medium">
                     {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
                   </span>
@@ -2960,6 +3238,7 @@ useEffect(() => {
   }, [customerInfo, deliveryOption, cart]);
 
 const addToCart = (product, selection) => {
+  if (!selection) throw new Error("Selection is required");
   const { size, border, quantity, extras, halfAndHalf, halfPizza1, halfPizza2, borderType, meatType, withMenu } = selection;
 
   const getPizzaName = (id) => {
