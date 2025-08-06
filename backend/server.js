@@ -20,7 +20,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
+printer.initialize().then(success => {
+  console.log('Inicialização da impressora:', success ? 'SUCESSO' : 'FALHOU');
+});
+
+
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
   console.log(`Servidor backend rodando na porta ${PORT}`);
   console.log(`Acesse: http://localhost:${PORT}/api/health para verificar o status`);

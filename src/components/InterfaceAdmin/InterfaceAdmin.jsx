@@ -15,6 +15,7 @@ import {
   getDoc
 } from 'firebase/firestore';
 import { 
+  FaStore,
   FaMapMarkerAlt,
   FaInfoCircle,
   FaPrint,
@@ -47,7 +48,7 @@ import {
   FaFileExport,
   FaUserTie,
   FaBiking,
-  FaMoneyBillAlt
+  FaMoneyBillAlt,
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -157,51 +158,101 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }) => {
 };
 
 const OrderItem = ({ item }) => {
+  // Verifica se extras são válidos
+  const hasValidExtras = item.extras && Array.isArray(item.extras) &&
+    item.extras.every(extra => extra && typeof extra.preco === 'number');
+
+  // Cálculo de preços
+  const precoBase = item.preco || 0;
+  const precoBorda = item.precoBorda || 0;
+  const precoExtras = hasValidExtras
+    ? item.extras.reduce((sum, extra) => sum + (extra.preco || 0), 0)
+    : 0;
+  const precoTotal = (precoBase + precoBorda + precoExtras) * item.quantidade;
+
+  // Determina o tipo de item
+ const isPizza = item.categoria === 'tradicionais' || item.categoria === 'pizzas';
+ const isBebida = item.categoria === 'bebidas' || item.categoria === 'freeDrinks';
+
+
   return (
-    <div 
-      className={`p-3 rounded-lg ${
-        item.pagoComSelos 
-          ? 'bg-amber-50 border border-amber-200' 
-          : 'bg-gray-50 border border-gray-200'
-      }`}
-    >
-      <div className="flex justify-between">
-        <div>
-          <p className="font-medium flex items-center">
+    <div className={`p-4 rounded-xl mb-3 transition-all ${item.pagoComSelos ? 
+      'bg-gradient-to-br from-amber-50 to-amber-100 border-l-4 border-amber-400' : 
+      'bg-white border-l-4 border-blue-500'} shadow-sm hover:shadow-md`}>
+
+      {/* Cabeçalho do Item */}
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex items-center">
+          <h3 className="text-lg font-bold text-gray-800">
             {item.quantidade}x {item.nome}
-            {item.pagoComSelos && (
-              <span className="ml-2 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs flex items-center">
-                <FaStamp className="mr-1" size={10} />
-                Selos
-              </span>
-            )}
-          </p>
-          {item.tamanho && (
-            <p className="text-xs text-gray-500 mt-1">
-              Tamanho: {item.tamanho.charAt(0).toUpperCase() + item.tamanho.slice(1)}
-            </p>
-          )}
-          {item.halfAndHalf && (
-            <p className="text-xs text-gray-500 mt-1">
-              Meia a meia: {item.halfPizza1Name} + {item.halfPizza2Name}
-            </p>
-          )}
-          {item.borderType && shouldShowBorderType(item.nome) && (
-            <p className="text-xs text-gray-500 mt-1">
-              Borda: {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
-            </p>
-          )}
-          {item.extras?.length > 0 && (
-            <p className="text-xs text-gray-500 mt-1">
-              Extras: {item.extras.map(e => e.nome).join(', ')}
-            </p>
+          </h3>
+          {item.pagoComSelos && (
+            <span className="ml-3 bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs flex items-center font-medium">
+              <FaStamp className="mr-1" size={12} />
+              {item.selosUsados} Selos
+            </span>
           )}
         </div>
-        <span className={`font-medium min-w-[70px] text-right ${
-          item.pagoComSelos ? 'text-green-600' : 'text-gray-800'
-        }`}>
-          {item.pagoComSelos ? 'Grátis' : formatCurrency(item.preco * item.quantidade)}
+        <span className={`text-xl font-bold ${item.pagoComSelos ? 'text-green-600' : 'text-gray-900'}`}>
+          {item.pagoComSelos ? 'Grátis' : formatCurrency(precoTotal)}
         </span>
+      </div>
+
+      {/* Detalhes Específicos */}
+      <div className="space-y-2 pl-1">
+        {/* Informações para Pizzas */}
+        {isPizza && (
+          <>
+            {item.tamanho && (
+              <p className="text-sm text-gray-600">
+                <span className="font-medium text-gray-700">Tamanho:</span> {item.tamanho}
+              </p>
+            )}
+
+            {item.tipoMassa && (
+              <p className="text-sm text-gray-600">
+                <span className="font-medium text-gray-700">Massa:</span> {item.tipoMassa}
+              </p>
+            )}
+
+            {item.halfAndHalf && (
+              <p className="text-sm text-gray-600">
+                <span className="font-medium text-gray-700">Meia a meia:</span> {item.halfPizza1Name} + {item.halfPizza2Name}
+              </p>
+            )}
+
+            {item.nomeBorda && (
+              <p className="text-sm text-gray-600">
+                <span className="font-medium text-gray-700">Borda:</span> {item.nomeBorda} (+{formatCurrency(item.precoBorda)})
+              </p>
+            )}
+          </>
+        )}
+
+        {/* Informações para Bebidas */}
+        {isBebida && item.descricao && (
+          <p className="text-sm text-gray-600">
+            <span className="font-medium text-gray-700">Detalhes:</span> {item.descricao}
+          </p>
+        )}
+
+        {/* Extras (comum a todos os itens) */}
+        {hasValidExtras && item.extras.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <p className="text-sm font-medium text-gray-700 mb-1">Extras:</p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+              {item.extras.map((extra, idx) => (
+                <li key={idx} className="text-sm text-gray-600 flex items-center">
+                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                  {extra.nome} (+{formatCurrency(extra.preco)})
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-sm font-semibold text-gray-800">
+              Total Extras: {formatCurrency(precoExtras)}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -570,163 +621,104 @@ const OrderCard = ({ order, onPrint, onDelete, onCancel, onMarkAsReady, onAssign
   );
 };
 
-const DeliveryAnalytics = ({ orders, startDate, endDate }) => {
-  const [deliveryFilter, setDeliveryFilter] = useState('all');
-  
-  // Filtra pedidos de entrega no período selecionado que estão marcados como prontos
-  const deliveryOrders = orders.filter(order => {
-    const orderDate = order.criadoEm?.toDate ? order.criadoEm.toDate() : new Date(order.criadoEm);
-    return (
-      order.tipoEntrega === 'entrega' && 
-      order.status === 'pronto' &&
-      order.entregador &&
-      orderDate >= startDate && 
-      orderDate <= endDate
-    );
-  });
+const DeliveryPerformance = ({ orders }) => {
+  const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 7)));
+  const [endDate, setEndDate] = useState(new Date());
+  const [deliveryStats, setDeliveryStats] = useState([]);
 
-  // Calcula o total de entregas e valores por entregador
-  const deliveryStats = deliveryOrders.reduce((acc, order) => {
-    if (!acc[order.entregador]) {
-      acc[order.entregador] = {
-        count: 0,
-        total: 0,
-        deliveries: []
-      };
-    }
-    acc[order.entregador].count++;
-    acc[order.entregador].total += order.total || 0;
-    acc[order.entregador].deliveries.push(order);
-    return acc;
-  }, {});
+  useEffect(() => {
+    const calculateDeliveryStats = () => {
+      const stats = {};
+      
+      // Filtra pedidos no intervalo de datas
+      const filteredOrders = orders.filter(order => {
+        const orderDate = order.criadoEm?.toDate ? order.criadoEm.toDate() : new Date(order.criadoEm);
+        return (
+          order.tipoEntrega === 'entrega' && 
+          order.status === 'pronto' &&
+          orderDate >= startDate && 
+          orderDate <= endDate
+        );
+      });
 
-  // Ordena entregadores por quantidade de entregas
-  const sortedDeliverers = Object.entries(deliveryStats)
-    .sort((a, b) => b[1].count - a[1].count)
-    .map(([name, stats]) => ({ 
-      name, 
-      count: stats.count,
-      total: stats.total,
-      average: stats.total / stats.count,
-      deliveries: stats.deliveries
-    }));
-
-  // Dados para o gráfico
-  const chartData = {
-    labels: sortedDeliverers.map(d => d.name),
-    datasets: [
-      {
-        label: 'Número de Entregas',
-        data: sortedDeliverers.map(d => d.count),
-        backgroundColor: 'rgba(79, 70, 229, 0.6)',
-        borderColor: 'rgba(79, 70, 229, 1)',
-        borderWidth: 1,
-        yAxisID: 'y'
-      },
-      {
-        label: 'Valor Total (€)',
-        data: sortedDeliverers.map(d => d.total),
-        backgroundColor: 'rgba(16, 185, 129, 0.6)',
-        borderColor: 'rgba(16, 185, 129, 1)',
-        borderWidth: 1,
-        yAxisID: 'y1',
-        type: 'line'
-      }
-    ]
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top'
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.datasetIndex === 0) {
-              label += context.raw;
-            } else {
-              label += formatCurrency(context.raw);
-            }
-            return label;
-          }
+      // Calcula dados para cada entregador
+      filteredOrders.forEach(order => {
+        // Normaliza nome do entregador para evitar duplicações
+        const deliverer = order.entregador 
+          ? order.entregador.trim().toLowerCase()
+          : 'não atribuído';
+        const displayName = order.entregador 
+          ? order.entregador.trim()
+          : 'Não atribuído';
+        
+        if (!stats[deliverer]) {
+          stats[deliverer] = {
+            name: displayName,
+            deliveries: 0,
+            totalRevenue: 0,
+            orders: []
+          };
         }
-      }
-    },
-    scales: {
-      y: {
-        type: 'linear',
-        display: true,
-        position: 'left',
-        title: {
-          display: true,
-          text: 'Número de Entregas'
-        },
-        ticks: {
-          precision: 0
+        
+        stats[deliverer].deliveries += 1;
+        if (order.metodoPagamento === 'dinheiro') {
+          stats[deliverer].totalRevenue += order.total || 0;
         }
-      },
-      y1: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        title: {
-          display: true,
-          text: 'Valor Total (€)'
-        },
-        grid: {
-          drawOnChartArea: false
-        }
-      }
-    }
-  };
+        stats[deliverer].orders.push(order);
+      });
 
-  // Prepara dados para exportação
+      // Converte para array e ordena por número de entregas
+      return Object.values(stats)
+        .sort((a, b) => b.deliveries - a.deliveries);
+    };
+
+    setDeliveryStats(calculateDeliveryStats());
+  }, [orders, startDate, endDate]);
+
   const prepareExportData = () => {
-    const data = sortedDeliverers.map(deliverer => ({
+    return deliveryStats.map(deliverer => ({
       'Entregador': deliverer.name,
-      'Total de Entregas': deliverer.count,
-      'Valor Total (€)': deliverer.total,
-      'Média por Entrega (€)': deliverer.average,
-      'Detalhes das Entregas': deliverer.deliveries
-        .map(order => `#${order.numeroPedido || order.id.substring(0, 5)} - ${formatCurrency(order.total || 0)}`)
-        .join('; ')
+      'Entregas Realizadas': deliverer.deliveries,
+      'Valor Total Recebido (€)': deliverer.totalRevenue,
+      'Média por Entrega (€)': (deliverer.totalRevenue / deliverer.deliveries).toFixed(2),
+      'Pedidos': deliverer.orders.map(order => `#${order.numeroPedido || order.id.substring(0, 5)} - ${formatCurrency(order.total)}`).join('; ')
     }));
-
-    return data;
   };
-
-  const exportData = prepareExportData();
 
   return (
     <ModernCard className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h3 className="text-lg font-bold text-gray-900 flex items-center">
-          <FaBiking className="text-blue-500 mr-2" />
-          Desempenho dos Entregadores
+          <FaMotorcycle className="text-blue-500 mr-2" />
+          Desempenho dos Estafetas
         </h3>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600">Filtrar:</span>
-          <select
-            value={deliveryFilter}
-            onChange={(e) => setDeliveryFilter(e.target.value)}
-            className="border border-gray-300 rounded-md px-2 py-1 text-sm"
-          >
-            <option value="all">Todos</option>
-            {sortedDeliverers.map(deliverer => (
-              <option key={deliverer.name} value={deliverer.name}>
-                {deliverer.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center">
+            <label className="mr-2 text-sm text-gray-700">De:</label>
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+            />
+          </div>
+          <div className="flex items-center">
+            <label className="mr-2 text-sm text-gray-700">Até:</label>
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate}
+              className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+            />
+          </div>
           <CSVLink
-            data={exportData}
-            filename={`relatorio-entregadores-${formatDate(startDate)}-a-${formatDate(endDate)}.csv`}
+            data={prepareExportData()}
+            filename={`desempenho-estafetas-${formatDate(startDate)}-a-${formatDate(endDate)}.csv`}
             className="px-3 py-1 bg-green-600 text-white rounded-md text-sm flex items-center hover:bg-green-700"
           >
             <FaFileExport className="mr-1" />
@@ -735,111 +727,136 @@ const DeliveryAnalytics = ({ orders, startDate, endDate }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <div className="lg:col-span-2 h-64">
-          <Bar 
-            data={chartData}
-            options={chartOptions}
-          />
-        </div>
-
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-            <FaUserTie className="text-blue-500 mr-2" />
-            Resumo por Entregador
-          </h4>
-          <div className="space-y-3 max-h-52 overflow-y-auto">
-            {sortedDeliverers.length > 0 ? (
-              sortedDeliverers.map(deliverer => (
-                <div key={deliverer.name} className="p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
-                  <div className="flex justify-between items-center mb-2">
-                    <h5 className="font-medium text-gray-900">{deliverer.name}</h5>
-                    <Badge color="blue">{deliverer.count} entregas</Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-600">Total:</span>
-                      <p className="font-medium text-green-600">{formatCurrency(deliverer.total)}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Média:</span>
-                      <p className="font-medium">{formatCurrency(deliverer.average)}</p>
-                    </div>
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-gray-200">
-                    <span className="text-xs text-gray-500">Valor a receber (10%):</span>
-                    <p className="font-bold text-lg text-blue-600">
-                      {formatCurrency(deliverer.total * 0.1)}
-                    </p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-4 text-gray-500">
-                Nenhum dado de entrega disponível para o período selecionado
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <h4 className="bg-gray-50 px-4 py-3 text-md font-semibold text-gray-800 border-b border-gray-200 flex items-center">
-          <FaListUl className="text-gray-500 mr-2" />
-          Detalhes das Entregas ({deliveryOrders.length})
-        </h4>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedido</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data/Hora</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entregador</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comissão (10%)</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {deliveryOrders.length > 0 ? (
-                deliveryOrders
-                  .filter(order => deliveryFilter === 'all' || order.entregador === deliveryFilter)
-                  .map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{order.numeroPedido || order.id.substring(0, 5)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                        {formatDateTime(order.criadoEm)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                        {order.entregador}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                        {order.cliente?.nome || 'Não informado'}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-green-600">
-                        {formatCurrency(order.total || 0)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
-                        {formatCurrency((order.total || 0) * 0.1)}
-                      </td>
-                    </tr>
-                  ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-sm text-gray-500">
-                    Nenhuma entrega registrada para o período selecionado
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estafeta</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entregas Realizadas</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Total Recebido</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Média por Entrega</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {deliveryStats.length > 0 ? (
+              deliveryStats.map((deliverer) => (
+                <tr key={deliverer.name} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {deliverer.name}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {deliverer.deliveries} entregas
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-green-600">
+                    {formatCurrency(deliverer.totalRevenue)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {formatCurrency(deliverer.totalRevenue / deliverer.deliveries)}
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="px-4 py-8 text-center text-sm text-gray-500">
+                  Nenhum dado de entrega disponível para o período selecionado
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ModernCard className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-md font-semibold text-gray-800 flex items-center">
+              <FaChartBar className="text-blue-500 mr-2" />
+              Entregas por Estafeta
+            </h4>
+          </div>
+          <div className="h-64">
+            <Bar
+              data={{
+                labels: deliveryStats.map(d => d.name),
+                datasets: [{
+                  label: 'Entregas Realizadas',
+                  data: deliveryStats.map(d => d.deliveries),
+                  backgroundColor: 'rgba(79, 70, 229, 0.6)',
+                  borderColor: 'rgba(79, 70, 229, 1)',
+                  borderWidth: 1
+                }]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      precision: 0
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        </ModernCard>
+
+        <ModernCard className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-md font-semibold text-gray-800 flex items-center">
+              <FaChartBar className="text-green-500 mr-2" />
+              Valor Total por Estafeta
+            </h4>
+          </div>
+          <div className="h-64">
+            <Bar
+              data={{
+                labels: deliveryStats.map(d => d.name),
+                datasets: [{
+                  label: 'Valor Total (€)',
+                  data: deliveryStats.map(d => d.totalRevenue),
+                  backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                  borderColor: 'rgba(16, 185, 129, 1)',
+                  borderWidth: 1
+                }]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: function(value) {
+                        return formatCurrency(value);
+                      }
+                    }
+                  }
+                },
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                          label += ': ';
+                        }
+                        label += formatCurrency(context.raw);
+                        return label;
+                      }
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        </ModernCard>
       </div>
     </ModernCard>
   );
 };
+
 
 const AnalyticsDashboard = ({ orders }) => {
   const [timeRange, setTimeRange] = useState('today');
@@ -847,6 +864,7 @@ const AnalyticsDashboard = ({ orders }) => {
   const [endDate, setEndDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [exportData, setExportData] = useState([]);
+  const [expandedDeliverers, setExpandedDeliverers] = useState({});
 
   // Ajusta a data final para incluir todo o dia
   const adjustedEndDate = new Date(endDate);
@@ -930,7 +948,22 @@ const AnalyticsDashboard = ({ orders }) => {
       if (order.tipoEntrega === 'entrega') {
         metrics.deliveryOrders++;
         if (order.entregador) {
-          metrics.deliverers[order.entregador] = (metrics.deliverers[order.entregador] || 0) + 1;
+          const delivererName = order.entregador;
+          if (!metrics.deliverers[delivererName]) {
+            metrics.deliverers[delivererName] = {
+              count: 0,
+              total: 0,
+              orders: [],
+              paymentMethods: {}
+            };
+          }
+          metrics.deliverers[delivererName].count++;
+          metrics.deliverers[delivererName].total += order.total || 0;
+          metrics.deliverers[delivererName].orders.push(order);
+          
+          const paymentMethod = order.metodoPagamento || 'outro';
+          metrics.deliverers[delivererName].paymentMethods[paymentMethod] = 
+            (metrics.deliverers[delivererName].paymentMethods[paymentMethod] || 0) + 1;
         }
       } else {
         metrics.pickupOrders++;
@@ -1024,6 +1057,13 @@ const AnalyticsDashboard = ({ orders }) => {
 
   const { paymentData, itemsData, hourlyData, dailyData } = prepareChartData();
 
+  const toggleDelivererExpansion = (delivererName) => {
+    setExpandedDeliverers(prev => ({
+      ...prev,
+      [delivererName]: !prev[delivererName]
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <ModernCard className="p-4">
@@ -1116,11 +1156,7 @@ const AnalyticsDashboard = ({ orders }) => {
         )}
       </ModernCard>
 
-      <DeliveryAnalytics 
-        orders={orders} 
-        startDate={startDate} 
-        endDate={adjustedEndDate} 
-      />
+      <DeliveryPerformance orders={orders} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <ModernCard className="p-4 bg-gradient-to-br from-blue-50 to-blue-100">
@@ -1291,80 +1327,163 @@ const AnalyticsDashboard = ({ orders }) => {
       <ModernCard className="p-4 overflow-x-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900 flex items-center">
-            <FaListUl className="text-gray-500 mr-2" />
-            Detalhes dos Pedidos ({filteredOrders.length})
+            <FaMotorcycle className="text-gray-500 mr-2" />
+            Desempenho dos Entregadores ({Object.keys(metrics.deliverers).length})
           </h3>
         </div>
         
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedido</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data/Hora</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entregador</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pagamento</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredOrders.length > 0 ? (
-              filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    #{order.numeroPedido || order.id.substring(0, 5)}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {formatDateTime(order.criadoEm)}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {order.cliente?.nome || 'Não informado'}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {order.tipoEntrega === 'entrega' ? (
-                      <Badge color="green">Entrega</Badge>
-                    ) : (
-                      <Badge color="blue">Retirada</Badge>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {order.tipoEntrega === 'entrega' ? (
-                      order.entregador || 'Não atribuído'
-                    ) : '--'}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {order.metodoPagamento?.toUpperCase() || 'NÃO INFORMADO'}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {formatCurrency(order.total || 0)}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {order.status === 'pronto' ? (
-                      <Badge color="green">PRONTO</Badge>
-                    ) : order.status === 'cancelado' ? (
-                      <Badge color="red">CANCELADO</Badge>
-                    ) : (
-                      <Badge color="yellow">PENDENTE</Badge>
-                    )}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="8" className="px-4 py-8 text-center text-sm text-gray-500">
-                  Nenhum pedido encontrado para o período selecionado
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <div className="space-y-4">
+          {Object.entries(metrics.deliverers).map(([delivererName, delivererData]) => (
+            <div key={delivererName} className="border border-gray-200 rounded-lg overflow-hidden">
+              <div 
+                className="flex items-center justify-between p-4 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                onClick={() => toggleDelivererExpansion(delivererName)}
+              >
+                <div className="flex items-center">
+                  <FaUser className="text-gray-500 mr-3" />
+                  <div>
+                    <h4 className="font-bold text-gray-900">{delivererName}</h4>
+                    <p className="text-sm text-gray-500">
+                      {delivererData.count} entrega{delivererData.count !== 1 ? 's' : ''} • 
+                      Total: {formatCurrency(delivererData.total)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <div className="flex space-x-2 mr-4">
+                    {Object.entries(delivererData.paymentMethods).map(([method, count]) => (
+                      <span key={method} className="text-xs font-medium px-2 py-1 bg-gray-200 rounded-full">
+                        {method.toUpperCase()}: {count}
+                      </span>
+                    ))}
+                  </div>
+                  <FaChevronDown className={`text-gray-500 transition-transform ${expandedDeliverers[delivererName] ? 'transform rotate-180' : ''}`} />
+                </div>
+              </div>
+              
+              {expandedDeliverers[delivererName] && (
+                <div className="bg-white divide-y divide-gray-200">
+                  <table className="min-w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedido</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data/Hora</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pagamento</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {delivererData.orders.map((order) => (
+                        <tr key={order.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                            #{order.numeroPedido || order.id.substring(0, 5)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {formatDateTime(order.criadoEm)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {order.cliente?.nome || 'Não informado'}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {order.metodoPagamento?.toUpperCase() || 'NÃO INFORMADO'}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {formatCurrency(order.total || 0)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {order.status === 'pronto' ? (
+                              <Badge color="green">PRONTO</Badge>
+                            ) : order.status === 'cancelado' ? (
+                              <Badge color="red">CANCELADO</Badge>
+                            ) : (
+                              <Badge color="yellow">PENDENTE</Badge>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {/* Pedidos sem entregador (retiradas) */}
+          {metrics.pickupOrders > 0 && (
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div 
+                className="flex items-center justify-between p-4 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                onClick={() => toggleDelivererExpansion('retiradas')}
+              >
+                <div className="flex items-center">
+                  <FaStore className="text-gray-500 mr-3" />
+                  <div>
+                    <h4 className="font-bold text-gray-900">Pedidos de Retirada</h4>
+                    <p className="text-sm text-gray-500">
+                      {metrics.pickupOrders} pedido{metrics.pickupOrders !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+                <FaChevronDown className={`text-gray-500 transition-transform ${expandedDeliverers['retiradas'] ? 'transform rotate-180' : ''}`} />
+              </div>
+              
+              {expandedDeliverers['retiradas'] && (
+                <div className="bg-white divide-y divide-gray-200">
+                  <table className="min-w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedido</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data/Hora</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pagamento</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredOrders
+                        .filter(order => order.tipoEntrega !== 'entrega')
+                        .map((order) => (
+                          <tr key={order.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                              #{order.numeroPedido || order.id.substring(0, 5)}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                              {formatDateTime(order.criadoEm)}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                              {order.cliente?.nome || 'Não informado'}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                              {order.metodoPagamento?.toUpperCase() || 'NÃO INFORMADO'}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {formatCurrency(order.total || 0)}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                              {order.status === 'pronto' ? (
+                                <Badge color="green">PRONTO</Badge>
+                              ) : order.status === 'cancelado' ? (
+                                <Badge color="red">CANCELADO</Badge>
+                              ) : (
+                                <Badge color="yellow">PENDENTE</Badge>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </ModernCard>
     </div>
   );
 };
-
 const InterfaceAdmin = () => {
   const [activeTab, setActiveTab] = useState('pedidos');
   const [orders, setOrders] = useState([]);
@@ -1395,115 +1514,109 @@ const InterfaceAdmin = () => {
     }
   };
 
-  useEffect(() => {
-    let isProcessing = false;
-    let isInitialLoad = true;
-    const processedOrders = new Set();
+const isProcessing = useRef(false);
+const isInitialLoad = useRef(true);
+const processedOrders = useRef(new Set());
 
+useEffect(() => {
+  const q = query(
+    collection(db, "pedidos"),
+    orderBy("criadoEm", "desc"),
+    limit(50)
+  );
+
+  const unsubscribe = onSnapshot(q, async (snapshot) => {
+    const updatedOrders = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      criadoEm: doc.data().criadoEm?.toDate() || new Date()
+    }));
+
+    setOrders(updatedOrders);
+
+    if (loading && isInitialLoad.current) {
+      setLoading(false);
+      isInitialLoad.current = false;
+    }
+
+    for (const change of snapshot.docChanges()) {
+      if (change.type === 'added' && !isProcessing.current && !isInitialLoad.current) {
+        const orderData = change.doc.data();
+        const orderId = change.doc.id;
+
+        if (orderData.status === 'impresso' || processedOrders.current.has(orderId)) continue;
+        processedOrders.current.add(orderId);
+
+        isProcessing.current = true;
+
+        const pedidoRef = doc(db, "pedidos", orderId);
+
+        try {
+          await updateDoc(pedidoRef, {
+            status: 'impresso',
+            impressoEm: serverTimestamp(),
+            impressoPor: auth.currentUser.uid
+          });
+
+          const orderToPrint = {
+            id: orderId,
+            ...orderData,
+            criadoEm: orderData.criadoEm?.toDate() || new Date()
+          };
+
+          await thermalPrinter.printOrder(orderToPrint);
+
+        } catch (error) {
+          console.error("Erro ao processar pedido:", error);
+          await updateDoc(pedidoRef, {
+            status: 'pendente',
+            impressoEm: null
+          });
+          processedOrders.current.delete(orderId);
+        } finally {
+          isProcessing.current = false;
+        }
+      }
+    }
+  });
+
+  return () => unsubscribe();
+}, [loading, thermalPrinter]);
+
+
+const refreshOrders = async () => {
+  setIsSyncing(true);
+  try {
     const q = query(
-      collection(db, "pedidos"),
-      orderBy("criadoEm", "desc"),
+      collection(db, 'pedidos'),
+      orderBy('criadoEm', 'desc'),
       limit(50)
     );
+    const snapshot = await getDocs(q);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const updatedOrders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        criadoEm: doc.data().criadoEm?.toDate() || new Date()
-      }));
+    const firestoreOrders = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      criadoEm: doc.data().criadoEm?.toDate() || new Date()
+    }));
 
-      setOrders(updatedOrders);
-
-      if (loading && isInitialLoad) {
-        setLoading(false);
-        isInitialLoad = false;
-      }
-
-      snapshot.docChanges().forEach(async (change) => {
-        if (change.type === 'added' && !isProcessing && !isInitialLoad) {
-          const orderData = change.doc.data();
-          const orderId = change.doc.id;
-
-          if (orderData.status === 'impresso' || processedOrders.has(orderId)) return;
-          processedOrders.add(orderId);
-
-          isProcessing = true;
-
-          const pedidoRef = doc(db, "pedidos", orderId);
-          const pedidoSnap = await getDoc(pedidoRef);
-
-          try {
-            if (pedidoSnap.exists()) {
-              await updateDoc(pedidoRef, {
-                status: 'impresso',
-                impressoEm: serverTimestamp(),
-                impressoPor: auth.currentUser.uid
-              });
-
-              const orderToPrint = {
-                id: orderId,
-                ...orderData,
-                criadoEm: orderData.criadoEm?.toDate() || new Date()
-              };
-
-              await thermalPrinter.printOrder(orderToPrint);
-            }
-          } catch (error) {
-            console.error("Erro ao processar pedido:", error);
-            const revertSnap = await getDoc(pedidoRef);
-            if (revertSnap.exists()) {
-              await updateDoc(pedidoRef, {
-                status: 'pendente',
-                impressoEm: null
-              });
-            }
-            processedOrders.delete(orderId);
-          } finally {
-            isProcessing = false;
-          }
-        }
-      });
-    });
-
-    return () => unsubscribe();
-  }, [loading, thermalPrinter]);
-
-  const refreshOrders = async () => {
-    setIsSyncing(true);
-    try {
-      const q = query(
-        collection(db, 'pedidos'),
-        orderBy('criadoEm', 'desc'),
-        limit(50)
-      );
-      const snapshot = await getDocs(q);
-
-      const firestoreOrders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        criadoEm: doc.data().criadoEm?.toDate() || new Date()
-      }));
-
-      setInternalOrders(firestoreOrders);
+    setInternalOrders(firestoreOrders);
+    
+    setOrders(prevOrders => {
+      const prevOrdersMap = new Map(prevOrders.map(o => [o.id, o]));
       
-      setOrders(prevOrders => {
-        const prevOrdersMap = new Map(prevOrders.map(o => [o.id, o]));
-        
-        return firestoreOrders.map(fsOrder => ({
-          ...fsOrder,
-          status: prevOrdersMap.get(fsOrder.id)?.status || fsOrder.status || 'pendente'
-        }));
-      });
-
-      console.log('Sincronização completa:', firestoreOrders.length, 'pedidos processados');
-    } catch (error) {
-      console.error('Falha na sincronização:', error);
-      setOrders(prevOrders => prevOrders);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+      return firestoreOrders.map(fsOrder => ({
+        ...fsOrder,
+        status: prevOrdersMap.get(fsOrder.id)?.status || fsOrder.status || 'pendente'
+      }));
+    });
+  } catch (error) {
+    console.error('Falha na sincronização:', error);
+    setOrders(prevOrders => prevOrders);
+  } finally {
+    setIsSyncing(false);
+  }
+};
 
   useEffect(() => {
     refreshOrders();
@@ -1921,7 +2034,7 @@ const InterfaceAdmin = () => {
                       <div className="space-y-4">
                         <div className="text-center">
                           <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-100 rounded-full mb-2">
-                            <FaStamp className="w-6 h-6 text-amber-600" />
+                            <FaStamp className="w-6 w-6 text-amber-600" />
                           </div>
                           <h3 className="text-md font-bold text-gray-900 mb-1">
                             Saldo Atual: {formatStamps(foundCustomer.selos)}

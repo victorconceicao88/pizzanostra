@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react';
-import { FaPizzaSlice,FaGlassWhiskey,FaArrowRight, FaChevronLeft, FaChevronRight, FaClipboardList,FaCopy,FaAddressBook,FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight, FaShieldAlt, FaPlus, FaUserPlus } from 'react-icons/fa';
+import { FaPizzaSlice,FaBacon,FaPlusCircle,FaClipboardCheck,FaRulerCombined,FaGlassWhiskey,FaArrowRight, FaChevronLeft, FaChevronRight, FaClipboardList,FaCopy,FaAddressBook,FaLeaf, FaIceCream, FaBreadSlice, FaWineGlassAlt, FaShoppingCart, FaMapMarkerAlt, FaMoneyBillWave, FaCreditCard, FaQrcode, FaRegStar, FaStar, FaChevronDown, FaChevronUp, FaRegClock, FaMotorcycle, FaGlobe, FaPhone, FaCheck, FaCoins, FaTicketAlt, FaTimes, FaCheckCircle, FaExclamationTriangle, FaGift, FaInfoCircle, FaUser, FaStore, FaAngleDown, FaAngleRight, FaShieldAlt, FaPlus, FaUserPlus } from 'react-icons/fa';
 import { Pizza, Leaf, IceCream, Hamburger,CupTogo, Wine, X, Check, Plus, Minus, MapPin, CreditCard, CurrencyEur, DeviceMobile, Money} from '@phosphor-icons/react';
 import { motion, AnimatePresence, useAnimation, useInView, PanInfo, useMotionValue } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -622,23 +622,25 @@ const CustomizationModal = ({
     ]
   };
 
-  const getBasePrice = () => {
-    if (selection.halfAndHalf && isFamilySize) {
-      const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas)
-        .find(p => p.id === (selection.halfPizza1 || product.id));
-      const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas)
-        .find(p => p.id === selection.halfPizza2);
-      
-      const price1 = pizza1?.sizes?.[selection.size] || 0;
-      const price2 = pizza2?.sizes?.[selection.size] || 0;
-      return Math.max(price1, price2);
-    }
-    return product.sizes ? (product.sizes[selection.size] || product.sizes.media) : product.price;
-  };
+const getBasePrice = () => {
+  if (selection.halfAndHalf && isFamilySize) {
+    const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas)
+      .find(p => p.id === (selection.halfPizza1 || product.id));
+    const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas)
+      .find(p => p.id === selection.halfPizza2);
+    
+    const price1 = pizza1?.sizes?.[selection.size] || 0;
+    const price2 = pizza2?.sizes?.[selection.size] || 0;
+    
+    return Math.max(price1, price2);
+  }
+  return product.sizes ? (product.sizes[selection.size] || product.sizes.media) : product.price;
+};
 
-  const basePrice = getBasePrice();
-  const extrasTotal = selection.extras.reduce((sum, extra) => sum + extra.price, 0);
-  const totalPrice = (basePrice + extrasTotal) * selection.quantity;
+const basePrice = getBasePrice();
+const extrasTotal = selection.extras.reduce((sum, extra) => sum + extra.price, 0);
+const borderPrice = selection.border ? (menuData.bordas.find(b => b.id === selection.border)?.sizes[selection.size] || 0) : 0;
+const totalPrice = (basePrice + extrasTotal + borderPrice) * selection.quantity;
   
   const handleSizeChange = (size) => {
     setSelection(prev => ({ 
@@ -701,22 +703,39 @@ const CustomizationModal = ({
     markStepAsCompleted(4);
   };
   
-  const handleAddToCart = () => {
-    if (selection.freeDrink && selection.freeDrink !== 'none') {
-      const selectedDrink = freeDrinkOptions[selection.size].find(d => d.id === selection.freeDrink);
-      const drinkItem = {
-        ...selectedDrink,
-        isFree: true,
-        price: 0, // Explicitly set price to 0 to prevent NaN issues
-        quantity: selection.quantity
-      };
-      onAddToCart(product, selection);
-      onAddToCart(drinkItem, { quantity: 1 }); // Ensure drink has proper quantity
-    } else {
-      onAddToCart(product, selection);
-    }
-    onClose();
-  };
+const handleAddToCart = () => {
+  if (selection.freeDrink && selection.freeDrink !== 'none') {
+    const selectedDrink = freeDrinkOptions[selection.size].find(d => d.id === selection.freeDrink);
+    const drinkItem = {
+      ...selectedDrink,
+      isFree: true,
+      price: 0,
+      quantity: selection.quantity
+    };
+    onAddToCart({
+      ...product,
+      price: basePrice + extrasTotal, // Inclui os extras aqui
+      borderPrice,
+      extras: selection.extras,
+      category: product.category
+    }, {
+      ...selection,
+      price: basePrice + extrasTotal + borderPrice // Garante que o preço total inclua tudo
+    });
+    onAddToCart(drinkItem, { quantity: 1 });
+  } else {
+    onAddToCart({
+      ...product,
+      price: basePrice + extrasTotal, // Inclui os extras aqui
+      borderPrice,
+      extras: selection.extras
+    }, {
+      ...selection,
+      price: basePrice + extrasTotal + borderPrice // Garante que o preço total inclua tudo
+    });
+  }
+  onClose();
+};
 
   const markStepAsCompleted = (stepId) => {
     if (!completedSteps.includes(stepId)) {
@@ -759,11 +778,12 @@ const CustomizationModal = ({
     const secondHalfPrice = secondHalfPizza?.sizes?.[selection.size] || 0;
 
     return (
-      <div className="mb-6">
+      <div className="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
         <div className="flex items-center justify-between mb-3">
-          <label className="font-medium text-gray-700">
-            {t(language, 'halfAndHalf')}
-          </label>
+          <div>
+            <h4 className="font-medium text-gray-800">{t(language, 'halfAndHalf')}</h4>
+            <p className="text-xs text-gray-500">{t(language, 'halfAndHalfDescription')}</p>
+          </div>
           <button
             onClick={toggleHalfAndHalf}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
@@ -780,10 +800,10 @@ const CustomizationModal = ({
         
         {selection.halfAndHalf && (
           <div className="space-y-3">
-            <div className="bg-gray-50 p-3 rounded-lg mb-2">
+            <div className="bg-white p-3 rounded-lg border border-gray-200">
               <p className="text-sm font-medium text-gray-700">
                 {t(language, 'firstHalf')}: 
-                <span className="ml-2 font-bold">
+                <span className="ml-2 font-bold text-green-600">
                   {typeof firstHalfPizza.name === 'object' 
                     ? firstHalfPizza.name[language] 
                     : firstHalfPizza.name} ({(firstHalfPrice / 2).toFixed(2)}€)
@@ -791,14 +811,14 @@ const CustomizationModal = ({
               </p>
             </div>
             
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">
+            <div className="bg-white p-3 rounded-lg border border-gray-200">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 {t(language, 'secondHalf')}
               </label>
               <select
                 value={selection.halfPizza2 || ''}
                 onChange={(e) => selectHalfPizza(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg text-sm"
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
                 <option value="">{t(language, 'selectHalf')}</option>
                 {menuData.tradicionais.concat(menuData.vegetarianas)
@@ -817,30 +837,30 @@ const CustomizationModal = ({
   };
 
   const renderBorderTypeSection = () => (
-    <div className="mb-6">
-      <label className="block text-gray-700 mb-2 font-medium">
-        {t(language, 'doughType')}
-      </label>
-      <div className="grid grid-cols-2 gap-2">
+    <div className="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+      <h4 className="font-medium text-gray-800 mb-2">{t(language, 'doughType')}</h4>
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => handleBorderTypeChange('fina')}
-          className={`py-3 rounded-lg transition-all ${
+          className={`py-3 px-2 rounded-lg transition-all flex flex-col items-center ${
             selection.borderType === 'fina'
-              ? 'bg-white border-2 border-[#016730] text-gray-800'
+              ? 'bg-white border-2 border-green-600 text-gray-800 shadow-sm'
               : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
           }`}
         >
-          {t(language, 'thinDough')}
+          <span className="font-medium">{t(language, 'thinDough')}</span>
+          <span className="text-xs text-gray-500 mt-1">{t(language, 'thinDoughDesc')}</span>
         </button>
         <button
           onClick={() => handleBorderTypeChange('grossa')}
-          className={`py-3 rounded-lg transition-all ${
+          className={`py-3 px-2 rounded-lg transition-all flex flex-col items-center ${
             selection.borderType === 'grossa'
-              ? 'bg-white border-2 border-[#016730] text-gray-800'
+              ? 'bg-white border-2 border-green-600 text-gray-800 shadow-sm'
               : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
           }`}
         >
-          {t(language, 'thickDough')}
+          <span className="font-medium">{t(language, 'thickDough')}</span>
+          <span className="text-xs text-gray-500 mt-1">{t(language, 'thickDoughDesc')}</span>
         </button>
       </div>
     </div>
@@ -850,26 +870,24 @@ const CustomizationModal = ({
     if (!isPizza) return null;
     
     return (
-      <div className="mb-6">
-        <label className="block text-gray-700 mb-2 font-medium">
-          {t(language, 'freeDrink')}
-        </label>
+      <div className="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+        <h4 className="font-medium text-gray-800 mb-3">{t(language, 'freeDrink')}</h4>
         <div className="grid grid-cols-3 gap-2">
           {freeDrinkOptions[selection.size].map(drink => (
             <button
               key={drink.id}
               onClick={() => handleFreeDrinkChange(drink.id)}
-              className={`p-3 rounded-lg border flex flex-col items-center transition-all ${
+              className={`p-2 rounded-lg border flex flex-col items-center transition-all ${
                 selection.freeDrink === drink.id
-                  ? 'bg-green-50 border-[#016730]'
+                  ? 'bg-green-50 border-green-600 shadow-inner'
                   : 'bg-white border-gray-200 hover:border-gray-300'
               }`}
             >
-              <span className="font-medium text-center">
+              <div className="w-8 h-8 bg-gray-100 rounded-full mb-1 flex items-center justify-center">
+                <FaGlassWhiskey className="text-gray-500" />
+              </div>
+              <span className="font-medium text-xs text-center">
                 {typeof drink.name === 'object' ? drink.name[language] : drink.name}
-              </span>
-              <span className="text-xs text-gray-500 mt-1">
-                {drink.price.toFixed(2)}€
               </span>
             </button>
           ))}
@@ -880,29 +898,29 @@ const CustomizationModal = ({
 
   const renderStepIndicator = () => {
     return (
-      <div className="flex items-center justify-between mb-6 relative">
-        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -z-10"></div>
+      <div className="flex items-center justify-between mb-8 relative">
+        <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -z-10 transform -translate-y-1/2"></div>
         {steps.map((step, index) => (
-          <div key={step.id} className="flex flex-col items-center">
+          <div key={step.id} className="flex flex-col items-center z-10">
             <button
               onClick={() => goToStep(step.id)}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${
                 currentStep === step.id
-                  ? 'bg-[#016730] text-white'
+                  ? 'bg-gradient-to-br from-green-600 to-green-800 text-white shadow-md'
                   : isStepCompleted(step.id)
-                    ? 'bg-green-100 text-[#016730]'
-                    : 'bg-gray-200 text-gray-600'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-500'
               }`}
               disabled={!isStepCompleted(step.id) && step.id !== 1}
             >
               {isStepCompleted(step.id) && currentStep !== step.id ? (
-                <FaCheck size={12} />
+                <FaCheck size={14} />
               ) : (
-                step.id
+                <span className="font-medium">{step.id}</span>
               )}
             </button>
-            <span className={`text-xs mt-1 text-center ${
-              currentStep === step.id ? 'font-bold text-[#016730]' : 'text-gray-600'
+            <span className={`text-xs mt-2 text-center max-w-16 ${
+              currentStep === step.id ? 'font-bold text-green-700' : 'text-gray-600'
             }`}>
               {step.label}
             </span>
@@ -919,22 +937,29 @@ const CustomizationModal = ({
     switch (currentStepData.name) {
       case 'size':
         return (
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'chooseSize')}</h3>
+          <div className="animate-fadeIn">
+            <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+              <FaRulerCombined className="mr-2 text-green-600" />
+              {t(language, 'chooseSize')}
+            </h3>
+            
             <div className="grid grid-cols-3 gap-3 mb-6">
               {['individual', 'media', 'familia'].map(size => (
                 <button
                   key={size}
                   onClick={() => handleSizeChange(size)}
-                  className={`py-4 rounded-lg transition-all flex flex-col items-center ${
+                  className={`py-4 rounded-xl transition-all flex flex-col items-center border ${
                     selection.size === size
-                      ? 'bg-white border-2 border-[#016730] text-gray-800 shadow-md'
-                      : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+                      ? 'bg-white border-2 border-green-600 text-gray-800 shadow-md'
+                      : 'bg-white border-gray-200 text-gray-800 hover:border-gray-300'
                   }`}
                 >
                   <div className="text-sm font-medium">{t(language, size)}</div>
-                  <div className="font-bold">
+                  <div className="font-bold text-green-600 mt-1">
                     {product.sizes[size]?.toFixed(2) || '0.00'}€
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {t(language, `${size}Desc`)}
                   </div>
                 </button>
               ))}
@@ -946,7 +971,7 @@ const CustomizationModal = ({
             <button
               onClick={goToNextStep}
               disabled={!selection.size}
-              className={`w-full py-3 bg-[#016730] rounded-lg text-white font-bold flex items-center justify-center ${
+              className={`w-full py-3 bg-gradient-to-r from-green-600 to-green-700 rounded-xl text-white font-bold flex items-center justify-center shadow-md hover:from-green-700 hover:to-green-800 transition-all ${
                 !selection.size ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -957,34 +982,52 @@ const CustomizationModal = ({
 
       case 'border':
         return (
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'chooseBorder')}</h3>
+          <div className="animate-fadeIn">
+            <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+              <FaBacon className="mr-2 text-green-600" />
+              {t(language, 'chooseBorder')}
+            </h3>
+            
             <div className="space-y-3 mb-6">
               <button
                 onClick={() => handleBorderChange(null)}
-                className={`w-full px-4 py-3 rounded-lg flex items-center justify-between transition-all ${
+                className={`w-full px-4 py-3 rounded-lg flex items-center justify-between transition-all border ${
                   selection.border === null
-                    ? 'bg-white border-2 border-[#016730] text-gray-800'
-                    : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+                    ? 'bg-white border-2 border-green-600 text-gray-800'
+                    : 'bg-white border-gray-200 text-gray-800 hover:border-gray-300'
                 }`}
               >
-                <span>{t(language, 'noBorder')}</span>
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                    <FaTimes className="text-gray-500" />
+                  </div>
+                  <span>{t(language, 'noBorder')}</span>
+                </div>
                 <span className="text-gray-500">+0.00€</span>
               </button>
+              
               {menuData.bordas.map(border => (
                 <button
                   key={border.id}
                   onClick={() => handleBorderChange(border.id)}
-                  className={`w-full px-4 py-3 rounded-lg flex items-center justify-between transition-all ${
+                  className={`w-full px-4 py-3 rounded-lg flex items-center justify-between transition-all border ${
                     selection.border === border.id
-                      ? 'bg-white border-2 border-[#016730] text-gray-800'
-                      : 'bg-white border border-gray-200 text-gray-800 hover:border-gray-300'
+                      ? 'bg-white border-2 border-green-600 text-gray-800'
+                      : 'bg-white border-gray-200 text-gray-800 hover:border-gray-300'
                   }`}
                 >
-                  <div className="flex flex-col items-start">
-                    <span>
-                      {typeof border.name === 'object' ? border.name[language] : border.name}
-                    </span>
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                      <FaBacon className="text-red-500" />
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">
+                        {typeof border.name === 'object' ? border.name[language] : border.name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {t(language, 'stuffedBorderDesc')}
+                      </span>
+                    </div>
                   </div>
                   <span className="text-gray-500">
                     +{border.sizes[selection.size || 'media'].toFixed(2)}€
@@ -996,13 +1039,13 @@ const CustomizationModal = ({
             <div className="flex gap-3">
               <button
                 onClick={goToPrevStep}
-                className="w-1/3 py-3 bg-gray-200 rounded-lg text-gray-800 font-bold flex items-center justify-center"
+                className="w-1/3 py-3 bg-gray-100 rounded-xl text-gray-700 font-bold flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <FaChevronLeft className="mr-2" /> {t(language, 'back')}
               </button>
               <button
                 onClick={goToNextStep}
-                className="w-2/3 py-3 bg-[#016730] rounded-lg text-white font-bold flex items-center justify-center"
+                className="w-2/3 py-3 bg-gradient-to-r from-green-600 to-green-700 rounded-xl text-white font-bold flex items-center justify-center shadow-md hover:from-green-700 hover:to-green-800 transition-all"
               >
                 {t(language, 'nextStep')} <FaArrowRight className="ml-2" />
               </button>
@@ -1012,8 +1055,12 @@ const CustomizationModal = ({
 
       case 'extras':
         return (
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'chooseExtras')}</h3>
+          <div className="animate-fadeIn">
+            <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+              <FaPlusCircle className="mr-2 text-green-600" />
+              {t(language, 'chooseExtras')}
+            </h3>
+            
             <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1 mb-6">
               {pizzaExtras.map(extra => {
                 const isSelected = selection.extras.some(e => e.id === extra.id);
@@ -1021,21 +1068,25 @@ const CustomizationModal = ({
                   <button
                     key={extra.id}
                     onClick={() => toggleExtra(extra)}
-                    className={`p-3 rounded-lg flex flex-col items-start transition-all border ${
+                    className={`p-3 rounded-xl flex flex-col items-start transition-all border ${
                       isSelected
-                        ? 'bg-green-50 border-[#016730]'
+                        ? 'bg-green-50 border-green-600'
                         : 'bg-white border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className="flex items-center w-full">
-                      {isSelected && (
-                        <FaCheck className="text-[#016730] mr-2" size={12} />
+                      {isSelected ? (
+                        <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mr-2">
+                          <FaCheck className="text-white text-xs" />
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 border-2 border-gray-300 rounded-full mr-2"></div>
                       )}
                       <span className="font-medium text-left truncate">
                         {typeof extra.name === 'object' ? extra.name[language] : extra.name}
                       </span>
                     </div>
-                    <span className="text-gray-500 mt-1">
+                    <span className="text-green-600 font-medium mt-1 ml-8">
                       +{extra.price.toFixed(2)}€
                     </span>
                   </button>
@@ -1046,13 +1097,13 @@ const CustomizationModal = ({
             <div className="flex gap-3">
               <button
                 onClick={goToPrevStep}
-                className="w-1/3 py-3 bg-gray-200 rounded-lg text-gray-800 font-bold flex items-center justify-center"
+                className="w-1/3 py-3 bg-gray-100 rounded-xl text-gray-700 font-bold flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <FaChevronLeft className="mr-2" /> {t(language, 'back')}
               </button>
               <button
                 onClick={goToNextStep}
-                className="w-2/3 py-3 bg-[#016730] rounded-lg text-white font-bold flex items-center justify-center"
+                className="w-2/3 py-3 bg-gradient-to-r from-green-600 to-green-700 rounded-xl text-white font-bold flex items-center justify-center shadow-md hover:from-green-700 hover:to-green-800 transition-all"
               >
                 {t(language, 'nextStep')} <FaArrowRight className="ml-2" />
               </button>
@@ -1062,22 +1113,28 @@ const CustomizationModal = ({
 
       case 'drink':
         return (
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'chooseFreeDrink')}</h3>
+          <div className="animate-fadeIn">
+            <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+              <FaGlassWhiskey className="mr-2 text-green-600" />
+              {t(language, 'chooseFreeDrink')}
+            </h3>
+            
             {renderFreeDrinkSection()}
             
             <div className="flex gap-3">
               <button
                 onClick={goToPrevStep}
-                className="w-1/3 py-3 bg-gray-200 rounded-lg text-gray-800 font-bold flex items-center justify-center"
+                className="w-1/3 py-3 bg-gray-100 rounded-xl text-gray-700 font-bold flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <FaChevronLeft className="mr-2" /> {t(language, 'back')}
               </button>
               <button
                 onClick={goToNextStep}
                 disabled={!selection.freeDrink}
-                className={`w-2/3 py-3 bg-[#016730] rounded-lg text-white font-bold flex items-center justify-center ${
-                  !selection.freeDrink ? 'opacity-50 cursor-not-allowed' : ''
+                className={`w-2/3 py-3 rounded-xl text-white font-bold flex items-center justify-center shadow-md transition-all ${
+                  !selection.freeDrink 
+                    ? 'bg-gray-300 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
                 }`}
               >
                 {t(language, 'reviewOrder')} <FaArrowRight className="ml-2" />
@@ -1088,16 +1145,29 @@ const CustomizationModal = ({
 
       case 'review':
         return (
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-4">{t(language, 'reviewYourOrder')}</h3>
+          <div className="animate-fadeIn">
+            <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+              <FaClipboardCheck className="mr-2 text-green-600" />
+              {t(language, 'reviewYourOrder')}
+            </h3>
             
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-              <h4 className="font-bold text-gray-800 mb-2">
-                {typeof product.name === 'object' ? product.name[language] : product.name}
-              </h4>
+            <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-6">
+              <div className="flex items-start mb-4">
+                <div className="w-16 h-16 bg-white rounded-lg border border-gray-200 flex items-center justify-center mr-4">
+                  <FaPizzaSlice className="text-2xl text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800 text-lg">
+                    {typeof product.name === 'object' ? product.name[language] : product.name}
+                  </h4>
+                  <p className="text-sm text-gray-500">
+                    {t(language, 'customizedItem')}
+                  </p>
+                </div>
+              </div>
               
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-2 border-b border-gray-200">
                   <span className="text-gray-600">{t(language, 'size')}:</span>
                   <span className="font-medium">
                     {t(language, selection.size)} - {product.sizes[selection.size].toFixed(2)}€
@@ -1105,7 +1175,7 @@ const CustomizationModal = ({
                 </div>
                 
                 {isPizza && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-2 border-b border-gray-200">
                     <span className="text-gray-600">{t(language, 'doughType')}:</span>
                     <span className="font-medium">
                       {t(language, selection.borderType === 'fina' ? 'thinDough' : 'thickDough')}
@@ -1115,7 +1185,7 @@ const CustomizationModal = ({
                 
                 {isPizza && isFamilySize && selection.halfAndHalf && (
                   <>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between py-2 border-b border-gray-200">
                       <span className="text-gray-600">{t(language, 'firstHalf')}:</span>
                       <span className="font-medium">
                         {typeof menuData.tradicionais.concat(menuData.vegetarianas)
@@ -1126,7 +1196,7 @@ const CustomizationModal = ({
                               .find(p => p.id === (selection.halfPizza1 || product.id)).name}
                       </span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between py-2 border-b border-gray-200">
                       <span className="text-gray-600">{t(language, 'secondHalf')}:</span>
                       <span className="font-medium">
                         {selection.halfPizza2 
@@ -1143,7 +1213,7 @@ const CustomizationModal = ({
                 )}
                 
                 {selection.border && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-2 border-b border-gray-200">
                     <span className="text-gray-600">{t(language, 'border')}:</span>
                     <span className="font-medium">
                       {typeof menuData.bordas.find(b => b.id === selection.border).name === 'object' 
@@ -1155,18 +1225,18 @@ const CustomizationModal = ({
                 )}
                 
                 {selection.extras.length > 0 && (
-                  <div>
-                    <div className="flex justify-between">
+                  <div className="py-2 border-b border-gray-200">
+                    <div className="flex justify-between mb-1">
                       <span className="text-gray-600">{t(language, 'extras')}:</span>
                       <span className="font-medium">+{extrasTotal.toFixed(2)}€</span>
                     </div>
                     <div className="pl-2 mt-1">
                       {selection.extras.map(extra => (
-                        <div key={extra.id} className="flex justify-between">
-                          <span className="text-gray-600">
+                        <div key={extra.id} className="flex justify-between text-xs py-1">
+                          <span className="text-gray-500">
                             • {typeof extra.name === 'object' ? extra.name[language] : extra.name}
                           </span>
-                          <span className="font-medium">+{extra.price.toFixed(2)}€</span>
+                          <span className="font-medium text-green-600">+{extra.price.toFixed(2)}€</span>
                         </div>
                       ))}
                     </div>
@@ -1174,7 +1244,7 @@ const CustomizationModal = ({
                 )}
                 
                 {selection.freeDrink && selection.freeDrink !== 'none' && (
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-2 border-b border-gray-200">
                     <span className="text-gray-600">{t(language, 'freeDrink')}:</span>
                     <span className="font-medium">
                       {typeof freeDrinkOptions[selection.size].find(d => d.id === selection.freeDrink).name === 'object' 
@@ -1184,54 +1254,52 @@ const CustomizationModal = ({
                   </div>
                 )}
                 
-                <div className="flex justify-between pt-2 border-t border-gray-200">
+                <div className="flex justify-between py-2">
                   <span className="text-gray-600">{t(language, 'quantity')}:</span>
-                  <span className="font-medium">{selection.quantity}</span>
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => handleQuantityChange(selection.quantity - 1)}
+                      disabled={selection.quantity <= 1}
+                      className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 disabled:opacity-30 transition-colors"
+                    >
+                      <Minus size={10} />
+                    </button>
+                    <span className="w-8 text-center font-medium">
+                      {selection.quantity}
+                    </span>
+                    <button
+                      onClick={() => handleQuantityChange(selection.quantity + 1)}
+                      className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                    >
+                      <Plus size={10} />
+                    </button>
+                  </div>
                 </div>
                 
-                <div className="flex justify-between pt-2 border-t border-gray-200">
-                  <span className="text-gray-600 font-bold">{t(language, 'total')}:</span>
-                  <span className="font-bold text-[#016730]">{totalPrice.toFixed(2)}€</span>
-                </div>
-              </div>
-            </div>
             
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-1">{t(language, 'quantity')}</h4>
-                <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => handleQuantityChange(selection.quantity - 1)}
-                    disabled={selection.quantity <= 1}
-                    className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
-                  >
-                    <Minus size={12} />
-                  </button>
-                  <span className="w-8 h-8 flex items-center justify-center text-sm font-medium border-l border-r border-gray-200">
-                    {selection.quantity}
-                  </span>
-                  <button
-                    onClick={() => handleQuantityChange(selection.quantity + 1)}
-                    className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                  >
-                    <Plus size={12} />
-                  </button>
-                </div>
+              <div className="flex justify-between pt-3 mt-3 border-t border-gray-200">
+                <span className="text-gray-700 font-bold">{t(language, 'total')}:</span>
+                <span className="font-bold text-xl text-green-600">
+                  {(basePrice + extrasTotal + borderPrice).toFixed(2)}€
+                </span>
+              </div>
               </div>
             </div>
             
             <div className="flex gap-3">
               <button
                 onClick={goToPrevStep}
-                className="w-1/3 py-3 bg-gray-200 rounded-lg text-gray-800 font-bold flex items-center justify-center"
+                className="w-1/3 py-3 bg-gray-100 rounded-xl text-gray-700 font-bold flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <FaChevronLeft className="mr-2" /> {t(language, 'back')}
               </button>
               <button
                 onClick={handleAddToCart}
                 disabled={isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2}
-                className={`w-2/3 py-3 bg-gradient-to-r from-red-600 to-[#016730] rounded-lg text-white font-bold hover:from-red-700 hover:to-[#02803c] transition-colors flex items-center justify-center ${
-                  isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 ? 'opacity-50 cursor-not-allowed' : ''
+                className={`w-2/3 py-3 rounded-xl text-white font-bold flex items-center justify-center shadow-md transition-all ${
+                  isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-red-600 to-green-600 hover:from-red-700 hover:to-green-700'
                 }`}
               >
                 <FaShoppingCart className="mr-2" /> {t(language, 'addToCart')}
@@ -1239,7 +1307,7 @@ const CustomizationModal = ({
             </div>
             
             {isPizza && isFamilySize && selection.halfAndHalf && !selection.halfPizza2 && (
-              <p className="text-red-500 text-sm mt-2 text-center">
+              <p className="text-red-500 text-sm mt-3 text-center">
                 {t(language, 'selectSecondHalf')}
               </p>
             )}
@@ -1252,25 +1320,33 @@ const CustomizationModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        {/* Italian flag lines at the top */}
-        <div className="h-2 w-full bg-green-600"></div>
-        <div className="h-2 w-full bg-white"></div>
-        <div className="h-2 w-full bg-red-600"></div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fadeIn">
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
+        {/* Italian flag header */}
+        <div className="h-1 w-full bg-green-600"></div>
+        <div className="h-1 w-full bg-white"></div>
+        <div className="h-1 w-full bg-red-600"></div>
         
         <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-800">
-              {typeof product.name === 'object' ? product.name[language] : product.name}
-            </h3>
-            <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
-              <X size={20} />
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-800">
+                {typeof product.name === 'object' ? product.name[language] : product.name}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {t(language, 'customizeYourOrder')}
+              </p>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <X size={20} className="text-gray-500" />
             </button>
           </div>
           
           {product.description && (
-            <p className="text-gray-600 text-sm mb-4">
+            <p className="text-gray-600 text-sm mb-6 px-2 py-3 bg-gray-50 rounded-lg border border-gray-100">
               {typeof product.description === 'object' ? product.description[language] : product.description}
             </p>
           )}
@@ -1441,45 +1517,40 @@ const CartItem = ({
   onToggleUseStamps,
   itemsWithStamps,
 }) => {
+  const canUseStamps = (item) => {
+    const validCategories = ['tradicionais', 'vegetarianas', 'entradas', 'doces'];
+    const isHalfAndHalfPizza = item.halfAndHalf && item.selectedSize === 'familia';
+    return (validCategories.includes(item.category) || isHalfAndHalfPizza) && !item.isBorder;
+  };
 
+  const calculateStampsNeeded = () => {
+    if (item.category === 'entradas') return 5 * item.quantity;
+    if (item.halfAndHalf && item.selectedSize === 'familia') return 12 * item.quantity;
+    
+    const size = item.selectedSize || 'media';
+    if (size === 'individual') return 10 * item.quantity;
+    if (size === 'media') return 11 * item.quantity;
+    if (size === 'familia') return 12 * item.quantity;
+    
+    return 0;
+  };
 
-const canUseStamps = (item) => {
-  const validCategories = ['tradicionais', 'vegetarianas', 'entradas', 'doces'];
-  const isHalfAndHalfPizza = item.halfAndHalf && item.selectedSize === 'familia';
-  return (validCategories.includes(item.category) || isHalfAndHalfPizza) && !item.isBorder;
-};
-
-const calculateStampsNeeded = () => {
-  if (item.category === 'entradas') return 5 * item.quantity;
-  if (item.halfAndHalf && item.selectedSize === 'familia') return 12 * item.quantity;
-  
-  const size = item.selectedSize || 'media';
-  if (size === 'individual') return 10 * item.quantity;
-  if (size === 'media') return 11 * item.quantity;
-  if (size === 'familia') return 12 * item.quantity;
-  
-  return 0;
-};
-
-
-const handleToggleUseStamps = () => {
-  if (!canUseStamps(item)) return;
-  
-  const needed = calculateStampsNeeded();
-  const totalUsed = Object.values(itemsWithStamps).reduce((sum, val) => sum + val, 0);
-  
-  // Se tentando ativar e ultrapassar o limite
-  if (!itemsWithStamps[item.id] && (totalUsed + needed) > selosDisponiveis) {
-    toast.error(t(language, 'notEnoughStamps'));
-    return;
-  }
-  
-  onToggleUseStamps(item.id, !itemsWithStamps[item.id], needed);
-};
+  const handleToggleUseStamps = () => {
+    if (!canUseStamps(item)) return;
+    
+    const needed = calculateStampsNeeded();
+    const totalUsed = Object.values(itemsWithStamps).reduce((sum, val) => sum + val, 0);
+    
+    if (!itemsWithStamps[item.id] && (totalUsed + needed) > selosDisponiveis) {
+      toast.error(t(language, 'notEnoughStamps'));
+      return;
+    }
+    
+    onToggleUseStamps(item.id, !itemsWithStamps[item.id], needed);
+  };
 
   const useStamps = itemsWithStamps[item.id] || false;
 
-  // Renderização para pizza meia a meia
   if (item.halfAndHalf && item.selectedSize === 'familia') {
     const getPizzaName = (id) => {
       const pizza = [...menuData.tradicionais, ...menuData.vegetarianas].find(p => p.id === id);
@@ -1500,7 +1571,7 @@ const handleToggleUseStamps = () => {
               {item.quantity}
             </span>
           </div>
-
+          
           <div className="flex-1">
             <div className="flex justify-between items-start">
               <h3 className="font-medium text-gray-900 text-xs sm:text-sm">
@@ -1518,37 +1589,50 @@ const handleToggleUseStamps = () => {
             </div>
 
             <div className="mt-1 sm:mt-2 flex flex-col gap-1 sm:gap-2">
-              <div className="flex items-start">
-                <span className="w-12 sm:w-16 text-xs text-gray-500">Tamanho:</span>
-                <span className="text-xs sm:text-sm font-medium">{t(language, item.selectedSize)}</span>
-              </div>
-
-              <div className="flex items-start">
-                <span className="w-12 sm:w-16 text-xs text-gray-500">1ª Metade:</span>
-                <span className="text-xs sm:text-sm font-medium">{pizza1}</span>
-              </div>
-
-              <div className="flex items-start">
-                <span className="w-12 sm:w-16 text-xs text-gray-500">2ª Metade:</span>
-                <span className="text-xs sm:text-sm font-medium">{pizza2}</span>
-              </div>
-
+              {item.selectedSize && (
+                <div className="flex items-start">
+                  <span className="w-12 sm:w-16 text-xs text-gray-500">Tamanho:</span>
+                  <span className="text-xs sm:text-sm font-medium">{t(language, item.selectedSize)}</span>
+                </div>
+              )}
+              
+              {item.selectedBorder && (
+                <div className="flex items-start">
+                  <span className="w-12 sm:w-16 text-xs text-gray-500">Borda:</span>
+                  <span className="text-xs sm:text-sm font-medium">
+                    {typeof menuData.bordas.find(b => b.id === item.selectedBorder)?.name === 'object' 
+                      ? menuData.bordas.find(b => b.id === item.selectedBorder).name[language] 
+                      : menuData.bordas.find(b => b.id === item.selectedBorder)?.name}
+                    {!useStamps && ` (+${item.borderPrice?.toFixed(2)}€)`}
+                  </span>
+                </div>
+              )}
+              
               {item.borderType && (
                 <div className="flex items-start">
-                  <span className="w-12 sm:w-16 text-xs text-gray-500">Massa:</span>
+                  <span className="w-12 sm:w-16 text-xs text-gray-500">Tipo de Massa:</span>
                   <span className="text-xs sm:text-sm font-medium">
                     {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
                   </span>
                 </div>
               )}
-
+              
+              <div className="flex items-start">
+                <span className="w-12 sm:w-16 text-xs text-gray-500">Metades:</span>
+                <div className="flex flex-col">
+                  <span className="text-xs sm:text-sm font-medium">1. {pizza1}</span>
+                  <span className="text-xs sm:text-sm font-medium">2. {pizza2}</span>
+                </div>
+              </div>
+              
               {item.extras?.length > 0 && (
                 <div className="flex items-start">
                   <span className="w-12 sm:w-16 text-xs text-gray-500">Extras:</span>
                   <span className="text-xs sm:text-sm font-medium">
-                    {item.extras.map(extra =>
+                    {item.extras.map(extra => 
                       typeof extra.name === 'object' ? extra.name[language] : extra.name
                     ).join(', ')}
+                    {!useStamps && ` (+${item.extras.reduce((sum, extra) => sum + extra.price, 0).toFixed(2)}€)`}
                   </span>
                 </div>
               )}
@@ -1560,23 +1644,24 @@ const handleToggleUseStamps = () => {
           {!useStamps && (
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
-                <button
+                <button 
                   onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-                  className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                  className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                  disabled={item.quantity <= 1}
                 >
                   <Minus size={10} />
                 </button>
                 <span className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center border-l border-r border-gray-200 text-xs sm:text-sm">
                   {item.quantity}
                 </span>
-                <button
+                <button 
                   onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-                  className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                  className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-100 transition-colors"
                 >
                   <Plus size={10} />
                 </button>
               </div>
-              <button
+              <button 
                 onClick={() => onRemove(item.id)}
                 className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
               >
@@ -1586,42 +1671,24 @@ const handleToggleUseStamps = () => {
           )}
           
           {canUseStamps(item) && (
-            <div className="mt-2 sm:mt-3 flex items-center justify-between bg-amber-50 p-2 sm:p-3 rounded-lg">
-              <div className="flex items-center">
-                <FaCoins className="text-amber-500 mr-1 sm:mr-2" size={12} />
-                <span className="text-xs sm:text-sm font-medium text-amber-800">
-                  {t(language, 'stampsAvailable')}: {selosDisponiveis}
-                </span>
-              </div>
-              
-              <button
-                onClick={handleToggleUseStamps}
-                className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium flex items-center ${
-                  useStamps
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                } transition-colors`}
-                disabled={!canUseStamps(item)}
-              >
-                {useStamps ? (
-                  <>
-                    <FaCheck className="mr-1" size={10} />
-                    {t(language, 'usingStamps')} ({calculateStampsNeeded()})
-                  </>
-                ) : (
-                  <>
-                    <FaCoins className="mr-1" size={10} />
-                    {t(language, 'useStamps')} ({calculateStampsNeeded()})
-                  </>
-                )}
-              </button>
-            </div>
+            <button 
+              onClick={handleToggleUseStamps}
+              className={`mt-1 sm:mt-2 text-xs px-2 sm:px-3 py-1 rounded-full ${
+                useStamps 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              } transition-colors`}
+              disabled={!canUseStamps(item)}
+            >
+              {useStamps 
+                ? `Usando ${calculateStampsNeeded()} selos` 
+                : `Usar selos (${calculateStampsNeeded()})`}
+            </button>
           )}
         </div>
       </div>
     );
   }
-
   // Renderização para hambúrgueres
   if (item.category === 'hamburgueres') {
     return (
@@ -1751,7 +1818,7 @@ const handleToggleUseStamps = () => {
             
             {item.borderType && (
               <div className="flex items-start">
-                <span className="w-12 sm:w-16 text-xs text-gray-500">Borda:</span>
+                <span className="w-12 sm:w-16 text-xs text-gray-500">Tipo de Massa:</span>
                 <span className="text-xs sm:text-sm font-medium">
                   {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
                 </span>
@@ -1801,7 +1868,7 @@ const handleToggleUseStamps = () => {
           </div>
         )}
         
-       {canUseStamps(item) && (
+        {canUseStamps(item) && (
           <button 
             onClick={handleToggleUseStamps}
             className={`mt-1 sm:mt-2 text-xs px-2 sm:px-3 py-1 rounded-full ${
@@ -1928,17 +1995,17 @@ const canUseStamps = (item) => {
   return (validCategories.includes(item.category) || isHalfAndHalfPizza) && !item.isBorder;
 };
 
-  const cartTotal = useMemo(() => {
-    return cart.reduce((total, item) => {
-      if (itemsWithStamps[item.id]) {
-        return total;
-      }
-      
-      const basePrice = (item.price || item.sizes?.[item.selectedSize] || 0) * item.quantity;
-      const extrasTotal = item.extras?.reduce((sum, extra) => sum + (extra.price * item.quantity), 0) || 0;
-      return total + basePrice + extrasTotal;
-    }, 0);
-  }, [cart, itemsWithStamps]);
+const cartTotal = useMemo(() => {
+  return cart.reduce((total, item) => {
+    if (itemsWithStamps[item.id]) {
+      return total;
+    }
+
+    const totalItemPrice = (item.price || item.sizes?.[item.selectedSize] || 0) * item.quantity;
+    return total + totalItemPrice;
+  }, 0);
+}, [cart, itemsWithStamps]);
+
   
   const deliveryFee = deliveryOption === 'entrega' && customerInfo.localidade ? 
     (deliveryAreas[selectedZone]?.taxa || 0) : 0;
@@ -2157,6 +2224,15 @@ const canUseStamps = (item) => {
                           <div className="flex">
                             <span className="font-medium w-24">Tamanho:</span>
                             <span className="capitalize">{item.selectedSize}</span>
+                          </div>
+                        )}
+
+                        {item.borderType && (
+                          <div className="flex">
+                            <span className="font-medium w-24">Tipo de Massa:</span>
+                            <span className="capitalize">
+                              {item.borderType === 'grossa' ? 'Grossa' : 'Fina'}
+                            </span>
                           </div>
                         )}
                         
@@ -3236,8 +3312,17 @@ useEffect(() => {
     
     setCanCheckout(basicCheck && deliveryCheck && cart.length > 0);
   }, [customerInfo, deliveryOption, cart]);
+   
+
 
 const addToCart = (product, selection) => {
+   console.log("DEBUG addToCart:", {
+    nome: typeof product.name === 'object' ? product.name.pt : product.name,
+    tamanho: selection.size,
+    extras: selection.extras,
+    border: selection.border,
+    category: product.category
+  });
   if (!selection) throw new Error("Selection is required");
   const { size, border, quantity, extras, halfAndHalf, halfPizza1, halfPizza2, borderType, meatType, withMenu } = selection;
 
@@ -3246,7 +3331,7 @@ const addToCart = (product, selection) => {
     return typeof pizza?.name === 'object' ? pizza.name[language] : pizza?.name || 'Desconhecido';
   };
 
-  const createBaseItem = (itemProduct, itemSize, itemQuantity, itemExtras) => ({
+    const createBaseItem = (itemProduct, itemSize, itemQuantity, itemExtras) => ({
     ...itemProduct,
     quantity: itemQuantity,
     price: itemProduct.sizes ? (itemProduct.sizes[itemSize] || itemProduct.sizes.media) : itemProduct.price,
@@ -3254,12 +3339,13 @@ const addToCart = (product, selection) => {
     extras: itemExtras,
     originalPrice: itemProduct.sizes ? (itemProduct.sizes[itemSize] || itemProduct.sizes.media) : itemProduct.price,
     category: itemProduct.category || 'outros',
-    isBorder: false
+    isBorder: false,
+    selectedBorder: border || null,
+    borderPrice: border ? (menuData.bordas.find(b => b.id === border)?.sizes[size] || 0) : 0
   });
 
-  // Lógica para hambúrgueres
   if (product.category === 'hamburgueres') {
-   const itemPrice = withMenu ? product.prices.menu : product.prices.sandwich;
+    const itemPrice = withMenu ? product.prices.menu : product.prices.sandwich;
     
     setCart(prevCart => {
       const existingItem = prevCart.find(item => 
@@ -3279,17 +3365,17 @@ const addToCart = (product, selection) => {
             : item
         );
       } else {
-       const newItem = {
-        ...product,
-        id: `${product.id}-${meatType}-${withMenu ? 'menu' : 'no-menu'}`,
-        quantity,
-        price: itemPrice,
-        originalPrice: itemPrice, // Adicione esta linha
-        meatType,
-        withMenu,
-        extras,
-        category: 'hamburgueres'
-      };
+        const newItem = {
+          ...product,
+          id: `${product.id}-${meatType}-${withMenu ? 'menu' : 'no-menu'}`,
+          quantity,
+          price: itemPrice,
+          originalPrice: itemPrice,
+          meatType,
+          withMenu,
+          extras,
+          category: 'hamburgueres'
+        };
         
         return [...prevCart, newItem];
       }
@@ -3300,82 +3386,92 @@ const addToCart = (product, selection) => {
     return;
   }
 
-  if (halfAndHalf && size === 'familia') {
-    setCart(prevCart => {
-      const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas).find(p => p.id === halfPizza1);
-      const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas).find(p => p.id === halfPizza2);
-      const avgPrice = (pizza1?.sizes?.[size] + pizza2?.sizes?.[size]) / 2;
+if (halfAndHalf && size === 'familia') {
+  setCart(prevCart => {
+    const pizza1 = menuData.tradicionais.concat(menuData.vegetarianas).find(p => p.id === halfPizza1);
+    const pizza2 = menuData.tradicionais.concat(menuData.vegetarianas).find(p => p.id === halfPizza2);
+    
+    // 1. Pegar o preço BASE das pizzas (sem extras)
+    const basePrice1 = pizza1?.basePrice || pizza1?.sizes?.familia || 0;
+    const basePrice2 = pizza2?.basePrice || pizza2?.sizes?.familia || 0;
+    
+    // 2. Determinar a pizza mais cara (base apenas)
+    const maxBasePrice = Math.max(basePrice1, basePrice2);
+    
+    // 3. Calcular valor dos extras (somente uma vez)
+    const extrasTotal = extras?.reduce((sum, extra) => sum + extra.price, 0) || 0;
+    
+    // 4. Calcular valor da borda
+    const borderPrice = border ? (menuData.bordas.find(b => b.id === border)?.sizes?.familia )|| 0 : 0;
+    
+    // 5. CÁLCULO FINAL CORRETO:
+    const totalPrice = maxBasePrice + extrasTotal + borderPrice;
 
-      const halfHalfItem = {
-        id: `${halfPizza1}-${halfPizza2}-${size}-${Date.now()}`,
-        name: {
-          pt: `½ ${pizza1?.name?.pt || pizza1?.name} + ½ ${pizza2?.name?.pt || pizza2?.name}`,
-          en: `½ ${pizza1?.name?.en || pizza1?.name} + ½ ${pizza2?.name?.en || pizza2?.name}`,
-          es: `½ ${pizza1?.name?.es || pizza1?.name} + ½ ${pizza2?.name?.es || pizza2?.name}`
-        },
-        quantity,
-        price: avgPrice,
-        originalPrice: avgPrice,
-        selectedSize: size,
-        extras,
-        halfAndHalf: true,
-        halfPizza1: halfPizza1,
-        halfPizza2: halfPizza2,
-        borderType,
-        category: 'pizzas',
-        isBorder: false,
-        stampsEligible: true
-      };
-
-      const existingIndex = prevCart.findIndex(item =>
-        item.id === halfHalfItem.id &&
-        item.selectedSize === size &&
-        JSON.stringify(item.extras) === JSON.stringify(extras) &&
-        item.borderType === borderType
-      );
-
-      if (existingIndex >= 0) {
-        const updatedCart = [...prevCart];
-        updatedCart[existingIndex].quantity += quantity;
-        return updatedCart;
+    const halfHalfItem = {
+      id: `${halfPizza1}-${halfPizza2}-${size}-${Date.now()}`,
+      name: {
+        pt: `½ ${pizza1?.name?.pt || pizza1?.name} + ½ ${pizza2?.name?.pt || pizza2?.name}`,
+        en: `½ ${pizza1?.name?.en || pizza1?.name} + ½ ${pizza2?.name?.en || pizza2?.name}`,
+        es: `½ ${pizza1?.name?.es || pizza1?.name} + ½ ${pizza2?.name?.es || pizza2?.name}`
+      },
+      quantity,
+      price: totalPrice, // Preço final correto
+      originalPrice: maxBasePrice, // Guarda o preço base SEM extras
+      selectedSize: size,
+      extras, // Mantém a lista de extras para exibição
+      halfAndHalf: true,
+      halfPizza1: halfPizza1,
+      halfPizza2: halfPizza2,
+      borderType,
+      selectedBorder: border || null,
+      borderPrice,
+      category: 'pizzas',
+      stampsEligible: true,
+      // Novo campo para cálculo transparente:
+      priceBreakdown: {
+        basePrice: maxBasePrice,
+        extras: extrasTotal,
+        border: borderPrice
       }
+    };
 
-      // Adiciona borda se selecionada
-      if (border && menuData.bordas.find(b => b.id === border)) {
-        const borderItem = menuData.bordas.find(b => b.id === border);
-        const borderPrice = borderItem.sizes[size] || borderItem.sizes.media;
-        
-        return [
-          ...prevCart, 
-          halfHalfItem,
-          {
-            ...borderItem,
-            id: `${borderItem.id}-${halfPizza1}-${halfPizza2}`,
-            quantity,
-            price: borderPrice,
-            selectedSize: size,
-            isBorder: true,
-            originalPrice: borderPrice,
-            category: 'bordas'
-          }
-        ];
-      }
+    const existingIndex = prevCart.findIndex(item =>
+      item.id === halfHalfItem.id &&
+      item.selectedSize === size &&
+      JSON.stringify(item.extras) === JSON.stringify(extras) &&
+      item.borderType === borderType &&
+      item.selectedBorder === border
+    );
 
-      return [...prevCart, halfHalfItem];
-    });
+    if (existingIndex >= 0) {
+      const updatedCart = [...prevCart];
+      updatedCart[existingIndex].quantity += quantity;
+      return updatedCart;
+    }
 
-    setAddedItemName(`½ ${getPizzaName(halfPizza1)} + ½ ${getPizzaName(halfPizza2)}`);
-    setShowAddedNotification(true);
-    return;
-  }
+    return [...prevCart, halfHalfItem];
+  });
 
-  // Lógica para produtos com tamanhos (pizzas normais)
+  setAddedItemName(`½ ${getPizzaName(halfPizza1)} + ½ ${getPizzaName(halfPizza2)}`);
+  setShowAddedNotification(true);
+  return;
+}
+
   if (product.sizes) {
     setCart(prevCart => {
+    // O preço base NÃO inclui os extras (vem do produto original)
+      const basePrice = product.sizes[size] || product.sizes.media;
+      
+      // O preço total deve incluir base + extras + borda
+      const extrasTotal = selection.extras?.reduce((sum, extra) => sum + extra.price, 0) || 0;
+      const borderPrice = selection.border ? (menuData.bordas.find(b => b.id === selection.border)?.sizes[size] || 0) : 0;
+      const totalPrice = basePrice + extrasTotal + borderPrice;
+
       const existingItem = prevCart.find(item => 
         item.id === product.id && 
         item.selectedSize === size && 
         item.selectedBorder === border &&
+        item.borderType === borderType &&
         JSON.stringify(item.extras) === JSON.stringify(extras) &&
         !item.isBorder
       );
@@ -3385,42 +3481,42 @@ const addToCart = (product, selection) => {
           item.id === product.id && 
           item.selectedSize === size && 
           item.selectedBorder === border &&
+          item.borderType === borderType &&
           JSON.stringify(item.extras) === JSON.stringify(extras) &&
           !item.isBorder
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { 
+                ...item, 
+                quantity: item.quantity + quantity,
+                price: totalPrice,
+                originalPrice: basePrice - (extras?.reduce((sum, extra) => sum + extra.price, 0) || 0), // Preço sem extras
+                borderPrice,
+                extras
+              }
             : item
         );
       } else {
-        const newItem = createBaseItem(product, size, quantity, extras);
-        newItem.selectedBorder = border;
-        newItem.stampsEligible = ['tradicionais', 'vegetarianas'].includes(product.category);
+        const newItem = {
+          ...product,
+          quantity,
+          price: totalPrice,
+          originalPrice: basePrice - (extras?.reduce((sum, extra) => sum + extra.price, 0) || 0), // Preço sem extras
+          selectedSize: size,
+          extras,
+          selectedBorder: border,
+          borderType,
+          borderPrice,
+          stampsEligible: ['tradicionais', 'vegetarianas'].includes(product.category),
+          category: product.category || 'pizzas'
+        };
 
-        if (border && menuData.bordas.find(b => b.id === border)) {
-          const borderItem = menuData.bordas.find(b => b.id === border);
-          const borderPrice = borderItem.sizes[size] || borderItem.sizes.media;
-          
-          return [
-            ...prevCart, 
-            newItem,
-            {
-              ...borderItem,
-              id: `${borderItem.id}-${product.id}`,
-              quantity,
-              price: borderPrice,
-              selectedSize: size,
-              isBorder: true,
-              originalPrice: borderPrice,
-              category: 'bordas'
-            }
-          ];
-        }
-        
         return [...prevCart, newItem];
       }
     });
   } else {
-    // Lógica para produtos sem tamanhos (bebidas, entradas)
     setCart(prevCart => {
+      const basePrice = product.price;
+      const extrasTotal = extras?.reduce((sum, extra) => sum + extra.price, 0) || 0;
+
       const existingItem = prevCart.find(item => 
         item.id === product.id &&
         JSON.stringify(item.extras) === JSON.stringify(extras) &&
@@ -3432,12 +3528,24 @@ const addToCart = (product, selection) => {
           item.id === product.id &&
           JSON.stringify(item.extras) === JSON.stringify(extras) &&
           !item.isBorder
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { 
+                ...item, 
+                quantity: item.quantity + quantity,
+                price: basePrice + extrasTotal,
+                originalPrice: basePrice
+              }
             : item
         );
       } else {
-        const newItem = createBaseItem(product, null, quantity, extras);
-        newItem.stampsEligible = product.category === 'entradas';
+        const newItem = {
+          ...product,
+          quantity,
+          price: basePrice + extrasTotal,
+          originalPrice: basePrice,
+          extras,
+          stampsEligible: product.category === 'entradas',
+          category: product.category || 'outros'
+        };
         return [...prevCart, newItem];
       }
     });
@@ -3447,8 +3555,10 @@ const addToCart = (product, selection) => {
   setShowAddedNotification(true);
 };
 
+let enviandoImpressao = false;
+
 const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSelecionada) => {
-  // Proteção contra duplo clique (especialmente para mobile)
+  
   if (pedidoEmAndamentoRef.current) return;
   pedidoEmAndamentoRef.current = true;
 
@@ -3468,10 +3578,6 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     cart.forEach(item => {
       if (item.halfAndHalf && item.selectedSize !== 'familia') {
         throw new Error('Opção meio a meio disponível apenas para pizzas de 41cm');
-      }
-
-      if (item.borderType && item.selectedSize !== 'familia') {
-        throw new Error('Seleção de borda disponível apenas para pizzas de 41cm');
       }
 
       if (item.halfAndHalf && (!item.halfPizza1 || !item.halfPizza2)) {
@@ -3496,15 +3602,17 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       if (item.halfAndHalf && item.selectedSize === 'familia') {
         const price1 = getPizzaPrice(item.halfPizza1 || item.id, item.selectedSize);
         const price2 = getPizzaPrice(item.halfPizza2, item.selectedSize);
-        precoBase = (price1 + price2) / 2;
+        precoBase = Math.max(price1, price2);
       } else if (item.category === 'hamburgueres') {
-        precoBase = item.price;
+        precoBase = item.originalPrice || item.price;
       } else {
-        precoBase = item.price || item.sizes?.[item.selectedSize] || 0;
+        precoBase = item.sizes?.[item.selectedSize] ?? item.originalPrice ?? 0;
+
       }
 
       const extras = item.extras?.reduce((sum, extra) => sum + extra.price, 0) || 0;
-      return total + ((precoBase + extras) * item.quantity);
+      const borda = item.borderPrice || 0;
+      return total + ((precoBase + extras + borda) * item.quantity);
     }, 0);
 
     const taxaEntrega = entregaSelecionada === 'entrega' && zonaSelecionada 
@@ -3532,10 +3640,10 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
 
     const timestamp = Date.now();
     const numeroPedido = String(timestamp).slice(-5).padStart(5, '0');
-    setOrderNumber(numeroPedido);
-
+    
     const pedidoRef = doc(collection(db, 'pedidos'));
-
+    
+     
     const pedidoData = {
       cliente: {
         nome: customerInfo.nome,
@@ -3555,10 +3663,16 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         id: item.id,
         nome: typeof item.name === 'object' ? item.name.pt : item.name,
         quantidade: item.quantity,
-        preco: itemsWithStamps[item.id] ? 0 : (item.price || item.sizes?.[item.selectedSize] || 0),
+        preco: itemsWithStamps[item.id] ? 0 : (item.originalPrice || item.sizes?.[item.selectedSize] || 0),
+        precoBorda: itemsWithStamps[item.id] ? 0 : (item.borderPrice || 0),
         tamanho: item.selectedSize || null,
         borda: item.selectedBorder || null,
-        isBorder: item.isBorder || false,
+        nomeBorda: item.selectedBorder ? 
+          (typeof menuData.bordas.find(b => b.id === item.selectedBorder)?.name === 'object' 
+            ? menuData.bordas.find(b => b.id === item.selectedBorder).name.pt 
+            : menuData.bordas.find(b => b.id === item.selectedBorder)?.name) 
+          : null,
+        tipoMassa: item.borderType || 'fina',
         pagoComSelos: !!itemsWithStamps[item.id],
         selosUsados: itemsWithStamps[item.id]
           ? (item.category === 'entradas' ? 5 * item.quantity
@@ -3572,7 +3686,6 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
         halfPizza2: item.halfAndHalf ? item.halfPizza2 : null,
         halfPizza1Name: item.halfAndHalf ? getPizzaName(item.halfPizza1 || item.id) : null,
         halfPizza2Name: item.halfAndHalf ? getPizzaName(item.halfPizza2) : null,
-        borderType: item.borderType || 'fina',
         categoria: item.category || 'outros',
         meatType: item.meatType || null,
         withMenu: item.withMenu || false,
@@ -3605,6 +3718,35 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
 
     await setDoc(pedidoRef, pedidoData);
 
+     if (enviandoImpressao) return;
+        enviandoImpressao = true;
+
+        try {
+          const response = await fetch('http://localhost:3002/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              numeroPedido,
+              itens: pedidoData.itens,
+              cliente: pedidoData.cliente,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (!result.success) {
+            console.error('Erro ao imprimir pedido:', result.error);
+            toast.error('Erro ao imprimir pedido. Tente novamente.');
+          } else {
+            console.log('Pedido enviado para impressão com sucesso');
+          }
+        } catch (printError) {
+          console.error('Erro na comunicação com o backend:', printError);
+          toast.error('Erro ao se comunicar com o servidor de impressão.');
+        } finally {
+          enviandoImpressao = false;
+        }
+ 
     if (user) {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
@@ -3613,16 +3755,17 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
       });
     }
 
+    setOrderNumber(numeroPedido);
     setCart([]);
     setItemsWithStamps({});
-    setShowOrderConfirmation(true);
+    localStorage.removeItem('pizzaNostraCart');
+
     setShowCheckout(false);
+    setShowOrderConfirmation(true);
 
     if (user) {
       setSelosDisponiveis(prev => prev + selosGanhos - selosUsados);
     }
-
-    localStorage.removeItem('pizzaNostraCart');
 
   } catch (error) {
     console.error("❌ Erro ao finalizar pedido:", error);
@@ -3632,9 +3775,6 @@ const finalizarPedido = async (valorPagoAtual, entregaSelecionada, zonaSeleciona
     pedidoEmAndamentoRef.current = false;
   }
 };
-
-
-
 
   const renderProducts = () => {
     if (activeCategory === 'todos') {

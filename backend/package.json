@@ -17,7 +17,13 @@
     "usb": "^1.6.3"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "browserify-zlib": "^0.2.0",
+    "buffer": "^6.0.3",
+    "nodemon": "^3.0.2",
+    "os-browserify": "^0.3.0",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "stream-browserify": "^3.0.0"
   },
   "overrides": {
     "escpos-usb": {

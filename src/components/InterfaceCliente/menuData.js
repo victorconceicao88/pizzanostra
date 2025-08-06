@@ -850,7 +850,7 @@ export const menuData = {
         en: 'Stuffed Crust - Catupiry',
         es: 'Borde Relleno - Catupiry'
       },
-      sizes: { individual: 4.00, media: 4.50, familia: 5.50 },
+      sizes: { individual: 5.50, media: 5.50, familia: 5.50 },
       image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1981&q=80'
     },
     {
@@ -860,7 +860,7 @@ export const menuData = {
         en: 'Stuffed Crust - Nutella',
         es: 'Borde Relleno - Nutella'
       },
-      sizes: { individual: 5.00, media: 5.50, familia: 6.50 },
+      sizes: { individual: 6.50, media: 6.50, familia: 6.50 },
       image: 'https://images.unsplash.com/photo-1590947132387-155cc02f3212?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
     }
   ],
